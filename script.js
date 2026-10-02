@@ -1,6 +1,7 @@
 /* =========================================================
    KARINDERYA KALKULATOR
-   MOBILE-FIRST VERSION
+   CORRECTED VERSION
+   Matches current index.html
 ========================================================= */
 
 
@@ -8,10 +9,17 @@
    LOCAL STORAGE
 ========================================================= */
 
-let savedRecipes = JSON.parse(localStorage.getItem("savedRecipes")) || [];
-let savedMenus = JSON.parse(localStorage.getItem("savedMenus")) || [];
-let ingredientPrices = JSON.parse(localStorage.getItem("ingredientPrices")) || [];
-let dailySalesRecords = JSON.parse(localStorage.getItem("dailySalesRecords")) || [];
+let savedRecipes =
+    JSON.parse(localStorage.getItem("savedRecipes")) || [];
+
+let savedMenus =
+    JSON.parse(localStorage.getItem("savedMenus")) || [];
+
+let ingredientPrices =
+    JSON.parse(localStorage.getItem("ingredientPrices")) || [];
+
+let dailySalesRecords =
+    JSON.parse(localStorage.getItem("dailySalesRecords")) || [];
 
 
 /* =========================================================
@@ -42,7 +50,7 @@ function formatMoney(value) {
 
 
 /* =========================================================
-   UNIT DEFINITIONS
+   UNITS
 ========================================================= */
 
 const unitDefinitions = {
@@ -141,17 +149,16 @@ const unitDefinitions = {
 };
 
 
-/* =========================================================
-   UNIT CONVERSION
-========================================================= */
-
 function canConvertUnits(fromUnit, toUnit) {
 
     if (!unitDefinitions[fromUnit] || !unitDefinitions[toUnit]) {
         return false;
     }
 
-    return unitDefinitions[fromUnit].type === unitDefinitions[toUnit].type;
+    return (
+        unitDefinitions[fromUnit].type ===
+        unitDefinitions[toUnit].type
+    );
 }
 
 
@@ -164,7 +171,8 @@ function convertUnit(quantity, fromUnit, toUnit) {
     const from = unitDefinitions[fromUnit];
     const to = unitDefinitions[toUnit];
 
-    const baseQuantity = Number(quantity) * from.multiplier;
+    const baseQuantity =
+        Number(quantity) * from.multiplier;
 
     return baseQuantity / to.multiplier;
 }
@@ -182,11 +190,12 @@ function calculateIngredientCost(
         return null;
     }
 
-    const purchaseInRecipeUnit = convertUnit(
-        purchaseQuantity,
-        purchaseUnit,
-        recipeUnit
-    );
+    const purchaseInRecipeUnit =
+        convertUnit(
+            purchaseQuantity,
+            purchaseUnit,
+            recipeUnit
+        );
 
     if (
         purchaseInRecipeUnit === null ||
@@ -213,7 +222,8 @@ function showScreen(screenId) {
         screen.classList.remove("active");
     });
 
-    const screen = document.getElementById(screenId);
+    const screen =
+        document.getElementById(screenId);
 
     if (screen) {
         screen.classList.add("active");
@@ -236,7 +246,7 @@ function showScreen(screenId) {
         initializeSalesScreen();
     }
 
-    if (screenId === "pricesScreen") {
+    if (screenId === "ingredientScreen") {
         renderIngredientPrices();
     }
 
@@ -250,6 +260,11 @@ function showScreen(screenId) {
 }
 
 
+function leaveScreen(currentScreen, targetScreen) {
+    showScreen(targetScreen);
+}
+
+
 /* =========================================================
    MODAL
 ========================================================= */
@@ -259,14 +274,17 @@ let modalConfirmCallback = null;
 
 function showConfirm(title, message, callback) {
 
-    document.getElementById("modalTitle").textContent = title;
-    document.getElementById("modalMessage").textContent = message;
+    document.getElementById("modalTitle").textContent =
+        title;
+
+    document.getElementById("modalMessage").textContent =
+        message;
 
     modalConfirmCallback = callback;
 
     document
         .getElementById("confirmModal")
-        .classList.add("active");
+        .classList.add("show");
 }
 
 
@@ -274,28 +292,30 @@ function closeConfirmModal() {
 
     document
         .getElementById("confirmModal")
-        .classList.remove("active");
+        .classList.remove("show");
 
     modalConfirmCallback = null;
 }
 
 
-document.getElementById("modalYes").addEventListener("click", function () {
+function modalYes() {
 
     if (typeof modalConfirmCallback === "function") {
         modalConfirmCallback();
     }
 
     closeConfirmModal();
+}
 
-});
 
-
-document.getElementById("modalNo").addEventListener("click", function () {
-
+function modalNo() {
     closeConfirmModal();
+}
 
-});
+
+function modalCancel() {
+    closeConfirmModal();
+}
 
 
 /* =========================================================
@@ -304,97 +324,73 @@ document.getElementById("modalNo").addEventListener("click", function () {
 
 function initializeRecipeScreen() {
 
-    const dateInput = document.getElementById("recipeDate");
+    const dateInput =
+        document.getElementById("recipeDate");
 
     if (!dateInput.value) {
-        dateInput.value = getLocalDateString();
+        dateInput.value =
+            getLocalDateString();
     }
 
+    const container =
+        document.getElementById("recipeIngredients");
+
     if (
-        document.getElementById("ingredientContainer").children.length === 0
+        container &&
+        container.children.length === 0
     ) {
-        addIngredientRow();
+        addRecipeIngredient();
     }
 
     calculateRecipeTotal();
 }
 
 
-function addIngredientRow() {
+/* Main function used by HTML button */
+function addRecipeIngredient() {
 
     const container =
-        document.getElementById("ingredientContainer");
+        document.getElementById("recipeIngredients");
 
-    const row = document.createElement("div");
+    if (!container) {
+        return;
+    }
 
-    row.className = "ingredient-row";
+    const row =
+        document.createElement("tr");
+
+    row.className = "recipe-ingredient-row";
 
     row.innerHTML = `
 
-        <div class="ingredient-header">
-
-            <span class="ingredient-number">
-                Ingredient ${container.children.length + 1}
-            </span>
-
-            <button
-                class="remove-small-button"
-                onclick="removeIngredientRow(this)"
+        <td>
+            <select
+                class="recipe-ingredient"
+                onchange="calculateRecipeRow(this)"
             >
-                ×
-            </button>
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label class="form-label">
-                Ingredient
-            </label>
-
-            <select class="recipe-ingredient"
-                    onchange="calculateRecipeRow(this)">
-
                 <option value="">
                     Select ingredient
                 </option>
-
             </select>
+        </td>
 
-        </div>
-
-
-        <div class="form-group">
-
-            <label class="form-label">
-                Amount Used
-            </label>
-
+        <td>
             <input
                 type="number"
                 class="recipe-amount"
                 inputmode="decimal"
                 min="0"
                 step="any"
-                placeholder="Example: 500"
+                placeholder="Amount"
                 oninput="calculateRecipeRow(this)"
             >
+        </td>
 
-        </div>
-
-
-        <div class="form-group">
-
-            <label class="form-label">
-                Unit
-            </label>
-
+        <td>
             <select
                 class="recipe-unit"
                 onchange="calculateRecipeRow(this)"
             >
-
                 <option value="kg">KG</option>
                 <option value="g">Gram</option>
                 <option value="l">Liter</option>
@@ -408,15 +404,22 @@ function addIngredientRow() {
                 <option value="can">Can</option>
                 <option value="pack">Pack</option>
                 <option value="sachet">Sachet</option>
-
             </select>
+        </td>
 
-        </div>
+        <td class="cost-cell">
+            <span class="row-cost">₱0.00</span>
+        </td>
 
-
-        <div class="ingredient-cost">
-            Cost: <span class="row-cost">₱0.00</span>
-        </div>
+        <td>
+            <button
+                type="button"
+                class="remove-row"
+                onclick="removeRecipeIngredient(this)"
+            >
+                ×
+            </button>
+        </td>
 
     `;
 
@@ -425,7 +428,6 @@ function addIngredientRow() {
     populateIngredientSelect(
         row.querySelector(".recipe-ingredient")
     );
-
 }
 
 
@@ -439,7 +441,8 @@ function populateIngredientSelect(select) {
 
     ingredientPrices.forEach(item => {
 
-        const option = document.createElement("option");
+        const option =
+            document.createElement("option");
 
         option.value = item.id;
 
@@ -447,46 +450,27 @@ function populateIngredientSelect(select) {
             `${item.name} — ${formatMoney(item.price)} / ${item.quantity} ${unitDefinitions[item.unit]?.label || item.unit}`;
 
         select.appendChild(option);
-
     });
-
 }
 
 
-function removeIngredientRow(button) {
+function removeRecipeIngredient(button) {
 
-    const row = button.closest(".ingredient-row");
+    const row =
+        button.closest(".recipe-ingredient-row");
 
     if (row) {
         row.remove();
     }
 
-    renumberIngredients();
-
     calculateRecipeTotal();
-}
-
-
-function renumberIngredients() {
-
-    document
-        .querySelectorAll(".ingredient-row")
-        .forEach((row, index) => {
-
-            const number =
-                row.querySelector(".ingredient-number");
-
-            number.textContent =
-                `Ingredient ${index + 1}`;
-
-        });
-
 }
 
 
 function calculateRecipeRow(element) {
 
-    const row = element.closest(".ingredient-row");
+    const row =
+        element.closest(".recipe-ingredient-row");
 
     if (!row) {
         return;
@@ -496,7 +480,9 @@ function calculateRecipeRow(element) {
         row.querySelector(".recipe-ingredient").value;
 
     const amount =
-        Number(row.querySelector(".recipe-amount").value);
+        Number(
+            row.querySelector(".recipe-amount").value
+        );
 
     const unit =
         row.querySelector(".recipe-unit").value;
@@ -506,7 +492,9 @@ function calculateRecipeRow(element) {
 
     const ingredient =
         ingredientPrices.find(
-            item => String(item.id) === String(ingredientId)
+            item =>
+                String(item.id) ===
+                String(ingredientId)
         );
 
     if (
@@ -515,20 +503,22 @@ function calculateRecipeRow(element) {
         amount <= 0
     ) {
 
-        costDisplay.textContent = "₱0.00";
+        costDisplay.textContent =
+            "₱0.00";
 
         calculateRecipeTotal();
 
         return;
     }
 
-    const cost = calculateIngredientCost(
-        amount,
-        unit,
-        ingredient.price,
-        ingredient.quantity,
-        ingredient.unit
-    );
+    const cost =
+        calculateIngredientCost(
+            amount,
+            unit,
+            ingredient.price,
+            ingredient.quantity,
+            ingredient.unit
+        );
 
     if (cost === null) {
 
@@ -551,22 +541,31 @@ function calculateRecipeTotal() {
     let total = 0;
 
     document
-        .querySelectorAll(".ingredient-row")
+        .querySelectorAll(".recipe-ingredient-row")
         .forEach(row => {
 
             const ingredientId =
-                row.querySelector(".recipe-ingredient").value;
+                row.querySelector(
+                    ".recipe-ingredient"
+                ).value;
 
             const amount =
-                Number(row.querySelector(".recipe-amount").value);
+                Number(
+                    row.querySelector(
+                        ".recipe-amount"
+                    ).value
+                );
 
             const unit =
-                row.querySelector(".recipe-unit").value;
+                row.querySelector(
+                    ".recipe-unit"
+                ).value;
 
             const ingredient =
                 ingredientPrices.find(
                     item =>
-                        String(item.id) === String(ingredientId)
+                        String(item.id) ===
+                        String(ingredientId)
                 );
 
             if (
@@ -586,13 +585,14 @@ function calculateRecipeTotal() {
                 if (cost !== null) {
                     total += cost;
                 }
-
             }
 
         });
 
-    document.getElementById("recipeTotalCost")
-        .textContent = formatMoney(total);
+    document.getElementById(
+        "recipeTotalCost"
+    ).textContent =
+        formatMoney(total);
 
     return total;
 }
@@ -601,41 +601,60 @@ function calculateRecipeTotal() {
 function saveRecipe() {
 
     const date =
-        document.getElementById("recipeDate").value;
+        document.getElementById(
+            "recipeDate"
+        ).value;
 
     const name =
-        document.getElementById("recipeName").value.trim();
+        document.getElementById(
+            "recipeName"
+        ).value.trim();
 
     if (!date) {
-        alert("Please select the recipe date.");
+        alert(
+            "Please select the recipe date."
+        );
         return;
     }
 
     if (!name) {
-        alert("Please enter the recipe name.");
+        alert(
+            "Please enter the recipe name."
+        );
         return;
     }
 
     const rows =
-        document.querySelectorAll(".ingredient-row");
+        document.querySelectorAll(
+            ".recipe-ingredient-row"
+        );
 
     const ingredients = [];
 
     rows.forEach(row => {
 
         const ingredientId =
-            row.querySelector(".recipe-ingredient").value;
+            row.querySelector(
+                ".recipe-ingredient"
+            ).value;
 
         const amount =
-            Number(row.querySelector(".recipe-amount").value);
+            Number(
+                row.querySelector(
+                    ".recipe-amount"
+                ).value
+            );
 
         const unit =
-            row.querySelector(".recipe-unit").value;
+            row.querySelector(
+                ".recipe-unit"
+            ).value;
 
         const ingredient =
             ingredientPrices.find(
                 item =>
-                    String(item.id) === String(ingredientId)
+                    String(item.id) ===
+                    String(ingredientId)
             );
 
         if (
@@ -655,27 +674,39 @@ function saveRecipe() {
             if (cost !== null) {
 
                 ingredients.push({
-                    ingredientId: ingredient.id,
-                    ingredientName: ingredient.name,
-                    amount: amount,
-                    unit: unit,
-                    cost: cost
+                    ingredientId:
+                        ingredient.id,
+
+                    ingredientName:
+                        ingredient.name,
+
+                    amount:
+                        amount,
+
+                    unit:
+                        unit,
+
+                    cost:
+                        cost
                 });
-
             }
-
         }
 
     });
 
     if (ingredients.length === 0) {
-        alert("Please add at least one valid ingredient.");
+
+        alert(
+            "Please add at least one valid ingredient."
+        );
+
         return;
     }
 
     const totalCost =
         ingredients.reduce(
-            (sum, item) => sum + Number(item.cost),
+            (sum, item) =>
+                sum + Number(item.cost),
             0
         );
 
@@ -710,11 +741,15 @@ function saveRecipe() {
 
 function resetRecipeForm() {
 
-    document.getElementById("recipeName").value = "";
+    document.getElementById(
+        "recipeName"
+    ).value = "";
 
-    document.getElementById("ingredientContainer").innerHTML = "";
+    document.getElementById(
+        "recipeIngredients"
+    ).innerHTML = "";
 
-    addIngredientRow();
+    addRecipeIngredient();
 
     calculateRecipeTotal();
 }
@@ -727,10 +762,13 @@ function resetRecipeForm() {
 function initializeMenuScreen() {
 
     const dateInput =
-        document.getElementById("menuDate");
+        document.getElementById(
+            "menuDate"
+        );
 
     if (!dateInput.value) {
-        dateInput.value = getLocalDateString();
+        dateInput.value =
+            getLocalDateString();
     }
 
     loadMenuOfDay();
@@ -740,30 +778,53 @@ function initializeMenuScreen() {
 function getRecipesForDate(date) {
 
     return savedRecipes.filter(
-        recipe => recipe.date === date
+        recipe =>
+            recipe.date === date
     );
-
 }
 
 
 function getSavedMenu(date) {
 
     return savedMenus.find(
-        menu => menu.date === date
+        menu =>
+            menu.date === date
     );
-
 }
 
 
 function loadMenuOfDay() {
 
     const date =
-        document.getElementById("menuDate").value;
+        document.getElementById(
+            "menuDate"
+        ).value;
 
-    const container =
-        document.getElementById("menuItemsContainer");
+    const tableContainer =
+        document.getElementById(
+            "menuTableContainer"
+        );
 
-    container.innerHTML = "";
+    const totals =
+        document.getElementById(
+            "menuTotals"
+        );
+
+    const message =
+        document.getElementById(
+            "noRecipesMessage"
+        );
+
+    const itemsContainer =
+        document.getElementById(
+            "menuItems"
+        );
+
+    itemsContainer.innerHTML = "";
+
+    tableContainer.classList.add("hidden");
+    totals.classList.add("hidden");
+    message.classList.add("hidden");
 
     if (!date) {
         return;
@@ -774,38 +835,31 @@ function loadMenuOfDay() {
 
     if (recipes.length === 0) {
 
-        container.innerHTML = `
-            <div class="empty-message">
-                No recipes have been saved for this date.
-            </div>
-        `;
-
-        document.getElementById("menuTotalsContainer").innerHTML = "";
+        message.classList.remove(
+            "hidden"
+        );
 
         return;
     }
 
+    tableContainer.classList.remove(
+        "hidden"
+    );
+
+    totals.classList.remove(
+        "hidden"
+    );
+
     const savedMenu =
         getSavedMenu(date);
-
-    renderMenuItems(recipes, savedMenu);
-
-    calculateMenuTotals();
-}
-
-
-function renderMenuItems(recipes, savedMenu) {
-
-    const container =
-        document.getElementById("menuItemsContainer");
-
-    container.innerHTML = "";
 
     recipes.forEach(recipe => {
 
         const savedItem =
             savedMenu?.items?.find(
-                item => item.recipeId === recipe.id
+                item =>
+                    Number(item.recipeId) ===
+                    Number(recipe.id)
             );
 
         const servings =
@@ -814,118 +868,97 @@ function renderMenuItems(recipes, savedMenu) {
         const sellingPrice =
             savedItem?.sellingPrice || "";
 
-        const card =
-            document.createElement("div");
+        const row =
+            document.createElement("tr");
 
-        card.className = "menu-card";
+        row.className =
+            "menu-item-row";
 
-        card.dataset.recipeId = recipe.id;
+        row.dataset.recipeId =
+            recipe.id;
 
-        card.innerHTML = `
+        row.innerHTML = `
 
-            <div class="menu-name">
+            <td class="menu-name">
                 ${escapeHtml(recipe.name)}
-            </div>
+            </td>
 
-            <div class="menu-recipe-cost">
-                Recipe Cost: <strong>
-                    ${formatMoney(recipe.totalCost)}
-                </strong>
-            </div>
+            <td class="menu-cost">
+                ${formatMoney(recipe.totalCost)}
+            </td>
 
+            <td>
+                <input
+                    type="number"
+                    class="menu-input menu-servings"
+                    inputmode="numeric"
+                    min="1"
+                    value="${servings}"
+                    placeholder="20"
+                    oninput="updateMenuRow(this)"
+                >
+            </td>
 
-            <div class="menu-input-grid">
+            <td>
+                <input
+                    type="number"
+                    class="menu-input menu-price"
+                    inputmode="decimal"
+                    min="0"
+                    step="any"
+                    value="${sellingPrice}"
+                    placeholder="40"
+                    oninput="updateMenuRow(this)"
+                >
+            </td>
 
-                <div>
-                    <label class="form-label">
-                        Servings
-                    </label>
+            <td class="auto-value menu-cost-serving">
+                ₱0.00
+            </td>
 
-                    <input
-                        type="number"
-                        class="menu-servings"
-                        inputmode="numeric"
-                        min="1"
-                        value="${servings}"
-                        placeholder="Example: 20"
-                        oninput="updateMenuRow(this)"
-                    >
-                </div>
+            <td class="profit-cell menu-profit-serving">
+                ₱0.00
+            </td>
 
-
-                <div>
-                    <label class="form-label">
-                        Price / Serving
-                    </label>
-
-                    <input
-                        type="number"
-                        class="menu-price"
-                        inputmode="decimal"
-                        min="0"
-                        step="any"
-                        value="${sellingPrice}"
-                        placeholder="Example: 40"
-                        oninput="updateMenuRow(this)"
-                    >
-                </div>
-
-            </div>
-
-
-            <div class="menu-result">
-
-                <div class="result-line">
-                    <span>Cost / Serving</span>
-                    <strong class="menu-cost-serving">
-                        ₱0.00
-                    </strong>
-                </div>
-
-                <div class="result-line">
-                    <span>Profit / Serving</span>
-                    <strong class="menu-profit-serving">
-                        ₱0.00
-                    </strong>
-                </div>
-
-                <div class="result-line profit">
-                    <span>Total Profit</span>
-                    <strong class="menu-total-profit">
-                        ₱0.00
-                    </strong>
-                </div>
-
-            </div>
+            <td class="profit-cell menu-total-profit">
+                ₱0.00
+            </td>
 
         `;
 
-        container.appendChild(card);
+        itemsContainer.appendChild(row);
 
         updateMenuRow(
-            card.querySelector(".menu-servings")
+            row.querySelector(
+                ".menu-servings"
+            )
         );
 
     });
 
+    calculateMenuTotals();
 }
 
 
 function updateMenuRow(element) {
 
-    const card =
-        element.closest(".menu-card");
+    const row =
+        element.closest(
+            ".menu-item-row"
+        );
 
-    if (!card) {
+    if (!row) {
         return;
     }
 
     const recipeId =
-        Number(card.dataset.recipeId);
+        Number(row.dataset.recipeId);
 
     const recipe =
         savedRecipes.find(
-            item => item.id === recipeId
+            item =>
+                Number(item.id) ===
+                recipeId
         );
 
     if (!recipe) {
@@ -934,12 +967,16 @@ function updateMenuRow(element) {
 
     const servings =
         Number(
-            card.querySelector(".menu-servings").value
+            row.querySelector(
+                ".menu-servings"
+            ).value
         );
 
     const price =
         Number(
-            card.querySelector(".menu-price").value
+            row.querySelector(
+                ".menu-price"
+            ).value
         );
 
     const costServing =
@@ -953,16 +990,19 @@ function updateMenuRow(element) {
     const totalProfit =
         servings * profitServing;
 
-    card.querySelector(".menu-cost-serving")
-        .textContent =
+    row.querySelector(
+        ".menu-cost-serving"
+    ).textContent =
         formatMoney(costServing);
 
-    card.querySelector(".menu-profit-serving")
-        .textContent =
+    row.querySelector(
+        ".menu-profit-serving"
+    ).textContent =
         formatMoney(profitServing);
 
-    card.querySelector(".menu-total-profit")
-        .textContent =
+    row.querySelector(
+        ".menu-total-profit"
+    ).textContent =
         formatMoney(totalProfit);
 
     calculateMenuTotals();
@@ -971,31 +1011,26 @@ function updateMenuRow(element) {
 
 function calculateMenuTotals() {
 
-    const cards =
-        document.querySelectorAll(".menu-card");
-
-    if (cards.length === 0) {
-
-        document.getElementById(
-            "menuTotalsContainer"
-        ).innerHTML = "";
-
-        return;
-    }
+    const rows =
+        document.querySelectorAll(
+            ".menu-item-row"
+        );
 
     let totalServings = 0;
     let totalSales = 0;
     let totalFoodCost = 0;
     let totalProfit = 0;
 
-    cards.forEach(card => {
+    rows.forEach(row => {
 
         const recipeId =
-            Number(card.dataset.recipeId);
+            Number(row.dataset.recipeId);
 
         const recipe =
             savedRecipes.find(
-                item => item.id === recipeId
+                item =>
+                    Number(item.id) ===
+                    recipeId
             );
 
         if (!recipe) {
@@ -1004,12 +1039,16 @@ function calculateMenuTotals() {
 
         const servings =
             Number(
-                card.querySelector(".menu-servings").value
+                row.querySelector(
+                    ".menu-servings"
+                ).value
             );
 
         const price =
             Number(
-                card.querySelector(".menu-price").value
+                row.querySelector(
+                    ".menu-price"
+                ).value
             );
 
         if (
@@ -1033,119 +1072,75 @@ function calculateMenuTotals() {
     });
 
     document.getElementById(
-        "menuTotalsContainer"
-    ).innerHTML = `
+        "menuTotalServings"
+    ).textContent =
+        totalServings;
 
-        <div class="card">
+    document.getElementById(
+        "menuTotalSales"
+    ).textContent =
+        formatMoney(totalSales);
 
-            <h3 class="card-title">
-                Daily Menu Summary
-            </h3>
+    document.getElementById(
+        "menuTotalFoodCost"
+    ).textContent =
+        formatMoney(totalFoodCost);
 
-            <div class="summary-grid">
-
-                <div class="summary-item">
-                    <div class="summary-item-label">
-                        Total Servings
-                    </div>
-
-                    <div class="summary-item-value">
-                        ${totalServings}
-                    </div>
-                </div>
-
-
-                <div class="summary-item">
-                    <div class="summary-item-label">
-                        Expected Sales
-                    </div>
-
-                    <div class="summary-item-value">
-                        ${formatMoney(totalSales)}
-                    </div>
-                </div>
-
-
-                <div class="summary-item">
-                    <div class="summary-item-label">
-                        Total Food Cost
-                    </div>
-
-                    <div class="summary-item-value">
-                        ${formatMoney(totalFoodCost)}
-                    </div>
-                </div>
-
-
-                <div class="summary-item profit">
-                    <div class="summary-item-label">
-                        Expected Profit
-                    </div>
-
-                    <div class="summary-item-value">
-                        ${formatMoney(totalProfit)}
-                    </div>
-                </div>
-
-            </div>
-
-            <button
-                class="success-button"
-                style="margin-top:14px;"
-                onclick="saveDailyMenu()"
-            >
-                Save Menu of the Day
-            </button>
-
-        </div>
-
-    `;
-
+    document.getElementById(
+        "menuTotalProfit"
+    ).textContent =
+        formatMoney(totalProfit);
 }
 
 
 function saveDailyMenu() {
 
     const date =
-        document.getElementById("menuDate").value;
+        document.getElementById(
+            "menuDate"
+        ).value;
 
     if (!date) {
-        alert("Please select a date.");
+        alert(
+            "Please select a date."
+        );
         return;
     }
 
-    const cards =
-        document.querySelectorAll(".menu-card");
+    const rows =
+        document.querySelectorAll(
+            ".menu-item-row"
+        );
 
-    if (cards.length === 0) {
-        alert("There are no recipes for this date.");
+    if (rows.length === 0) {
+        alert(
+            "There are no recipes for this date."
+        );
         return;
     }
 
     const items = [];
 
-    cards.forEach(card => {
-
-        const recipeId =
-            Number(card.dataset.recipeId);
-
-        const servings =
-            Number(
-                card.querySelector(".menu-servings").value
-            );
-
-        const sellingPrice =
-            Number(
-                card.querySelector(".menu-price").value
-            );
+    rows.forEach(row => {
 
         items.push({
 
-            recipeId: recipeId,
+            recipeId:
+                Number(row.dataset.recipeId),
 
-            servings: servings,
+            servings:
+                Number(
+                    row.querySelector(
+                        ".menu-servings"
+                    ).value
+                ) || 0,
 
-            sellingPrice: sellingPrice
+            sellingPrice:
+                Number(
+                    row.querySelector(
+                        ".menu-price"
+                    ).value
+                ) || 0
 
         });
 
@@ -1153,14 +1148,17 @@ function saveDailyMenu() {
 
     const existingIndex =
         savedMenus.findIndex(
-            menu => menu.date === date
+            menu =>
+                menu.date === date
         );
 
     const menu = {
 
         id:
             existingIndex >= 0
-                ? savedMenus[existingIndex].id
+                ? savedMenus[
+                    existingIndex
+                  ].id
                 : Date.now(),
 
         date: date,
@@ -1171,7 +1169,9 @@ function saveDailyMenu() {
 
     if (existingIndex >= 0) {
 
-        savedMenus[existingIndex] = menu;
+        savedMenus[
+            existingIndex
+        ] = menu;
 
     } else {
 
@@ -1184,8 +1184,9 @@ function saveDailyMenu() {
         JSON.stringify(savedMenus)
     );
 
-    alert("Menu of the Day saved successfully.");
-
+    alert(
+        "Menu of the Day saved successfully."
+    );
 }
 
 
@@ -1196,42 +1197,47 @@ function saveDailyMenu() {
 function saveIngredientPrice() {
 
     const name =
-        document
-            .getElementById("priceIngredientName")
-            .value
-            .trim();
+        document.getElementById(
+            "ingredientName"
+        ).value.trim();
 
     const price =
         Number(
             document.getElementById(
-                "priceIngredientPrice"
+                "ingredientPrice"
             ).value
         );
 
     const quantity =
         Number(
             document.getElementById(
-                "priceIngredientQuantity"
+                "ingredientQuantity"
             ).value
         );
 
     const unit =
         document.getElementById(
-            "priceIngredientUnit"
+            "ingredientUnit"
         ).value;
 
     if (!name) {
-        alert("Please enter the ingredient name.");
+        alert(
+            "Please enter the ingredient name."
+        );
         return;
     }
 
     if (!price || price <= 0) {
-        alert("Please enter a valid price.");
+        alert(
+            "Please enter a valid price."
+        );
         return;
     }
 
     if (!quantity || quantity <= 0) {
-        alert("Please enter a valid quantity.");
+        alert(
+            "Please enter a valid quantity."
+        );
         return;
     }
 
@@ -1249,17 +1255,25 @@ function saveIngredientPrice() {
             "This ingredient already has a saved price. Replace it?",
             function () {
 
-                ingredientPrices[existingIndex] = {
+                ingredientPrices[
+                    existingIndex
+                ] = {
 
-                    ...ingredientPrices[existingIndex],
+                    ...ingredientPrices[
+                        existingIndex
+                    ],
 
-                    name: name,
+                    name:
+                        name,
 
-                    price: price,
+                    price:
+                        price,
 
-                    quantity: quantity,
+                    quantity:
+                        quantity,
 
-                    unit: unit
+                    unit:
+                        unit
 
                 };
 
@@ -1267,7 +1281,9 @@ function saveIngredientPrice() {
 
                 clearIngredientPriceForm();
 
-                alert("Ingredient price updated.");
+                alert(
+                    "Ingredient price updated."
+                );
 
             }
         );
@@ -1277,15 +1293,20 @@ function saveIngredientPrice() {
 
     ingredientPrices.push({
 
-        id: Date.now(),
+        id:
+            Date.now(),
 
-        name: name,
+        name:
+            name,
 
-        price: price,
+        price:
+            price,
 
-        quantity: quantity,
+        quantity:
+            quantity,
 
-        unit: unit
+        unit:
+            unit
 
     });
 
@@ -1293,8 +1314,9 @@ function saveIngredientPrice() {
 
     clearIngredientPriceForm();
 
-    alert("Ingredient price saved.");
-
+    alert(
+        "Ingredient price saved."
+    );
 }
 
 
@@ -1302,32 +1324,32 @@ function saveIngredientPricesToStorage() {
 
     localStorage.setItem(
         "ingredientPrices",
-        JSON.stringify(ingredientPrices)
+        JSON.stringify(
+            ingredientPrices
+        )
     );
-
 }
 
 
 function clearIngredientPriceForm() {
 
     document.getElementById(
-        "priceIngredientName"
+        "ingredientName"
     ).value = "";
 
     document.getElementById(
-        "priceIngredientPrice"
+        "ingredientPrice"
     ).value = "";
 
     document.getElementById(
-        "priceIngredientQuantity"
+        "ingredientQuantity"
     ).value = "";
 
     document.getElementById(
-        "priceIngredientUnit"
+        "ingredientUnit"
     ).value = "kg";
 
     renderIngredientPrices();
-
 }
 
 
@@ -1354,29 +1376,38 @@ function renderIngredientPrices() {
     ingredientPrices.forEach(item => {
 
         const card =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
-        card.className = "record-card";
+        card.className =
+            "record-card";
 
         const unitLabel =
-            unitDefinitions[item.unit]?.label ||
+            unitDefinitions[
+                item.unit
+            ]?.label ||
             item.unit;
 
         card.innerHTML = `
 
-            <div class="record-title">
-                ${escapeHtml(item.name)}
-            </div>
+            <div>
 
-            <div class="record-info">
-                ${formatMoney(item.price)}
-                /
-                ${item.quantity}
-                ${unitLabel}
+                <div class="record-name">
+                    ${escapeHtml(item.name)}
+                </div>
+
+                <div class="record-info">
+                    ${formatMoney(item.price)}
+                    /
+                    ${item.quantity}
+                    ${unitLabel}
+                </div>
+
             </div>
 
             <button
-                class="record-delete"
+                class="danger-button"
                 onclick="deleteIngredientPrice(${item.id})"
             >
                 Delete
@@ -1385,9 +1416,7 @@ function renderIngredientPrices() {
         `;
 
         container.appendChild(card);
-
     });
-
 }
 
 
@@ -1400,16 +1429,15 @@ function deleteIngredientPrice(id) {
 
             ingredientPrices =
                 ingredientPrices.filter(
-                    item => item.id !== id
+                    item =>
+                        item.id !== id
                 );
 
             saveIngredientPricesToStorage();
 
             renderIngredientPrices();
-
         }
     );
-
 }
 
 
@@ -1420,49 +1448,71 @@ function deleteIngredientPrice(id) {
 function initializeSalesScreen() {
 
     const dateInput =
-        document.getElementById("salesDate");
+        document.getElementById(
+            "salesDate"
+        );
 
     if (!dateInput.value) {
-        dateInput.value = getLocalDateString();
+        dateInput.value =
+            getLocalDateString();
     }
 
+    const container =
+        document.getElementById(
+            "salesRows"
+        );
+
     if (
-        document.getElementById("salesContainer")
-            .children.length === 0
+        container &&
+        container.children.length === 0
     ) {
         addSalesRow();
     }
 
+    const expenseContainer =
+        document.getElementById(
+            "expenseRows"
+        );
+
     if (
-        document.getElementById("expenseContainer")
-            .children.length === 0
+        expenseContainer &&
+        expenseContainer.children.length === 0
     ) {
         addExpenseRow();
     }
-
 }
 
 
 function addSalesRow() {
 
     const container =
-        document.getElementById("salesContainer");
+        document.getElementById(
+            "salesRows"
+        );
+
+    if (!container) {
+        return;
+    }
 
     const row =
-        document.createElement("div");
+        document.createElement(
+            "tr"
+        );
 
-    row.className = "sales-row";
+    row.className =
+        "sales-row";
 
     row.innerHTML = `
 
-        <div class="sales-grid">
-
+        <td>
             <input
                 type="text"
                 class="sale-item"
                 placeholder="Item"
             >
+        </td>
 
+        <td>
             <input
                 type="number"
                 class="sale-qty"
@@ -1470,11 +1520,9 @@ function addSalesRow() {
                 min="0"
                 placeholder="Qty"
             >
+        </td>
 
-        </div>
-
-        <div class="sales-price-grid">
-
+        <td>
             <input
                 type="number"
                 class="sale-price"
@@ -1483,20 +1531,84 @@ function addSalesRow() {
                 step="any"
                 placeholder="Price"
             >
+        </td>
 
+        <td class="cost-cell sale-total">
+            ₱0.00
+        </td>
+
+        <td>
             <button
-                class="remove-small-button"
-                onclick="this.closest('.sales-row').remove()"
+                type="button"
+                class="remove-row"
+                onclick="removeSalesRow(this)"
             >
                 ×
             </button>
-
-        </div>
+        </td>
 
     `;
 
     container.appendChild(row);
 
+    row.querySelector(".sale-qty")
+        .addEventListener(
+            "input",
+            calculateSaleRow
+        );
+
+    row.querySelector(".sale-price")
+        .addEventListener(
+            "input",
+            calculateSaleRow
+        );
+}
+
+
+function calculateSaleRow(event) {
+
+    const row =
+        event.target.closest(
+            ".sales-row"
+        );
+
+    if (!row) {
+        return;
+    }
+
+    const qty =
+        Number(
+            row.querySelector(
+                ".sale-qty"
+            ).value
+        ) || 0;
+
+    const price =
+        Number(
+            row.querySelector(
+                ".sale-price"
+            ).value
+        ) || 0;
+
+    row.querySelector(
+        ".sale-total"
+    ).textContent =
+        formatMoney(
+            qty * price
+        );
+}
+
+
+function removeSalesRow(button) {
+
+    const row =
+        button.closest(
+            ".sales-row"
+        );
+
+    if (row) {
+        row.remove();
+    }
 }
 
 
@@ -1504,24 +1616,32 @@ function addExpenseRow() {
 
     const container =
         document.getElementById(
-            "expenseContainer"
+            "expenseRows"
         );
 
-    const row =
-        document.createElement("div");
+    if (!container) {
+        return;
+    }
 
-    row.className = "expense-row";
+    const row =
+        document.createElement(
+            "tr"
+        );
+
+    row.className =
+        "expense-row";
 
     row.innerHTML = `
 
-        <div class="expense-grid">
-
+        <td>
             <input
                 type="text"
                 class="expense-name"
                 placeholder="Expense"
             >
+        </td>
 
+        <td>
             <input
                 type="number"
                 class="expense-amount"
@@ -1530,24 +1650,34 @@ function addExpenseRow() {
                 step="any"
                 placeholder="Amount"
             >
+        </td>
 
-        </div>
-
-        <div style="text-align:right;margin-top:8px;">
-
+        <td>
             <button
-                class="remove-small-button"
-                onclick="this.closest('.expense-row').remove()"
+                type="button"
+                class="remove-row"
+                onclick="removeExpenseRow(this)"
             >
                 ×
             </button>
-
-        </div>
+        </td>
 
     `;
 
     container.appendChild(row);
+}
 
+
+function removeExpenseRow(button) {
+
+    const row =
+        button.closest(
+            ".expense-row"
+        );
+
+    if (row) {
+        row.remove();
+    }
 }
 
 
@@ -1556,28 +1686,35 @@ function calculateDailySales() {
     let totalSales = 0;
 
     document
-        .querySelectorAll(".sales-row")
+        .querySelectorAll(
+            ".sales-row"
+        )
         .forEach(row => {
 
             const qty =
                 Number(
-                    row.querySelector(".sale-qty").value
-                );
+                    row.querySelector(
+                        ".sale-qty"
+                    ).value
+                ) || 0;
 
             const price =
                 Number(
-                    row.querySelector(".sale-price").value
-                );
+                    row.querySelector(
+                        ".sale-price"
+                    ).value
+                ) || 0;
 
-            totalSales += qty * price;
-
+            totalSales +=
+                qty * price;
         });
-
 
     let totalExpenses = 0;
 
     document
-        .querySelectorAll(".expense-row")
+        .querySelectorAll(
+            ".expense-row"
+        )
         .forEach(row => {
 
             totalExpenses +=
@@ -1586,80 +1723,46 @@ function calculateDailySales() {
                         ".expense-amount"
                     ).value
                 ) || 0;
-
         });
 
-
     const profit =
-        totalSales - totalExpenses;
-
+        totalSales -
+        totalExpenses;
 
     document.getElementById(
-        "dailySalesResult"
-    ).innerHTML = `
+        "dailyTotalSales"
+    ).textContent =
+        formatMoney(totalSales);
 
-        <div class="card" style="margin-top:14px;">
+    document.getElementById(
+        "dailyTotalExpenses"
+    ).textContent =
+        formatMoney(totalExpenses);
 
-            <h3 class="card-title">
-                Daily Result
-            </h3>
-
-            <div class="summary-grid">
-
-                <div class="summary-item">
-                    <div class="summary-item-label">
-                        Sales
-                    </div>
-
-                    <div class="summary-item-value">
-                        ${formatMoney(totalSales)}
-                    </div>
-                </div>
-
-
-                <div class="summary-item">
-                    <div class="summary-item-label">
-                        Expenses
-                    </div>
-
-                    <div class="summary-item-value">
-                        ${formatMoney(totalExpenses)}
-                    </div>
-                </div>
-
-
-                <div class="summary-item profit">
-                    <div class="summary-item-label">
-                        Profit
-                    </div>
-
-                    <div class="summary-item-value">
-                        ${formatMoney(profit)}
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
-    `;
+    document.getElementById(
+        "dailyProfit"
+    ).textContent =
+        formatMoney(profit);
 
     return {
         totalSales,
         totalExpenses,
         profit
     };
-
 }
 
 
 function saveDailySales() {
 
     const date =
-        document.getElementById("salesDate").value;
+        document.getElementById(
+            "salesDate"
+        ).value;
 
     if (!date) {
-        alert("Please select a date.");
+        alert(
+            "Please select a date."
+        );
         return;
     }
 
@@ -1669,76 +1772,88 @@ function saveDailySales() {
     const sales = [];
 
     document
-        .querySelectorAll(".sales-row")
+        .querySelectorAll(
+            ".sales-row"
+        )
         .forEach(row => {
 
             const item =
-                row.querySelector(".sale-item")
-                    .value
-                    .trim();
+                row.querySelector(
+                    ".sale-item"
+                ).value.trim();
 
             const qty =
                 Number(
-                    row.querySelector(".sale-qty").value
-                );
+                    row.querySelector(
+                        ".sale-qty"
+                    ).value
+                ) || 0;
 
             const price =
                 Number(
-                    row.querySelector(".sale-price").value
-                );
+                    row.querySelector(
+                        ".sale-price"
+                    ).value
+                ) || 0;
 
-            if (item && qty > 0) {
+            if (
+                item &&
+                qty > 0
+            ) {
 
                 sales.push({
                     item,
                     qty,
                     price
                 });
-
             }
-
         });
-
 
     const expenses = [];
 
     document
-        .querySelectorAll(".expense-row")
+        .querySelectorAll(
+            ".expense-row"
+        )
         .forEach(row => {
 
             const name =
-                row.querySelector(".expense-name")
-                    .value
-                    .trim();
+                row.querySelector(
+                    ".expense-name"
+                ).value.trim();
 
             const amount =
                 Number(
                     row.querySelector(
                         ".expense-amount"
                     ).value
-                );
+                ) || 0;
 
-            if (name && amount > 0) {
+            if (
+                name &&
+                amount > 0
+            ) {
 
                 expenses.push({
                     name,
                     amount
                 });
-
             }
-
         });
-
 
     const record = {
 
-        id: Date.now(),
+        id:
+            Date.now(),
 
-        date,
+        date:
+            date,
 
-        sales,
+        sales:
+            sales,
 
-        expenses,
+        expenses:
+            expenses,
 
         totalSales:
             result.totalSales,
@@ -1751,12 +1866,11 @@ function saveDailySales() {
 
     };
 
-
     const existingIndex =
         dailySalesRecords.findIndex(
-            item => item.date === date
+            item =>
+                item.date === date
         );
-
 
     if (existingIndex >= 0) {
 
@@ -1778,16 +1892,18 @@ function saveDailySales() {
 
                 updateTodaySummary();
 
-                alert("Daily record updated.");
-
+                alert(
+                    "Daily record updated."
+                );
             }
         );
 
         return;
     }
 
-
-    dailySalesRecords.push(record);
+    dailySalesRecords.push(
+        record
+    );
 
     localStorage.setItem(
         "dailySalesRecords",
@@ -1798,8 +1914,9 @@ function saveDailySales() {
 
     updateTodaySummary();
 
-    alert("Daily sales record saved.");
-
+    alert(
+        "Daily sales record saved."
+    );
 }
 
 
@@ -1844,68 +1961,25 @@ function calculateProfit() {
             ).value
         ) || 0;
 
-
     const totalExpenses =
         foodCost +
         labor +
         rent +
         other;
 
-
     const netProfit =
-        sales - totalExpenses;
-
+        sales -
+        totalExpenses;
 
     document.getElementById(
-        "profitResult"
-    ).innerHTML = `
+        "profitExpenses"
+    ).textContent =
+        formatMoney(totalExpenses);
 
-        <div class="card">
-
-            <h3 class="card-title">
-                Result
-            </h3>
-
-            <div class="summary-grid">
-
-                <div class="summary-item">
-                    <div class="summary-item-label">
-                        Sales
-                    </div>
-
-                    <div class="summary-item-value">
-                        ${formatMoney(sales)}
-                    </div>
-                </div>
-
-
-                <div class="summary-item">
-                    <div class="summary-item-label">
-                        Total Expenses
-                    </div>
-
-                    <div class="summary-item-value">
-                        ${formatMoney(totalExpenses)}
-                    </div>
-                </div>
-
-
-                <div class="summary-item profit">
-                    <div class="summary-item-label">
-                        Net Profit
-                    </div>
-
-                    <div class="summary-item-value">
-                        ${formatMoney(netProfit)}
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
-    `;
-
+    document.getElementById(
+        "netProfit"
+    ).textContent =
+        formatMoney(netProfit);
 }
 
 
@@ -1920,7 +1994,6 @@ function renderSavedRecords() {
     renderSavedMenus();
 
     renderSavedSales();
-
 }
 
 
@@ -1933,7 +2006,9 @@ function renderSavedRecipes() {
 
     container.innerHTML = "";
 
-    if (savedRecipes.length === 0) {
+    if (
+        savedRecipes.length === 0
+    ) {
 
         container.innerHTML = `
             <div class="empty-message">
@@ -1944,36 +2019,44 @@ function renderSavedRecipes() {
         return;
     }
 
-
     savedRecipes
         .slice()
         .reverse()
         .forEach(recipe => {
 
             const card =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
-            card.className = "record-card";
+            card.className =
+                "record-card";
 
             card.innerHTML = `
 
-                <div class="record-title">
-                    ${escapeHtml(recipe.name)}
-                </div>
+                <div>
+                    <div class="record-name">
+                        ${escapeHtml(
+                            recipe.name
+                        )}
+                    </div>
 
-                <div class="record-info">
-                    ${recipe.date}
-                </div>
+                    <div class="record-info">
+                        ${recipe.date}
+                    </div>
 
-                <div class="record-info">
-                    Total Cost:
-                    <strong>
-                        ${formatMoney(recipe.totalCost)}
-                    </strong>
+                    <div class="record-info">
+                        Total Cost:
+                        <strong>
+                            ${formatMoney(
+                                recipe.totalCost
+                            )}
+                        </strong>
+                    </div>
                 </div>
 
                 <button
-                    class="record-delete"
+                    class="danger-button"
                     onclick="deleteRecipe(${recipe.id})"
                 >
                     Delete
@@ -1981,10 +2064,10 @@ function renderSavedRecipes() {
 
             `;
 
-            container.appendChild(card);
-
+            container.appendChild(
+                card
+            );
         });
-
 }
 
 
@@ -1997,7 +2080,9 @@ function renderSavedMenus() {
 
     container.innerHTML = "";
 
-    if (savedMenus.length === 0) {
+    if (
+        savedMenus.length === 0
+    ) {
 
         container.innerHTML = `
             <div class="empty-message">
@@ -2008,33 +2093,38 @@ function renderSavedMenus() {
         return;
     }
 
-
     savedMenus
         .slice()
         .reverse()
         .forEach(menu => {
 
             const card =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
-            card.className = "record-card";
+            card.className =
+                "record-card";
 
             card.innerHTML = `
 
-                <div class="record-title">
-                    Menu of the Day
-                </div>
+                <div>
+                    <div class="record-name">
+                        Menu of the Day
+                    </div>
 
-                <div class="record-info">
-                    ${menu.date}
-                </div>
+                    <div class="record-info">
+                        ${menu.date}
+                    </div>
 
-                <div class="record-info">
-                    ${menu.items.length} menu item(s)
+                    <div class="record-info">
+                        ${menu.items.length}
+                        menu item(s)
+                    </div>
                 </div>
 
                 <button
-                    class="record-delete"
+                    class="danger-button"
                     onclick="deleteMenu(${menu.id})"
                 >
                     Delete
@@ -2042,10 +2132,10 @@ function renderSavedMenus() {
 
             `;
 
-            container.appendChild(card);
-
+            container.appendChild(
+                card
+            );
         });
-
 }
 
 
@@ -2058,7 +2148,9 @@ function renderSavedSales() {
 
     container.innerHTML = "";
 
-    if (dailySalesRecords.length === 0) {
+    if (
+        dailySalesRecords.length === 0
+    ) {
 
         container.innerHTML = `
             <div class="empty-message">
@@ -2069,42 +2161,52 @@ function renderSavedSales() {
         return;
     }
 
-
     dailySalesRecords
         .slice()
         .reverse()
         .forEach(record => {
 
             const card =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
-            card.className = "record-card";
+            card.className =
+                "record-card";
 
             card.innerHTML = `
 
-                <div class="record-title">
-                    ${record.date}
-                </div>
+                <div>
+                    <div class="record-name">
+                        ${record.date}
+                    </div>
 
-                <div class="record-info">
-                    Sales:
-                    ${formatMoney(record.totalSales)}
-                </div>
+                    <div class="record-info">
+                        Sales:
+                        ${formatMoney(
+                            record.totalSales
+                        )}
+                    </div>
 
-                <div class="record-info">
-                    Expenses:
-                    ${formatMoney(record.totalExpenses)}
-                </div>
+                    <div class="record-info">
+                        Expenses:
+                        ${formatMoney(
+                            record.totalExpenses
+                        )}
+                    </div>
 
-                <div class="record-info">
-                    Profit:
-                    <strong style="color:#16834b;">
-                        ${formatMoney(record.profit)}
-                    </strong>
+                    <div class="record-info">
+                        Profit:
+                        <strong style="color:#16834b;">
+                            ${formatMoney(
+                                record.profit
+                            )}
+                        </strong>
+                    </div>
                 </div>
 
                 <button
-                    class="record-delete"
+                    class="danger-button"
                     onclick="deleteSalesRecord(${record.id})"
                 >
                     Delete
@@ -2112,15 +2214,15 @@ function renderSavedSales() {
 
             `;
 
-            container.appendChild(card);
-
+            container.appendChild(
+                card
+            );
         });
-
 }
 
 
 /* =========================================================
-   DELETE RECORDS
+   DELETE
 ========================================================= */
 
 function deleteRecipe(id) {
@@ -2132,19 +2234,20 @@ function deleteRecipe(id) {
 
             savedRecipes =
                 savedRecipes.filter(
-                    recipe => recipe.id !== id
+                    recipe =>
+                        recipe.id !== id
                 );
 
             localStorage.setItem(
                 "savedRecipes",
-                JSON.stringify(savedRecipes)
+                JSON.stringify(
+                    savedRecipes
+                )
             );
 
             renderSavedRecords();
-
         }
     );
-
 }
 
 
@@ -2157,19 +2260,20 @@ function deleteMenu(id) {
 
             savedMenus =
                 savedMenus.filter(
-                    menu => menu.id !== id
+                    menu =>
+                        menu.id !== id
                 );
 
             localStorage.setItem(
                 "savedMenus",
-                JSON.stringify(savedMenus)
+                JSON.stringify(
+                    savedMenus
+                )
             );
 
             renderSavedRecords();
-
         }
     );
-
 }
 
 
@@ -2182,7 +2286,8 @@ function deleteSalesRecord(id) {
 
             dailySalesRecords =
                 dailySalesRecords.filter(
-                    record => record.id !== id
+                    record =>
+                        record.id !== id
                 );
 
             localStorage.setItem(
@@ -2195,10 +2300,8 @@ function deleteSalesRecord(id) {
             renderSavedRecords();
 
             updateTodaySummary();
-
         }
     );
-
 }
 
 
@@ -2213,45 +2316,46 @@ function updateTodaySummary() {
 
     const records =
         dailySalesRecords.filter(
-            record => record.date === today
+            record =>
+                record.date === today
         );
-
 
     let sales = 0;
     let expenses = 0;
     let profit = 0;
 
-
     records.forEach(record => {
 
-        sales += Number(record.totalSales) || 0;
+        sales +=
+            Number(
+                record.totalSales
+            ) || 0;
 
         expenses +=
-            Number(record.totalExpenses) || 0;
+            Number(
+                record.totalExpenses
+            ) || 0;
 
         profit +=
-            Number(record.profit) || 0;
-
+            Number(
+                record.profit
+            ) || 0;
     });
-
 
     document.getElementById(
         "todaySales"
     ).textContent =
         formatMoney(sales);
 
-
     document.getElementById(
         "todayExpenses"
     ).textContent =
         formatMoney(expenses);
 
-
     document.getElementById(
         "todayProfit"
     ).textContent =
         formatMoney(profit);
-
 }
 
 
@@ -2262,12 +2366,14 @@ function updateTodaySummary() {
 function escapeHtml(text) {
 
     const div =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
-    div.textContent = text;
+    div.textContent =
+        text;
 
     return div.innerHTML;
-
 }
 
 
@@ -2282,20 +2388,36 @@ document.addEventListener(
         const today =
             getLocalDateString();
 
-        document.getElementById(
-            "recipeDate"
-        ).value = today;
+        const recipeDate =
+            document.getElementById(
+                "recipeDate"
+            );
 
-        document.getElementById(
-            "menuDate"
-        ).value = today;
+        const menuDate =
+            document.getElementById(
+                "menuDate"
+            );
 
-        document.getElementById(
-            "salesDate"
-        ).value = today;
+        const salesDate =
+            document.getElementById(
+                "salesDate"
+            );
 
+        if (recipeDate) {
+            recipeDate.value =
+                today;
+        }
+
+        if (menuDate) {
+            menuDate.value =
+                today;
+        }
+
+        if (salesDate) {
+            salesDate.value =
+                today;
+        }
 
         updateTodaySummary();
-
     }
 );
