@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karinderya Kalkulator</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            background: #f3f5f8;
+            color: #1f2937;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        .app {
+            max-width: 1200px;
+            margin: auto;
+            min-height: 100vh;
+            background: #f3f5f8;
+        }
+
+        /* HEADER */
+        .app-header {
+            background: #17324d;
+            color: white;
+            padding: 24px 20px;
+        }
+
+        .app-title {
+            font-size: 26px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .app-subtitle {
+            margin: 5px 0 0;
+            font-size: 14px;
+            color: #d7e2ec;
+        }
+
+        /* HOME */
+        .home-content {
+            padding: 20px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .home-button {
+            background: white;
+            border: 1px solid #dbe2e8;
+            border-radius: 10px;
+            padding: 20px 15px;
+            text-align: left;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .home-button:hover {
+            border-color: #527a9e;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .home-button-icon {
+            font-size: 25px;
+            margin-bottom: 10px;
+        }
+
+        .home-button-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #17324d;
+        }
+
+        .home-button-text {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        /* TODAY SUMMARY */
+        .today-summary {
+            margin-top: 22px;
+            background: white;
+            border: 1px solid #dbe2e8;
+            border-radius: 10px;
+            padding: 18px;
+        }
+
+        .today-summary-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #17324d;
+            margin-bottom: 14px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .summary-item {
+            background: #f7f9fb;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .summary-value {
+            margin-top: 4px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #17324d;
+        }
+
+        .profit-value {
+            color: #16834b;
+        }
+
+        /* SCREEN */
+        .screen {
+            display: none;
+            padding: 20px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .back-button {
+            border: none;
+            background: white;
+            color: #17324d;
+            border: 1px solid #dbe2e8;
+            border-radius: 8px;
+            width: 42px;
+            height: 42px;
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            color: #17324d;
+            font-size: 22px;
+        }
+
+        .section-header p {
+            margin: 3px 0 0;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .section-box {
+            background: white;
+            border: 1px solid #dbe2e8;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 16px;
+        }
+
+        /* FORM */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            border: 1px solid #cfd8e1;
+            border-radius: 7px;
+            padding: 11px 12px;
+            background: white;
+            color: #1f2937;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #527a9e;
+            box-shadow: 0 0 0 2px rgba(82,122,158,0.12);
+        }
+
+        /* BUTTONS */
+        .primary-button,
+        .secondary-button,
+        .danger-button {
+            border: none;
+            border-radius: 7px;
+            padding: 12px 18px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .primary-button {
+            background: #17324d;
+            color: white;
+        }
+
+        .primary-button:hover {
+            background: #10263b;
+        }
+
+        .secondary-button {
+            background: #e9eef3;
+            color: #17324d;
+        }
+
+        .secondary-button:hover {
+            background: #dce5ed;
+        }
+
+        .danger-button {
+            background: #fbe9e9;
+            color: #b42318;
+        }
+
+        .danger-button:hover {
+            background: #f8dcdc;
+        }
+
+        .green-button {
+            background: #16834b;
+        }
+
+        .green-button:hover {
+            background: #116c3e;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        /* INGREDIENT TABLE */
+        .ingredient-table-wrapper {
+            overflow-x: auto;
+        }
+
+        .ingredient-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 720px;
+        }
+
+        .ingredient-table th {
+            background: #edf2f6;
+            color: #374151;
+            font-size: 11px;
+            text-transform: uppercase;
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid #dbe2e8;
+        }
+
+        .ingredient-table td {
+            padding: 8px;
+            border-bottom: 1px solid #edf0f3;
+            vertical-align: middle;
+        }
+
+        .ingredient-table input,
+        .ingredient-table select {
+            padding: 9px;
+        }
+
+        .cost-cell {
+            font-weight: 700;
+            color: #17324d;
+            white-space: nowrap;
+        }
+
+        .remove-row {
+            border: none;
+            background: #fbe9e9;
+            color: #b42318;
+            border-radius: 6px;
+            padding: 8px 10px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .total-box {
+            margin-top: 16px;
+            padding: 16px;
+            background: #edf4f9;
+            border: 1px solid #d4e1eb;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .total-label {
+            font-weight: 700;
+            color: #374151;
+        }
+
+        .total-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: #17324d;
+        }
+
+        /* MENU OF THE DAY */
+        .menu-table-wrapper {
+            overflow-x: auto;
+            background: white;
+            border: 1px solid #dbe2e8;
+            border-radius: 10px;
+        }
+
+        .menu-table {
+            width: 100%;
+            min-width: 950px;
+            border-collapse: collapse;
+        }
+
+        .menu-table th {
+            background: #17324d;
+            color: white;
+            padding: 12px 10px;
+            font-size: 11px;
+            text-transform: uppercase;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .menu-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e9ed;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        .menu-table tbody tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .menu-name {
+            font-weight: 800;
+            color: #17324d;
+        }
+
+        .menu-cost {
+            font-weight: 700;
+        }
+
+        .menu-input {
+            width: 100px;
+            padding: 8px 9px;
+            text-align: right;
+        }
+
+        .auto-value {
+            font-weight: 700;
+        }
+
+        .profit-cell {
+            color: #16834b;
+            font-weight: 800;
+        }
+
+        .menu-total-box {
+            margin-top: 18px;
+            background: white;
+            border: 1px solid #dbe2e8;
+            border-radius: 10px;
+            padding: 18px;
+        }
+
+        .menu-total-title {
+            color: #17324d;
+            font-size: 16px;
+            font-weight: 800;
+            margin-bottom: 14px;
+        }
+
+        .menu-total-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .menu-total-item {
+            background: #f6f8fa;
+            border-radius: 8px;
+            padding: 13px;
+        }
+
+        .menu-total-item .label {
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        .menu-total-item .value {
+            margin-top: 4px;
+            font-size: 18px;
+            font-weight: 800;
+            color: #17324d;
+        }
+
+        .menu-total-item.profit .value {
+            color: #16834b;
+        }
+
+        /* RESULT */
+        .result-box {
+            background: white;
+            border: 1px solid #dbe2e8;
+            border-radius: 10px;
+            padding: 18px;
+            margin-top: 16px;
+        }
+
+        .result-title {
+            color: #17324d;
+            font-weight: 800;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            border-bottom: 1px solid #edf0f3;
+        }
+
+        .result-row:last-of-type {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #6b7280;
+        }
+
+        .result-value {
+            font-weight: 800;
+            color: #17324d;
+        }
+
+        .result-highlight {
+            color: #16834b;
+        }
+
+        /* RECORDS */
+        .record-section {
+            margin-bottom: 22px;
+        }
+
+        .record-section h3 {
+            color: #17324d;
+            margin: 0 0 10px;
+            font-size: 16px;
+        }
+
+        .record-card {
+            background: white;
+            border: 1px solid #dbe2e8;
+            border-radius: 8px;
+            padding: 13px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .record-name {
+            font-weight: 700;
+            color: #17324d;
+        }
+
+        .record-info {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 3px;
+        }
+
+        /* EMPTY */
+        .empty-message {
+            background: white;
+            border: 1px dashed #cbd5df;
+            border-radius: 10px;
+            padding: 30px 20px;
+            text-align: center;
+            color: #6b7280;
+            margin-top: 16px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 9999;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-box {
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #17324d;
+        }
+
+        .modal-message {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .modal-button {
+            flex: 1;
+            border: none;
+            border-radius: 7px;
+            padding: 11px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .modal-yes {
+            background: #17324d;
+            color: white;
+        }
+
+        .modal-no {
+            background: #e9eef3;
+            color: #17324d;
+        }
+
+        .modal-cancel {
+            background: #fbe9e9;
+            color: #b42318;
+        }
+
+        /* MOBILE */
+        @media (max-width: 800px) {
+            .menu-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .menu-total-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .app-header {
+                padding: 20px 15px;
+            }
+
+            .home-content,
+            .screen {
+                padding: 15px;
+            }
+
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-row {
+                flex-direction: column;
+            }
+
+            .menu-total-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-header h2 {
+                font-size: 19px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- HEADER -->
+    <header class="app-header">
+        <h1 class="app-title">Karinderya Kalkulator</h1>
+        <p class="app-subtitle">Simple costing, menu and profit calculator</p>
+    </header>
+
+    <!-- HOME -->
+    <div id="homeScreen" class="screen active">
+
+        <div class="home-content">
+
+            <div class="menu-grid">
+
+                <button class="home-button" onclick="showScreen('recipeScreen')">
+                    <div class="home-button-icon">🍲</div>
+                    <div class="home-button-title">Recipe Cost</div>
+                    <div class="home-button-text">Calculate the cost of a recipe</div>
+                </button>
+
+                <button class="home-button" onclick="showScreen('menuScreen')">
+                    <div class="home-button-icon">🍛</div>
+                    <div class="home-button-title">Menu of the Day</div>
+                    <div class="home-button-text">Set servings, price and profit</div>
+                </button>
+
+                <button class="home-button" onclick="showScreen('profitScreen')">
+                    <div class="home-button-icon">📊</div>
+                    <div class="home-button-title">Profit Calculator</div>
+                    <div class="home-button-text">Calculate overall profit</div>
+                </button>
+
+                <button class="home-button" onclick="showScreen('salesScreen')">
+                    <div class="home-button-icon">🧾</div>
+                    <div class="home-button-title">Daily Sales</div>
+                    <div class="home-button-text">Record sales and expenses</div>
+                </button>
+
+                <button class="home-button" onclick="showScreen('ingredientScreen')">
+                    <div class="home-button-icon">🛒</div>
+                    <div class="home-button-title">Ingredient Prices</div>
+                    <div class="home-button-text">Manage ingredient prices</div>
+                </button>
+
+                <button class="home-button" onclick="showScreen('recordsScreen')">
+                    <div class="home-button-icon">📋</div>
+                    <div class="home-button-title">Saved Records</div>
+                    <div class="home-button-text">View saved information</div>
+                </button>
+
+            </div>
+
+            <!-- TODAY SUMMARY -->
+            <div class="today-summary">
+                <div class="today-summary-title">TODAY'S SUMMARY</div>
+
+                <div class="summary-grid">
+
+                    <div class="summary-item">
+                        <div class="summary-label">Sales</div>
+                        <div class="summary-value" id="todaySales">₱0.00</div>
+                    </div>
+
+                    <div class="summary-item">
+                        <div class="summary-label">Expenses</div>
+                        <div class="summary-value" id="todayExpenses">₱0.00</div>
+                    </div>
+
+                    <div class="summary-item">
+                        <div class="summary-label">Profit</div>
+                        <div class="summary-value profit-value" id="todayProfit">₱0.00</div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- RECIPE COST -->
+    <div id="recipeScreen" class="screen">
+
+        <div class="section-header">
+            <button class="back-button" onclick="leaveScreen('recipeScreen','homeScreen')">‹</button>
+
+            <div>
+                <h2>Recipe Cost</h2>
+                <p>Calculate the total cost of making a recipe</p>
+            </div>
+        </div>
+
+        <div class="section-box">
+
+            <div class="form-row">
+
+                <div class="form-group">
+                    <label>Recipe Date</label>
+                    <input type="date" id="recipeDate">
+                </div>
+
+                <div class="form-group">
+                    <label>Recipe Name</label>
+                    <input type="text" id="recipeName" placeholder="Example: Adobo">
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="section-box">
+
+            <div class="ingredient-table-wrapper">
+
+                <table class="ingredient-table">
+
+                    <thead>
+                        <tr>
+                            <th>Ingredient</th>
+                            <th>Amount Used</th>
+                            <th>Unit</th>
+                            <th>Cost</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="recipeIngredients"></tbody>
+
+                </table>
+
+            </div>
+
+            <div class="button-row">
+                <button class="secondary-button" onclick="addRecipeIngredient()">
+                    + ADD INGREDIENT
+                </button>
+            </div>
+
+            <div class="total-box">
+                <span class="total-label">TOTAL RECIPE COST</span>
+                <span class="total-value" id="recipeTotalCost">₱0.00</span>
+            </div>
+
+            <div class="button-row">
+                <button class="primary-button" onclick="saveRecipe()">
+                    SAVE RECIPE
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MENU OF THE DAY -->
+    <div id="menuScreen" class="screen">
+
+        <div class="section-header">
+            <button class="back-button" onclick="showScreen('homeScreen')">‹</button>
+
+            <div>
+                <h2>Menu of the Day</h2>
+                <p>Set servings, selling price and expected profit</p>
+            </div>
+        </div>
+
+        <div class="section-box">
+
+            <div class="form-group">
+                <label>Menu Date</label>
+                <input type="date" id="menuDate" onchange="loadMenuOfDay()">
+            </div>
+
+        </div>
+
+        <div id="noRecipesMessage" class="empty-message hidden">
+            No recipes have been saved for this date.<br><br>
+            Go to <strong>Recipe Cost</strong> and save a recipe first.
+        </div>
+
+        <div id="menuTableContainer" class="menu-table-wrapper hidden">
+
+            <table class="menu-table">
+
+                <thead>
+                    <tr>
+                        <th>MENU</th>
+                        <th>RECIPE COST</th>
+                        <th>SERVINGS</th>
+                        <th>PRICE / SERVING</th>
+                        <th>COST / SERVING</th>
+                        <th>PROFIT / SERVING</th>
+                        <th>TOTAL PROFIT</th>
+                    </tr>
+                </thead>
+
+                <tbody id="menuItems"></tbody>
+
+            </table>
+
+        </div>
+
+        <div id="menuTotals" class="menu-total-box hidden">
+
+            <div class="menu-total-title">MENU TOTALS</div>
+
+            <div class="menu-total-grid">
+
+                <div class="menu-total-item">
+                    <div class="label">TOTAL SERVINGS</div>
+                    <div class="value" id="menuTotalServings">0</div>
+                </div>
+
+                <div class="menu-total-item">
+                    <div class="label">EXPECTED SALES</div>
+                    <div class="value" id="menuTotalSales">₱0.00</div>
+                </div>
+
+                <div class="menu-total-item">
+                    <div class="label">TOTAL FOOD COST</div>
+                    <div class="value" id="menuTotalFoodCost">₱0.00</div>
+                </div>
+
+                <div class="menu-total-item profit">
+                    <div class="label">TOTAL EXPECTED PROFIT</div>
+                    <div class="value" id="menuTotalProfit">₱0.00</div>
+                </div>
+
+            </div>
+
+            <div class="button-row">
+                <button class="primary-button green-button" onclick="saveDailyMenu()">
+                    SAVE MENU OF THE DAY
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- PROFIT CALCULATOR -->
+    <div id="profitScreen" class="screen">
+
+        <div class="section-header">
+            <button class="back-button" onclick="showScreen('homeScreen')">‹</button>
+
+            <div>
+                <h2>Profit Calculator</h2>
+                <p>Calculate your overall business profit</p>
+            </div>
+        </div>
+
+        <div class="section-box">
+
+            <div class="form-row">
+
+                <div class="form-group">
+                    <label>Total Sales</label>
+                    <input type="number" id="profitSales" min="0" step="0.01" oninput="calculateProfit()">
+                </div>
+
+                <div class="form-group">
+                    <label>Food Cost</label>
+                    <input type="number" id="profitFoodCost" min="0" step="0.01" oninput="calculateProfit()">
+                </div>
+
+                <div class="form-group">
+                    <label>Labor</label>
+                    <input type="number" id="profitLabor" min="0" step="0.01" oninput="calculateProfit()">
+                </div>
+
+                <div class="form-group">
+                    <label>Rent</label>
+                    <input type="number" id="profitRent" min="0" step="0.01" oninput="calculateProfit()">
+                </div>
+
+                <div class="form-group">
+                    <label>Other Expenses</label>
+                    <input type="number" id="profitOther" min="0" step="0.01" oninput="calculateProfit()">
+                </div>
+
+            </div>
+
+            <div id="profitResult" class="result-box">
+
+                <div class="result-title">RESULT</div>
+
+                <div class="result-row">
+                    <span class="result-label">Total Expenses</span>
+                    <span class="result-value" id="profitExpenses">₱0.00</span>
+                </div>
+
+                <div class="result-row">
+                    <span class="result-label">Net Profit</span>
+                    <span class="result-value result-highlight" id="netProfit">₱0.00</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- DAILY SALES -->
+    <div id="salesScreen" class="screen">
+
+        <div class="section-header">
+            <button class="back-button" onclick="leaveScreen('salesScreen','homeScreen')">‹</button>
+
+            <div>
+                <h2>Daily Sales</h2>
+                <p>Record today's sales and expenses</p>
+            </div>
+        </div>
+
+        <div class="section-box">
+
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="salesDate">
+            </div>
+
+        </div>
+
+        <div class="section-box">
+
+            <h3 style="margin-top:0;color:#17324d;">SALES</h3>
+
+            <div class="ingredient-table-wrapper">
+
+                <table class="ingredient-table">
+
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="salesRows"></tbody>
+
+                </table>
+
+            </div>
+
+            <div class="button-row">
+                <button class="secondary-button" onclick="addSalesRow()">
+                    + ADD SALE
+                </button>
+            </div>
+
+        </div>
+
+        <div class="section-box">
+
+            <h3 style="margin-top:0;color:#17324d;">EXPENSES</h3>
+
+            <div class="ingredient-table-wrapper">
+
+                <table class="ingredient-table">
+
+                    <thead>
+                        <tr>
+                            <th>Expense</th>
+                            <th>Amount</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="expenseRows"></tbody>
+
+                </table>
+
+            </div>
+
+            <div class="button-row">
+                <button class="secondary-button" onclick="addExpenseRow()">
+                    + ADD EXPENSE
+                </button>
+            </div>
+
+        </div>
+
+        <div class="result-box">
+
+            <div class="result-title">DAILY RESULT</div>
+
+            <div class="result-row">
+                <span class="result-label">Total Sales</span>
+                <span class="result-value" id="dailyTotalSales">₱0.00</span>
+            </div>
+
+            <div class="result-row">
+                <span class="result-label">Total Expenses</span>
+                <span class="result-value" id="dailyTotalExpenses">₱0.00</span>
+            </div>
+
+            <div class="result-row">
+                <span class="result-label">Profit</span>
+                <span class="result-value result-highlight" id="dailyProfit">₱0.00</span>
+            </div>
+
+            <div class="button-row">
+                <button class="primary-button" onclick="calculateDailySales()">
+                    CALCULATE
+                </button>
+
+                <button class="primary-button green-button" onclick="saveDailySales()">
+                    SAVE DAILY RECORD
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- INGREDIENT PRICES -->
+    <div id="ingredientScreen" class="screen">
+
+        <div class="section-header">
+            <button class="back-button" onclick="showScreen('homeScreen')">‹</button>
+
+            <div>
+                <h2>Ingredient Prices</h2>
+                <p>Manage your current ingredient prices</p>
+            </div>
+        </div>
+
+        <div class="section-box">
+
+            <div class="form-row">
+
+                <div class="form-group">
+                    <label>Ingredient Name</label>
+                    <input type="text" id="ingredientName" placeholder="Example: Pork">
+                </div>
+
+                <div class="form-group">
+                    <label>Price</label>
+                    <input type="number" id="ingredientPrice" min="0" step="0.01">
+                </div>
+
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="ingredientQuantity" min="0" step="0.001">
+                </div>
+
+                <div class="form-group">
+                    <label>Unit</label>
+                    <select id="ingredientUnit">
+                        <option value="kg">KG</option>
+                        <option value="g">Gram</option>
+                        <option value="l">Liter</option>
+                        <option value="ml">ML</option>
+                        <option value="piece">Piece</option>
+                        <option value="dozen">Dozen</option>
+                        <option value="bottle">Bottle</option>
+                        <option value="can">Can</option>
+                        <option value="pack">Pack</option>
+                        <option value="sachet">Sachet</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="button-row">
+                <button class="primary-button" onclick="saveIngredientPrice()">
+                    SAVE INGREDIENT
+                </button>
+            </div>
+
+        </div>
+
+        <div class="section-box">
+
+            <h3 style="margin-top:0;color:#17324d;">SAVED INGREDIENT PRICES</h3>
+
+            <div id="ingredientPriceList"></div>
+
+        </div>
+
+    </div>
+
+    <!-- SAVED RECORDS -->
+    <div id="recordsScreen" class="screen">
+
+        <div class="section-header">
+            <button class="back-button" onclick="showScreen('homeScreen')">‹</button>
+
+            <div>
+                <h2>Saved Records</h2>
+                <p>View your saved recipes, menus and daily sales</p>
+            </div>
+        </div>
+
+        <div class="section-box">
+
+            <div class="record-section">
+                <h3>Saved Recipes</h3>
+                <div id="savedRecipesList"></div>
+            </div>
+
+            <div class="record-section">
+                <h3>Saved Menus</h3>
+                <div id="savedMenusList"></div>
+            </div>
+
+            <div class="record-section">
+                <h3>Daily Sales Records</h3>
+                <div id="savedSalesList"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- CONFIRMATION MODAL -->
+<div id="confirmModal" class="modal-overlay">
+
+    <div class="modal-box">
+
+        <div class="modal-title" id="modalTitle">Save this?</div>
+
+        <div class="modal-message" id="modalMessage">
+            Do you want to save this before leaving?
+        </div>
+
+        <div class="modal-buttons">
+
+            <button class="modal-button modal-yes" onclick="modalYes()">
+                YES
+            </button>
+
+            <button class="modal-button modal-no" onclick="modalNo()">
+                NO
+            </button>
+
+            <button class="modal-button modal-cancel" onclick="modalCancel()">
+                CANCEL
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
