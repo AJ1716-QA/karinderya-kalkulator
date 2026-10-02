@@ -1,1213 +1,1182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Karinderya Kalkulator</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-            background: #f3f5f8;
-            color: #1f2937;
-        }
-
-        button,
-        input,
-        select {
-            font: inherit;
-        }
-
-        .app {
-            max-width: 1200px;
-            margin: auto;
-            min-height: 100vh;
-            background: #f3f5f8;
-        }
-
-        /* HEADER */
-        .app-header {
-            background: #17324d;
-            color: white;
-            padding: 24px 20px;
-        }
-
-        .app-title {
-            font-size: 26px;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .app-subtitle {
-            margin: 5px 0 0;
-            font-size: 14px;
-            color: #d7e2ec;
-        }
-
-        /* HOME */
-        .home-content {
-            padding: 20px;
-        }
-
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 14px;
-        }
-
-        .home-button {
-            background: white;
-            border: 1px solid #dbe2e8;
-            border-radius: 10px;
-            padding: 20px 15px;
-            text-align: left;
-            cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-        }
-
-        .home-button:hover {
-            border-color: #527a9e;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-
-        .home-button-icon {
-            font-size: 25px;
-            margin-bottom: 10px;
-        }
-
-        .home-button-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #17324d;
-        }
-
-        .home-button-text {
-            font-size: 12px;
-            color: #6b7280;
-            margin-top: 4px;
-        }
-
-        /* TODAY SUMMARY */
-        .today-summary {
-            margin-top: 22px;
-            background: white;
-            border: 1px solid #dbe2e8;
-            border-radius: 10px;
-            padding: 18px;
-        }
-
-        .today-summary-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #17324d;
-            margin-bottom: 14px;
-        }
-
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-        }
-
-        .summary-item {
-            background: #f7f9fb;
-            border-radius: 8px;
-            padding: 12px;
-        }
-
-        .summary-label {
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .summary-value {
-            margin-top: 4px;
-            font-size: 18px;
-            font-weight: 700;
-            color: #17324d;
-        }
-
-        .profit-value {
-            color: #16834b;
-        }
-
-        /* SCREEN */
-        .screen {
-            display: none;
-            padding: 20px;
-        }
-
-        .screen.active {
-            display: block;
-        }
-
-        .section-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 18px;
-        }
-
-        .back-button {
-            border: none;
-            background: white;
-            color: #17324d;
-            border: 1px solid #dbe2e8;
-            border-radius: 8px;
-            width: 42px;
-            height: 42px;
-            font-size: 28px;
-            cursor: pointer;
-        }
-
-        .section-header h2 {
-            margin: 0;
-            color: #17324d;
-            font-size: 22px;
-        }
-
-        .section-header p {
-            margin: 3px 0 0;
-            color: #6b7280;
-            font-size: 13px;
-        }
-
-        .section-box {
-            background: white;
-            border: 1px solid #dbe2e8;
-            border-radius: 10px;
-            padding: 18px;
-            margin-bottom: 16px;
-        }
-
-        /* FORM */
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-        }
-
-        .form-group {
-            margin-bottom: 14px;
-        }
-
-        .form-group:last-child {
-            margin-bottom: 0;
-        }
-
-        label {
-            display: block;
-            font-size: 12px;
-            font-weight: 700;
-            color: #374151;
-            margin-bottom: 6px;
-        }
-
-        input,
-        select {
-            width: 100%;
-            border: 1px solid #cfd8e1;
-            border-radius: 7px;
-            padding: 11px 12px;
-            background: white;
-            color: #1f2937;
-            outline: none;
-        }
-
-        input:focus,
-        select:focus {
-            border-color: #527a9e;
-            box-shadow: 0 0 0 2px rgba(82,122,158,0.12);
-        }
-
-        /* BUTTONS */
-        .primary-button,
-        .secondary-button,
-        .danger-button {
-            border: none;
-            border-radius: 7px;
-            padding: 12px 18px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-
-        .primary-button {
-            background: #17324d;
-            color: white;
-        }
-
-        .primary-button:hover {
-            background: #10263b;
-        }
-
-        .secondary-button {
-            background: #e9eef3;
-            color: #17324d;
-        }
-
-        .secondary-button:hover {
-            background: #dce5ed;
-        }
-
-        .danger-button {
-            background: #fbe9e9;
-            color: #b42318;
-        }
-
-        .danger-button:hover {
-            background: #f8dcdc;
-        }
-
-        .green-button {
-            background: #16834b;
-        }
-
-        .green-button:hover {
-            background: #116c3e;
-        }
-
-        .button-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 16px;
-        }
-
-        /* INGREDIENT TABLE */
-        .ingredient-table-wrapper {
-            overflow-x: auto;
-        }
-
-        .ingredient-table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 720px;
-        }
-
-        .ingredient-table th {
-            background: #edf2f6;
-            color: #374151;
-            font-size: 11px;
-            text-transform: uppercase;
-            padding: 10px 8px;
-            text-align: left;
-            border-bottom: 1px solid #dbe2e8;
-        }
-
-        .ingredient-table td {
-            padding: 8px;
-            border-bottom: 1px solid #edf0f3;
-            vertical-align: middle;
-        }
-
-        .ingredient-table input,
-        .ingredient-table select {
-            padding: 9px;
-        }
-
-        .cost-cell {
-            font-weight: 700;
-            color: #17324d;
-            white-space: nowrap;
-        }
-
-        .remove-row {
-            border: none;
-            background: #fbe9e9;
-            color: #b42318;
-            border-radius: 6px;
-            padding: 8px 10px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-
-        .total-box {
-            margin-top: 16px;
-            padding: 16px;
-            background: #edf4f9;
-            border: 1px solid #d4e1eb;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .total-label {
-            font-weight: 700;
-            color: #374151;
-        }
-
-        .total-value {
-            font-size: 22px;
-            font-weight: 800;
-            color: #17324d;
-        }
-
-        /* MENU OF THE DAY */
-        .menu-table-wrapper {
-            overflow-x: auto;
-            background: white;
-            border: 1px solid #dbe2e8;
-            border-radius: 10px;
-        }
-
-        .menu-table {
-            width: 100%;
-            min-width: 950px;
-            border-collapse: collapse;
-        }
-
-        .menu-table th {
-            background: #17324d;
-            color: white;
-            padding: 12px 10px;
-            font-size: 11px;
-            text-transform: uppercase;
-            text-align: left;
-            white-space: nowrap;
-        }
-
-        .menu-table td {
-            padding: 10px;
-            border-bottom: 1px solid #e5e9ed;
-            white-space: nowrap;
-            vertical-align: middle;
-        }
-
-        .menu-table tbody tr:nth-child(even) {
-            background: #f8fafc;
-        }
-
-        .menu-name {
-            font-weight: 800;
-            color: #17324d;
-        }
-
-        .menu-cost {
-            font-weight: 700;
-        }
-
-        .menu-input {
-            width: 100px;
-            padding: 8px 9px;
-            text-align: right;
-        }
-
-        .auto-value {
-            font-weight: 700;
-        }
-
-        .profit-cell {
-            color: #16834b;
-            font-weight: 800;
-        }
-
-        .menu-total-box {
-            margin-top: 18px;
-            background: white;
-            border: 1px solid #dbe2e8;
-            border-radius: 10px;
-            padding: 18px;
-        }
-
-        .menu-total-title {
-            color: #17324d;
-            font-size: 16px;
-            font-weight: 800;
-            margin-bottom: 14px;
-        }
-
-        .menu-total-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-        }
-
-        .menu-total-item {
-            background: #f6f8fa;
-            border-radius: 8px;
-            padding: 13px;
-        }
-
-        .menu-total-item .label {
-            font-size: 11px;
-            color: #6b7280;
-        }
-
-        .menu-total-item .value {
-            margin-top: 4px;
-            font-size: 18px;
-            font-weight: 800;
-            color: #17324d;
-        }
-
-        .menu-total-item.profit .value {
-            color: #16834b;
-        }
-
-        /* RESULT */
-        .result-box {
-            background: white;
-            border: 1px solid #dbe2e8;
-            border-radius: 10px;
-            padding: 18px;
-            margin-top: 16px;
-        }
-
-        .result-title {
-            color: #17324d;
-            font-weight: 800;
-            font-size: 14px;
-            margin-bottom: 12px;
-        }
-
-        .result-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 9px 0;
-            border-bottom: 1px solid #edf0f3;
-        }
-
-        .result-row:last-of-type {
-            border-bottom: none;
-        }
-
-        .result-label {
-            color: #6b7280;
-        }
-
-        .result-value {
-            font-weight: 800;
-            color: #17324d;
-        }
-
-        .result-highlight {
-            color: #16834b;
-        }
-
-        /* RECORDS */
-        .record-section {
-            margin-bottom: 22px;
-        }
-
-        .record-section h3 {
-            color: #17324d;
-            margin: 0 0 10px;
-            font-size: 16px;
-        }
-
-        .record-card {
-            background: white;
-            border: 1px solid #dbe2e8;
-            border-radius: 8px;
-            padding: 13px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .record-name {
-            font-weight: 700;
-            color: #17324d;
-        }
-
-        .record-info {
-            font-size: 12px;
-            color: #6b7280;
-            margin-top: 3px;
-        }
-
-        /* EMPTY */
-        .empty-message {
-            background: white;
-            border: 1px dashed #cbd5df;
-            border-radius: 10px;
-            padding: 30px 20px;
-            text-align: center;
-            color: #6b7280;
-            margin-top: 16px;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* MODAL */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(17, 24, 39, 0.55);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 9999;
-        }
-
-        .modal-overlay.show {
-            display: flex;
-        }
-
-        .modal-box {
-            background: white;
-            width: 100%;
-            max-width: 400px;
-            border-radius: 12px;
-            padding: 22px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-        }
-
-        .modal-title {
-            font-size: 18px;
-            font-weight: 800;
-            color: #17324d;
-        }
-
-        .modal-message {
-            color: #6b7280;
-            font-size: 14px;
-            margin-top: 8px;
-            line-height: 1.5;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 20px;
-        }
-
-        .modal-button {
-            flex: 1;
-            border: none;
-            border-radius: 7px;
-            padding: 11px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-
-        .modal-yes {
-            background: #17324d;
-            color: white;
-        }
-
-        .modal-no {
-            background: #e9eef3;
-            color: #17324d;
-        }
-
-        .modal-cancel {
-            background: #fbe9e9;
-            color: #b42318;
-        }
-
-        /* MOBILE */
-        @media (max-width: 800px) {
-            .menu-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 0;
-            }
-
-            .menu-total-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .summary-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 520px) {
-            .app-header {
-                padding: 20px 15px;
-            }
-
-            .home-content,
-            .screen {
-                padding: 15px;
-            }
-
-            .menu-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .button-row {
-                flex-direction: column;
-            }
-
-            .menu-total-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .section-header h2 {
-                font-size: 19px;
-            }
-        }
-    </style>
+
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b2d5c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Karinderya">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karinderya Kalkulator</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f4f6f9;
+    color:#172033;
+}
+
+button,
+input,
+select{
+    font-family:inherit;
+}
+
+button{
+    cursor:pointer;
+}
+
+.app-header{
+    background:#123b66;
+    color:white;
+    padding:18px 16px;
+    position:sticky;
+    top:0;
+    z-index:100;
+    box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+
+.header-title{
+    font-size:22px;
+    font-weight:700;
+}
+
+.header-subtitle{
+    font-size:12px;
+    opacity:.85;
+    margin-top:4px;
+}
+
+.container{
+    width:100%;
+    max-width:900px;
+    margin:auto;
+    padding:16px;
+}
+
+.screen{
+    display:none;
+}
+
+.screen.active{
+    display:block;
+}
+
+.home-title{
+    font-size:22px;
+    font-weight:700;
+    margin:5px 0 15px;
+}
+
+.dashboard-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+}
+
+.dashboard-card{
+    background:white;
+    border-radius:14px;
+    padding:18px 14px;
+    min-height:105px;
+    border:1px solid #e1e6ed;
+    box-shadow:0 3px 10px rgba(18,59,102,.07);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    transition:.15s;
+}
+
+.dashboard-card:active{
+    transform:scale(.98);
+}
+
+.card-icon{
+    font-size:24px;
+    margin-bottom:8px;
+}
+
+.card-title{
+    font-weight:700;
+    font-size:15px;
+    color:#123b66;
+}
+
+.card-subtitle{
+    font-size:11px;
+    color:#6c7785;
+    margin-top:4px;
+}
+
+.section-card{
+    background:white;
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:15px;
+    border:1px solid #e1e6ed;
+    box-shadow:0 3px 10px rgba(18,59,102,.06);
+}
+
+.section-title{
+    color:#123b66;
+    font-size:18px;
+    font-weight:700;
+    margin-bottom:14px;
+}
+
+.back-button{
+    border:none;
+    background:#e8eef5;
+    color:#123b66;
+    padding:10px 14px;
+    border-radius:9px;
+    font-weight:700;
+    margin-bottom:14px;
+}
+
+.form-group{
+    margin-bottom:12px;
+}
+
+.form-group label{
+    display:block;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:5px;
+    color:#334155;
+}
+
+input,
+select{
+    width:100%;
+    border:1px solid #cfd7e2;
+    border-radius:8px;
+    padding:11px 10px;
+    background:white;
+    color:#172033;
+    font-size:14px;
+}
+
+input:focus,
+select:focus{
+    outline:none;
+    border-color:#1769aa;
+    box-shadow:0 0 0 2px rgba(23,105,170,.1);
+}
+
+.btn{
+    border:none;
+    border-radius:9px;
+    padding:11px 14px;
+    font-weight:700;
+    font-size:13px;
+}
+
+.btn-primary{
+    background:#123b66;
+    color:white;
+}
+
+.btn-secondary{
+    background:#e8eef5;
+    color:#123b66;
+}
+
+.btn-success{
+    background:#18794e;
+    color:white;
+}
+
+.btn-danger{
+    background:#c62828;
+    color:white;
+}
+
+.btn-small{
+    padding:8px 10px;
+    font-size:12px;
+}
+
+.button-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.message{
+    display:none;
+    padding:10px 12px;
+    border-radius:8px;
+    margin:10px 0;
+    font-size:13px;
+}
+
+.message.show{
+    display:block;
+}
+
+.message.success{
+    background:#e6f5ed;
+    color:#17623f;
+}
+
+.message.error{
+    background:#fdeaea;
+    color:#a32121;
+}
+
+.message.info{
+    background:#e8f1fb;
+    color:#164f7d;
+}
+
+/* SUMMARY */
+
+.summary-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+}
+
+.summary-box{
+    background:#f7f9fc;
+    border:1px solid #e0e6ee;
+    border-radius:10px;
+    padding:11px 8px;
+    text-align:center;
+}
+
+.summary-label{
+    font-size:10px;
+    color:#687585;
+    margin-bottom:5px;
+}
+
+.summary-value{
+    font-size:16px;
+    font-weight:700;
+    color:#123b66;
+}
+
+/* INGREDIENTS */
+
+.entry-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.full{
+    grid-column:1/-1;
+}
+
+.list-item{
+    border:1px solid #e0e5eb;
+    background:#fafbfd;
+    border-radius:10px;
+    padding:12px;
+    margin-bottom:8px;
+}
+
+.list-item-title{
+    font-weight:700;
+    color:#123b66;
+    margin-bottom:6px;
+}
+
+.list-item-info{
+    font-size:12px;
+    color:#687585;
+    line-height:1.6;
+}
+
+/* RECIPE */
+
+.recipe-ingredient-row{
+    display:grid;
+    grid-template-columns:1.6fr .8fr .8fr auto;
+    gap:7px;
+    align-items:end;
+    margin-bottom:8px;
+}
+
+.recipe-cost-box{
+    background:#eef5fb;
+    border:1px solid #d7e5f2;
+    border-radius:10px;
+    padding:14px;
+    margin:12px 0;
+}
+
+.recipe-cost-label{
+    font-size:12px;
+    color:#637181;
+}
+
+.recipe-cost-value{
+    font-size:22px;
+    font-weight:700;
+    color:#123b66;
+    margin-top:4px;
+}
+
+/* MENU */
+
+.target-food-cost-box{
+    background:#eef5fb;
+    border:1px solid #cfe0ef;
+    border-radius:12px;
+    padding:13px;
+    margin-bottom:14px;
+}
+
+.target-food-cost-title{
+    font-size:13px;
+    font-weight:700;
+    color:#123b66;
+    margin-bottom:7px;
+}
+
+.target-food-cost-row{
+    display:flex;
+    align-items:center;
+    gap:7px;
+}
+
+.target-food-cost-row input{
+    max-width:110px;
+    font-weight:700;
+}
+
+.target-food-cost-row span{
+    font-weight:700;
+    color:#123b66;
+}
+
+.menu-note{
+    font-size:12px;
+    color:#687585;
+    margin-bottom:12px;
+}
+
+.menu-item{
+    background:white;
+    border:1px solid #dfe5ec;
+    border-radius:12px;
+    padding:12px;
+    margin-bottom:10px;
+}
+
+.menu-top{
+    display:grid;
+    grid-template-columns:1.5fr .8fr .8fr;
+    gap:8px;
+    align-items:start;
+}
+
+.menu-name{
+    font-size:14px;
+    font-weight:700;
+    color:#123b66;
+}
+
+.menu-cost{
+    font-size:12px;
+    color:#687585;
+    margin-top:3px;
+}
+
+.menu-field label{
+    display:block;
+    font-size:10px;
+    color:#687585;
+    margin-bottom:4px;
+    font-weight:700;
+}
+
+.menu-field input{
+    padding:9px 7px;
+    font-size:13px;
+}
+
+.menu-info{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:6px;
+    margin-top:9px;
+}
+
+.menu-info-box{
+    background:#f6f8fb;
+    border-radius:8px;
+    padding:7px 5px;
+    text-align:center;
+}
+
+.menu-info-label{
+    font-size:9px;
+    color:#778291;
+}
+
+.menu-info-value{
+    font-size:12px;
+    font-weight:700;
+    color:#243b53;
+    margin-top:2px;
+}
+
+.menu-actions{
+    margin-top:9px;
+    display:flex;
+    justify-content:flex-end;
+}
+
+/* SALES */
+
+.sales-row{
+    border:1px solid #dfe5ec;
+    border-radius:10px;
+    padding:11px;
+    margin-bottom:8px;
+    background:white;
+}
+
+.sales-row-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    margin-bottom:7px;
+}
+
+.sales-row-name{
+    font-weight:700;
+    color:#123b66;
+    font-size:14px;
+}
+
+.sales-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:7px;
+}
+
+.sales-box{
+    background:#f6f8fb;
+    border-radius:7px;
+    padding:7px 5px;
+}
+
+.sales-box label{
+    display:block;
+    font-size:9px;
+    color:#718096;
+}
+
+.sales-box strong{
+    display:block;
+    font-size:12px;
+    margin-top:2px;
+}
+
+.sales-quantity{
+    width:100%;
+    padding:8px 6px;
+    font-size:13px;
+}
+
+.sold-out{
+    opacity:.65;
+}
+
+/* PROFIT */
+
+.profit-line{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 0;
+    border-bottom:1px solid #edf0f4;
+    font-size:13px;
+}
+
+.profit-line:last-child{
+    border-bottom:none;
+}
+
+.profit-total{
+    font-weight:700;
+    color:#123b66;
+}
+
+.net-profit-box{
+    margin-top:12px;
+    background:#123b66;
+    color:white;
+    border-radius:11px;
+    padding:15px;
+}
+
+.net-profit-label{
+    font-size:12px;
+    opacity:.85;
+}
+
+.net-profit-value{
+    font-size:25px;
+    font-weight:700;
+    margin-top:4px;
+}
+
+/* RECORDS */
+
+.month-folder{
+    border:1px solid #dfe5ec;
+    border-radius:11px;
+    margin-bottom:10px;
+    overflow:hidden;
+}
+
+.month-header{
+    width:100%;
+    border:none;
+    background:#eef3f8;
+    padding:13px;
+    text-align:left;
+    font-weight:700;
+    color:#123b66;
+}
+
+.month-content{
+    padding:10px;
+    background:white;
+}
+
+.record-card{
+    border:1px solid #e2e6ec;
+    border-radius:8px;
+    padding:10px;
+    margin-bottom:7px;
+    font-size:12px;
+}
+
+.record-card strong{
+    color:#123b66;
+}
+
+.empty{
+    text-align:center;
+    color:#7a8592;
+    font-size:13px;
+    padding:20px 10px;
+}
+
+@media(max-width:600px){
+    .container{
+        padding:12px;
+    }
+
+    .dashboard-grid{
+        gap:9px;
+    }
+
+    .dashboard-card{
+        min-height:95px;
+        padding:14px 11px;
+    }
+
+    .entry-grid{
+        grid-template-columns:1fr;
+    }
+
+    .full{
+        grid-column:auto;
+    }
+
+    .recipe-ingredient-row{
+        grid-template-columns:1.4fr .7fr .7fr auto;
+    }
+
+    .summary-value{
+        font-size:14px;
+    }
+}
+</style>
 </head>
 
 <body>
 
-<div class="app">
+<header class="app-header">
+    <div class="header-title">Karinderya Kalkulator</div>
+    <div class="header-subtitle">Simple business calculator for your karinderya</div>
+</header>
 
-    <!-- HEADER -->
-    <header class="app-header">
-        <h1 class="app-title">Karinderya Kalkulator</h1>
-        <p class="app-subtitle">Simple costing, menu and profit calculator</p>
-    </header>
+<div class="container">
 
-    <!-- HOME -->
-    <div id="homeScreen" class="screen active">
+<!-- HOME -->
+<section id="homeScreen" class="screen active">
 
-        <div class="home-content">
+    <div class="home-title">Dashboard</div>
 
-            <div class="menu-grid">
+    <div class="dashboard-grid">
 
-                <button class="home-button" onclick="showScreen('recipeScreen')">
-                    <div class="home-button-icon">🍲</div>
-                    <div class="home-button-title">Recipe Cost</div>
-                    <div class="home-button-text">Calculate the cost of a recipe</div>
-                </button>
+        <button class="dashboard-card" onclick="showScreen('ingredientsScreen')">
+            <div class="card-icon">🥬</div>
+            <div class="card-title">Ingredients / Other Items</div>
+            <div class="card-subtitle">Prices and store items</div>
+        </button>
 
-                <button class="home-button" onclick="showScreen('menuScreen')">
-                    <div class="home-button-icon">🍛</div>
-                    <div class="home-button-title">Menu of the Day</div>
-                    <div class="home-button-text">Set servings, price and profit</div>
-                </button>
+        <button class="dashboard-card" onclick="showScreen('recipeScreen')">
+            <div class="card-icon">🍲</div>
+            <div class="card-title">Recipe of the Day</div>
+            <div class="card-subtitle">Create recipe costing</div>
+        </button>
 
-                <button class="home-button" onclick="showScreen('profitScreen')">
-                    <div class="home-button-icon">📊</div>
-                    <div class="home-button-title">Profit Calculator</div>
-                    <div class="home-button-text">Calculate overall profit</div>
-                </button>
+        <button class="dashboard-card" onclick="showScreen('menuScreen')">
+            <div class="card-icon">🍽️</div>
+            <div class="card-title">Menu of the Day</div>
+            <div class="card-subtitle">Set prices and servings</div>
+        </button>
 
-                <button class="home-button" onclick="showScreen('salesScreen')">
-                    <div class="home-button-icon">🧾</div>
-                    <div class="home-button-title">Daily Sales</div>
-                    <div class="home-button-text">Record sales and expenses</div>
-                </button>
+        <button class="dashboard-card" onclick="showScreen('salesScreen')">
+            <div class="card-icon">🧾</div>
+            <div class="card-title">Daily Sales Monitoring</div>
+            <div class="card-subtitle">Record actual sales</div>
+        </button>
 
-                <button class="home-button" onclick="showScreen('ingredientScreen')">
-                    <div class="home-button-icon">🛒</div>
-                    <div class="home-button-title">Ingredient Prices</div>
-                    <div class="home-button-text">Manage ingredient prices</div>
-                </button>
+        <button class="dashboard-card" onclick="showScreen('profitScreen')">
+            <div class="card-icon">📊</div>
+            <div class="card-title">Profit Calculator</div>
+            <div class="card-subtitle">Expenses and net profit</div>
+        </button>
 
-                <button class="home-button" onclick="showScreen('recordsScreen')">
-                    <div class="home-button-icon">📋</div>
-                    <div class="home-button-title">Saved Records</div>
-                    <div class="home-button-text">View saved information</div>
-                </button>
-
-            </div>
-
-            <!-- TODAY SUMMARY -->
-            <div class="today-summary">
-                <div class="today-summary-title">TODAY'S SUMMARY</div>
-
-                <div class="summary-grid">
-
-                    <div class="summary-item">
-                        <div class="summary-label">Sales</div>
-                        <div class="summary-value" id="todaySales">₱0.00</div>
-                    </div>
-
-                    <div class="summary-item">
-                        <div class="summary-label">Expenses</div>
-                        <div class="summary-value" id="todayExpenses">₱0.00</div>
-                    </div>
-
-                    <div class="summary-item">
-                        <div class="summary-label">Profit</div>
-                        <div class="summary-value profit-value" id="todayProfit">₱0.00</div>
-                    </div>
-
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- RECIPE COST -->
-    <div id="recipeScreen" class="screen">
-
-        <div class="section-header">
-            <button class="back-button" onclick="leaveScreen('recipeScreen','homeScreen')">‹</button>
-
-            <div>
-                <h2>Recipe Cost</h2>
-                <p>Calculate the total cost of making a recipe</p>
-            </div>
-        </div>
-
-        <div class="section-box">
-
-            <div class="form-row">
-
-                <div class="form-group">
-                    <label>Recipe Date</label>
-                    <input type="date" id="recipeDate">
-                </div>
-
-                <div class="form-group">
-                    <label>Recipe Name</label>
-                    <input type="text" id="recipeName" placeholder="Example: Adobo">
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="section-box">
-
-            <div class="ingredient-table-wrapper">
-
-                <table class="ingredient-table">
-
-                    <thead>
-                        <tr>
-                            <th>Ingredient</th>
-                            <th>Amount Used</th>
-                            <th>Unit</th>
-                            <th>Cost</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-
-                    <tbody id="recipeIngredients"></tbody>
-
-                </table>
-
-            </div>
-
-            <div class="button-row">
-                <button class="secondary-button" onclick="addRecipeIngredient()">
-                    + ADD INGREDIENT
-                </button>
-            </div>
-
-            <div class="total-box">
-                <span class="total-label">TOTAL RECIPE COST</span>
-                <span class="total-value" id="recipeTotalCost">₱0.00</span>
-            </div>
-
-            <div class="button-row">
-                <button class="primary-button" onclick="saveRecipe()">
-                    SAVE RECIPE
-                </button>
-            </div>
-
-        </div>
+        <button class="dashboard-card" onclick="showScreen('recordsScreen')">
+            <div class="card-icon">📁</div>
+            <div class="card-title">Records</div>
+            <div class="card-subtitle">Monthly archived records</div>
+        </button>
 
     </div>
 
-    <!-- MENU OF THE DAY -->
-    <div id="menuScreen" class="screen">
+    <div class="section-card" style="margin-top:15px;">
+        <div class="section-title">Today's Summary</div>
 
-        <div class="section-header">
-            <button class="back-button" onclick="showScreen('homeScreen')">‹</button>
+        <div class="summary-grid">
+            <div class="summary-box">
+                <div class="summary-label">Total Sales</div>
+                <div class="summary-value" id="todaySales">₱0.00</div>
+            </div>
 
-            <div>
-                <h2>Menu of the Day</h2>
-                <p>Set servings, selling price and expected profit</p>
+            <div class="summary-box">
+                <div class="summary-label">Expenses</div>
+                <div class="summary-value" id="todayExpenses">₱0.00</div>
+            </div>
+
+            <div class="summary-box">
+                <div class="summary-label">Net Profit</div>
+                <div class="summary-value" id="todayProfit">₱0.00</div>
             </div>
         </div>
+    </div>
 
-        <div class="section-box">
+    <div class="section-card">
+        <div class="section-title">Monthly Summary</div>
+
+        <div style="font-size:12px;color:#687585;margin-bottom:10px;" id="monthlySummaryLabel">
+            Current Month
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-box">
+                <div class="summary-label">Total Sales</div>
+                <div class="summary-value" id="monthlySales">₱0.00</div>
+            </div>
+
+            <div class="summary-box">
+                <div class="summary-label">Total Expenses</div>
+                <div class="summary-value" id="monthlyExpenses">₱0.00</div>
+            </div>
+
+            <div class="summary-box">
+                <div class="summary-label">Net Profit</div>
+                <div class="summary-value" id="monthlyProfit">₱0.00</div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+
+<!-- INGREDIENTS -->
+<section id="ingredientsScreen" class="screen">
+
+    <button class="back-button" onclick="showScreen('homeScreen')">← Back to Dashboard</button>
+
+    <div class="section-card">
+        <div class="section-title">Ingredients / Other Items</div>
+
+        <div class="message" id="ingredientMessage"></div>
+
+        <h3 style="font-size:15px;color:#123b66;">Ingredients</h3>
+
+        <div class="form-group">
+            <label>Ingredient</label>
+            <select id="ingredientName" onchange="handleCustomIngredient()"></select>
+        </div>
+
+        <div class="form-group" id="customIngredientGroup" style="display:none;">
+            <label>Custom Ingredient Name</label>
+            <input type="text" id="customIngredientName" placeholder="Enter ingredient">
+        </div>
+
+        <div class="entry-grid">
 
             <div class="form-group">
-                <label>Menu Date</label>
-                <input type="date" id="menuDate" onchange="loadMenuOfDay()">
+                <label>Purchase Price</label>
+                <input type="number" id="ingredientPurchasePrice" min="0" step="0.01" placeholder="₱">
+            </div>
+
+            <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" id="ingredientQuantity" min="0" step="0.001" placeholder="0">
+            </div>
+
+            <div class="form-group">
+                <label>Unit</label>
+                <select id="ingredientUnit">
+                    <option value="kg">kg</option>
+                    <option value="g">g</option>
+                    <option value="liter">liter</option>
+                    <option value="ml">ml</option>
+                    <option value="piece">piece</option>
+                    <option value="pack">pack</option>
+                    <option value="bottle">bottle</option>
+                    <option value="can">can</option>
+                    <option value="other">other</option>
+                </select>
             </div>
 
         </div>
 
-        <div id="noRecipesMessage" class="empty-message hidden">
-            No recipes have been saved for this date.<br><br>
-            Go to <strong>Recipe Cost</strong> and save a recipe first.
+        <div class="button-row">
+            <button class="btn btn-primary" onclick="saveIngredient()">Save Ingredient</button>
         </div>
 
-        <div id="menuTableContainer" class="menu-table-wrapper hidden">
+        <div style="margin-top:18px;" id="ingredientList"></div>
+    </div>
 
-            <table class="menu-table">
 
-                <thead>
-                    <tr>
-                        <th>MENU</th>
-                        <th>RECIPE COST</th>
-                        <th>SERVINGS</th>
-                        <th>PRICE / SERVING</th>
-                        <th>COST / SERVING</th>
-                        <th>PROFIT / SERVING</th>
-                        <th>TOTAL PROFIT</th>
-                    </tr>
-                </thead>
+    <div class="section-card">
 
-                <tbody id="menuItems"></tbody>
+        <div class="section-title">Other Items</div>
 
-            </table>
+        <div class="message" id="otherItemMessage"></div>
 
+        <div class="form-group">
+            <label>Item</label>
+            <select id="otherItemName" onchange="handleCustomOtherItem()"></select>
         </div>
 
-        <div id="menuTotals" class="menu-total-box hidden">
+        <div class="form-group" id="customOtherItemGroup" style="display:none;">
+            <label>Custom Item Name</label>
+            <input type="text" id="customOtherItemName" placeholder="Enter item">
+        </div>
 
-            <div class="menu-total-title">MENU TOTALS</div>
+        <div class="entry-grid">
 
-            <div class="menu-total-grid">
-
-                <div class="menu-total-item">
-                    <div class="label">TOTAL SERVINGS</div>
-                    <div class="value" id="menuTotalServings">0</div>
-                </div>
-
-                <div class="menu-total-item">
-                    <div class="label">EXPECTED SALES</div>
-                    <div class="value" id="menuTotalSales">₱0.00</div>
-                </div>
-
-                <div class="menu-total-item">
-                    <div class="label">TOTAL FOOD COST</div>
-                    <div class="value" id="menuTotalFoodCost">₱0.00</div>
-                </div>
-
-                <div class="menu-total-item profit">
-                    <div class="label">TOTAL EXPECTED PROFIT</div>
-                    <div class="value" id="menuTotalProfit">₱0.00</div>
-                </div>
-
+            <div class="form-group">
+                <label>Purchase Price</label>
+                <input type="number" id="otherPurchasePrice" min="0" step="0.01" placeholder="₱">
             </div>
 
-            <div class="button-row">
-                <button class="primary-button green-button" onclick="saveDailyMenu()">
-                    SAVE MENU OF THE DAY
+            <div class="form-group">
+                <label>Quantity Purchased</label>
+                <input type="number" id="otherQuantity" min="0" step="0.001" placeholder="0">
+            </div>
+
+            <div class="form-group">
+                <label>Unit</label>
+                <select id="otherUnit">
+                    <option value="piece">piece</option>
+                    <option value="pack">pack</option>
+                    <option value="carton">carton</option>
+                    <option value="case">case</option>
+                    <option value="bottle">bottle</option>
+                    <option value="can">can</option>
+                    <option value="box">box</option>
+                    <option value="sachet">sachet</option>
+                    <option value="other">other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Selling Price / Unit</label>
+                <input type="number" id="otherSellingPrice" min="0" step="0.01" placeholder="₱">
+            </div>
+
+        </div>
+
+        <div class="button-row">
+            <button class="btn btn-primary" onclick="saveOtherItem()">Save Other Item</button>
+        </div>
+
+        <div style="margin-top:18px;" id="otherItemList"></div>
+
+    </div>
+
+</section>
+
+
+<!-- RECIPE -->
+<section id="recipeScreen" class="screen">
+
+    <button class="back-button" onclick="showScreen('homeScreen')">← Back to Dashboard</button>
+
+    <div class="section-card">
+
+        <div class="section-title">Recipe of the Day</div>
+
+        <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="recipeDate">
+        </div>
+
+        <div class="form-group">
+            <label>Recipe Name</label>
+            <input type="text" id="recipeName" placeholder="Example: Chicken Adobo">
+        </div>
+
+        <div class="message" id="recipeMessage"></div>
+
+        <h3 style="font-size:15px;color:#123b66;margin-top:16px;">Ingredients</h3>
+
+        <div id="recipeIngredients"></div>
+
+        <button class="btn btn-secondary btn-small" onclick="addRecipeIngredient()">
+            + Add Ingredient
+        </button>
+
+        <div class="recipe-cost-box">
+            <div class="recipe-cost-label">Total Recipe Cost</div>
+            <div class="recipe-cost-value" id="recipeTotalCost">₱0.00</div>
+        </div>
+
+        <div class="button-row">
+            <button class="btn btn-primary" onclick="saveRecipe()">Save Recipe</button>
+            <button class="btn btn-secondary" onclick="clearRecipeForm()">Clear</button>
+        </div>
+
+    </div>
+
+    <div class="section-card">
+        <div class="section-title">Saved Recipes</div>
+        <div class="form-group">
+            <label>Show Date</label>
+            <input type="date" id="savedRecipeDate" onchange="loadSavedRecipes()">
+        </div>
+
+        <div id="savedRecipesList"></div>
+    </div>
+
+</section>
+
+
+<!-- MENU -->
+<section id="menuScreen" class="screen">
+
+    <button class="back-button" onclick="showScreen('homeScreen')">← Back to Dashboard</button>
+
+    <div class="section-card">
+
+        <div class="section-title">Menu of the Day</div>
+
+        <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="menuDate" onchange="loadMenuOfDay()">
+        </div>
+
+        <!-- ONLY TARGET FOOD COST FIELD -->
+        <div class="target-food-cost-box">
+
+            <div class="target-food-cost-title">
+                Target Food Cost
+            </div>
+
+            <div class="target-food-cost-row">
+                <input
+                    type="number"
+                    id="targetFoodCost"
+                    min="1"
+                    max="100"
+                    step="0.1"
+                    value="40"
+                    onchange="saveTargetFoodCost()"
+                >
+                <span>%</span>
+
+                <button
+                    class="btn btn-primary btn-small"
+                    onclick="saveTargetFoodCost()"
+                >
+                    Save Setting
                 </button>
             </div>
 
         </div>
 
-    </div>
-
-    <!-- PROFIT CALCULATOR -->
-    <div id="profitScreen" class="screen">
-
-        <div class="section-header">
-            <button class="back-button" onclick="showScreen('homeScreen')">‹</button>
-
-            <div>
-                <h2>Profit Calculator</h2>
-                <p>Calculate your overall business profit</p>
-            </div>
+        <div class="menu-note">
+            Recipes saved for this date automatically appear below.
+            Adjust the quantity and actual selling price as needed.
         </div>
 
-        <div class="section-box">
+        <div class="message" id="menuMessage"></div>
 
-            <div class="form-row">
+        <div id="menuItems"></div>
+
+    </div>
+
+</section>
+
+
+<!-- DAILY SALES -->
+<section id="salesScreen" class="screen">
+
+    <button class="back-button" onclick="showScreen('homeScreen')">← Back to Dashboard</button>
+
+    <div class="section-card">
+
+        <div class="section-title">Daily Sales Monitoring</div>
+
+        <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="salesDate" onchange="loadDailySales()">
+        </div>
+
+        <div class="message" id="salesMessage"></div>
+
+        <h3 style="font-size:15px;color:#123b66;">Cooked Food</h3>
+
+        <div class="form-group">
+            <label>Select Menu Item</label>
+            <select id="salesFoodSelect" onchange="addSalesFoodItem()">
+                <option value="">Select cooked food...</option>
+            </select>
+        </div>
+
+        <div id="salesFoodItems"></div>
+
+        <h3 style="font-size:15px;color:#123b66;margin-top:20px;">Other Items</h3>
+
+        <div class="form-group">
+            <label>Select Other Item</label>
+            <select id="salesOtherSelect" onchange="addSalesOtherItem()">
+                <option value="">Select other item...</option>
+            </select>
+        </div>
+
+        <div id="salesOtherItems"></div>
+
+        <div class="section-card" style="background:#f7f9fc;margin-top:15px;">
+
+            <div class="profit-line">
+                <span>Cooked Food Sales</span>
+                <strong id="salesFoodTotal">₱0.00</strong>
+            </div>
+
+            <div class="profit-line">
+                <span>Other Item Sales</span>
+                <strong id="salesOtherTotal">₱0.00</strong>
+            </div>
+
+            <div class="profit-line profit-total">
+                <span>Total Sales</span>
+                <strong id="salesGrandTotal">₱0.00</strong>
+            </div>
+
+            <div class="profit-line">
+                <span>Food Cost</span>
+                <strong id="salesCostTotal">₱0.00</strong>
+            </div>
+
+            <div class="profit-line profit-total">
+                <span>Gross Profit</span>
+                <strong id="salesGrossProfit">₱0.00</strong>
+            </div>
+
+        </div>
+
+        <button class="btn btn-primary" onclick="saveDailySales()">
+            Save Daily Sales
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- PROFIT -->
+<section id="profitScreen" class="screen">
+
+    <button class="back-button" onclick="showScreen('homeScreen')">← Back to Dashboard</button>
+
+    <div class="section-card">
+
+        <div class="section-title">Profit Calculator</div>
+
+        <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="profitDate" onchange="loadProfitCalculator()">
+        </div>
+
+        <div class="section-card" style="background:#f7f9fc;">
+
+            <div class="section-title" style="font-size:15px;">Sales</div>
+
+            <div class="profit-line">
+                <span>Cooked Food Sales</span>
+                <strong id="profitFoodSales">₱0.00</strong>
+            </div>
+
+            <div class="profit-line">
+                <span>Other Item Sales</span>
+                <strong id="profitOtherSales">₱0.00</strong>
+            </div>
+
+            <div class="profit-line profit-total">
+                <span>Total Sales</span>
+                <strong id="profitTotalSales">₱0.00</strong>
+            </div>
+
+        </div>
+
+        <div class="section-card" style="background:#f7f9fc;">
+
+            <div class="section-title" style="font-size:15px;">Cost of Goods</div>
+
+            <div class="profit-line">
+                <span>Cooked Food Cost</span>
+                <strong id="profitFoodCost">₱0.00</strong>
+            </div>
+
+            <div class="profit-line">
+                <span>Other Item Cost</span>
+                <strong id="profitOtherCost">₱0.00</strong>
+            </div>
+
+            <div class="profit-line profit-total">
+                <span>Total Cost of Goods</span>
+                <strong id="profitTotalCost">₱0.00</strong>
+            </div>
+
+            <div class="profit-line profit-total">
+                <span>Gross Profit</span>
+                <strong id="profitGrossProfit">₱0.00</strong>
+            </div>
+
+        </div>
+
+        <div class="section-card">
+
+            <div class="section-title" style="font-size:15px;">
+                Operating Expenses
+            </div>
+
+            <div class="entry-grid">
 
                 <div class="form-group">
-                    <label>Total Sales</label>
-                    <input type="number" id="profitSales" min="0" step="0.01" oninput="calculateProfit()">
+                    <label>Rent</label>
+                    <input type="number" id="expenseRent" min="0" step="0.01" value="0">
                 </div>
 
                 <div class="form-group">
-                    <label>Food Cost</label>
-                    <input type="number" id="profitFoodCost" min="0" step="0.01" oninput="calculateProfit()">
+                    <label>LPG / Gas</label>
+                    <input type="number" id="expenseGas" min="0" step="0.01" value="0">
+                </div>
+
+                <div class="form-group">
+                    <label>Electricity</label>
+                    <input type="number" id="expenseElectricity" min="0" step="0.01" value="0">
+                </div>
+
+                <div class="form-group">
+                    <label>Water</label>
+                    <input type="number" id="expenseWater" min="0" step="0.01" value="0">
+                </div>
+
+                <div class="form-group">
+                    <label>WiFi / Internet</label>
+                    <input type="number" id="expenseWifi" min="0" step="0.01" value="0">
                 </div>
 
                 <div class="form-group">
                     <label>Labor</label>
-                    <input type="number" id="profitLabor" min="0" step="0.01" oninput="calculateProfit()">
+                    <input type="number" id="expenseLabor" min="0" step="0.01" value="0">
                 </div>
 
-                <div class="form-group">
-                    <label>Rent</label>
-                    <input type="number" id="profitRent" min="0" step="0.01" oninput="calculateProfit()">
-                </div>
-
-                <div class="form-group">
+                <div class="form-group full">
                     <label>Other Expenses</label>
-                    <input type="number" id="profitOther" min="0" step="0.01" oninput="calculateProfit()">
-                </div>
-
-            </div>
-
-            <div id="profitResult" class="result-box">
-
-                <div class="result-title">RESULT</div>
-
-                <div class="result-row">
-                    <span class="result-label">Total Expenses</span>
-                    <span class="result-value" id="profitExpenses">₱0.00</span>
-                </div>
-
-                <div class="result-row">
-                    <span class="result-label">Net Profit</span>
-                    <span class="result-value result-highlight" id="netProfit">₱0.00</span>
+                    <input type="number" id="expenseOther" min="0" step="0.01" value="0">
                 </div>
 
             </div>
 
         </div>
+
+        <div class="net-profit-box">
+            <div class="net-profit-label">Net Profit</div>
+            <div class="net-profit-value" id="profitNetProfit">₱0.00</div>
+        </div>
+
+        <div class="button-row" style="margin-top:12px;">
+            <button class="btn btn-secondary" onclick="calculateProfit()">
+                Calculate
+            </button>
+
+            <button class="btn btn-primary" onclick="saveProfitRecord()">
+                Save Profit Record
+            </button>
+        </div>
+
+        <div class="message" id="profitMessage"></div>
 
     </div>
 
-    <!-- DAILY SALES -->
-    <div id="salesScreen" class="screen">
+</section>
 
-        <div class="section-header">
-            <button class="back-button" onclick="leaveScreen('salesScreen','homeScreen')">‹</button>
 
-            <div>
-                <h2>Daily Sales</h2>
-                <p>Record today's sales and expenses</p>
-            </div>
+<!-- RECORDS -->
+<section id="recordsScreen" class="screen">
+
+    <button class="back-button" onclick="showScreen('homeScreen')">← Back to Dashboard</button>
+
+    <div class="section-card">
+
+        <div class="section-title">Records</div>
+
+        <div class="menu-note">
+            Records are organized by month. Recipe and Menu of the Day are not archived here.
         </div>
 
-        <div class="section-box">
-
-            <div class="form-group">
-                <label>Date</label>
-                <input type="date" id="salesDate">
-            </div>
-
-        </div>
-
-        <div class="section-box">
-
-            <h3 style="margin-top:0;color:#17324d;">SALES</h3>
-
-            <div class="ingredient-table-wrapper">
-
-                <table class="ingredient-table">
-
-                    <thead>
-                        <tr>
-                            <th>Item</th>
-                            <th>Quantity</th>
-                            <th>Price</th>
-                            <th>Total</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-
-                    <tbody id="salesRows"></tbody>
-
-                </table>
-
-            </div>
-
-            <div class="button-row">
-                <button class="secondary-button" onclick="addSalesRow()">
-                    + ADD SALE
-                </button>
-            </div>
-
-        </div>
-
-        <div class="section-box">
-
-            <h3 style="margin-top:0;color:#17324d;">EXPENSES</h3>
-
-            <div class="ingredient-table-wrapper">
-
-                <table class="ingredient-table">
-
-                    <thead>
-                        <tr>
-                            <th>Expense</th>
-                            <th>Amount</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-
-                    <tbody id="expenseRows"></tbody>
-
-                </table>
-
-            </div>
-
-            <div class="button-row">
-                <button class="secondary-button" onclick="addExpenseRow()">
-                    + ADD EXPENSE
-                </button>
-            </div>
-
-        </div>
-
-        <div class="result-box">
-
-            <div class="result-title">DAILY RESULT</div>
-
-            <div class="result-row">
-                <span class="result-label">Total Sales</span>
-                <span class="result-value" id="dailyTotalSales">₱0.00</span>
-            </div>
-
-            <div class="result-row">
-                <span class="result-label">Total Expenses</span>
-                <span class="result-value" id="dailyTotalExpenses">₱0.00</span>
-            </div>
-
-            <div class="result-row">
-                <span class="result-label">Profit</span>
-                <span class="result-value result-highlight" id="dailyProfit">₱0.00</span>
-            </div>
-
-            <div class="button-row">
-                <button class="primary-button" onclick="calculateDailySales()">
-                    CALCULATE
-                </button>
-
-                <button class="primary-button green-button" onclick="saveDailySales()">
-                    SAVE DAILY RECORD
-                </button>
-            </div>
-
-        </div>
+        <div id="monthlyRecords"></div>
 
     </div>
 
-    <!-- INGREDIENT PRICES -->
-    <div id="ingredientScreen" class="screen">
-
-        <div class="section-header">
-            <button class="back-button" onclick="showScreen('homeScreen')">‹</button>
-
-            <div>
-                <h2>Ingredient Prices</h2>
-                <p>Manage your current ingredient prices</p>
-            </div>
-        </div>
-
-        <div class="section-box">
-
-            <div class="form-row">
-
-                <div class="form-group">
-                    <label>Ingredient Name</label>
-                    <input type="text" id="ingredientName" placeholder="Example: Pork">
-                </div>
-
-                <div class="form-group">
-                    <label>Price</label>
-                    <input type="number" id="ingredientPrice" min="0" step="0.01">
-                </div>
-
-                <div class="form-group">
-                    <label>Quantity</label>
-                    <input type="number" id="ingredientQuantity" min="0" step="0.001">
-                </div>
-
-                <div class="form-group">
-                    <label>Unit</label>
-                    <select id="ingredientUnit">
-                        <option value="kg">KG</option>
-                        <option value="g">Gram</option>
-                        <option value="l">Liter</option>
-                        <option value="ml">ML</option>
-                        <option value="piece">Piece</option>
-                        <option value="dozen">Dozen</option>
-                        <option value="bottle">Bottle</option>
-                        <option value="can">Can</option>
-                        <option value="pack">Pack</option>
-                        <option value="sachet">Sachet</option>
-                    </select>
-                </div>
-
-            </div>
-
-            <div class="button-row">
-                <button class="primary-button" onclick="saveIngredientPrice()">
-                    SAVE INGREDIENT
-                </button>
-            </div>
-
-        </div>
-
-        <div class="section-box">
-
-            <h3 style="margin-top:0;color:#17324d;">SAVED INGREDIENT PRICES</h3>
-
-            <div id="ingredientPriceList"></div>
-
-        </div>
-
-    </div>
-
-    <!-- SAVED RECORDS -->
-    <div id="recordsScreen" class="screen">
-
-        <div class="section-header">
-            <button class="back-button" onclick="showScreen('homeScreen')">‹</button>
-
-            <div>
-                <h2>Saved Records</h2>
-                <p>View your saved recipes, menus and daily sales</p>
-            </div>
-        </div>
-
-        <div class="section-box">
-
-            <div class="record-section">
-                <h3>Saved Recipes</h3>
-                <div id="savedRecipesList"></div>
-            </div>
-
-            <div class="record-section">
-                <h3>Saved Menus</h3>
-                <div id="savedMenusList"></div>
-            </div>
-
-            <div class="record-section">
-                <h3>Daily Sales Records</h3>
-                <div id="savedSalesList"></div>
-            </div>
-
-        </div>
-
-    </div>
+</section>
 
 </div>
 
-<!-- CONFIRMATION MODAL -->
-<div id="confirmModal" class="modal-overlay">
-
-    <div class="modal-box">
-
-        <div class="modal-title" id="modalTitle">Save this?</div>
-
-        <div class="modal-message" id="modalMessage">
-            Do you want to save this before leaving?
-        </div>
-
-        <div class="modal-buttons">
-
-            <button class="modal-button modal-yes" onclick="modalYes()">
-                YES
-            </button>
-
-            <button class="modal-button modal-no" onclick="modalNo()">
-                NO
-            </button>
-
-            <button class="modal-button modal-cancel" onclick="modalCancel()">
-                CANCEL
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
 
 <script src="script.js"></script>
 
