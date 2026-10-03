@@ -1,3 +1,11 @@
+const SUPABASE_URL = "https://msfapslfenhsshzspwua.supabase.co";
+
+const SUPABASE_KEY = "sb_publishable_ZNFssu6P5t-0DuRF6bflgw_l_t1EVBI";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
 /* =========================================================
    KARINDERYA KALKULATOR
    MOBILE-FIRST BUSINESS CALCULATOR
