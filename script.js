@@ -599,27 +599,15 @@ async function saveIngredient() {
     } else {
 
         ingredientPrices.push({
-            id: Date.now().toString(),
-            name: name,
-            purchasePrice: purchasePrice,
-            quantity: quantity,
-            unit: unit,
-            unitCost: unitCost
-        });
-    }const userId = await getCurrentUserId();
+    id: Date.now().toString(),
+    name: name,
+    purchasePrice: purchasePrice,
+    quantity: quantity,
+    unit: unit,
+    unitCost: unitCost
+});
 
-if (userId) {
-    await supabaseClient
-        .from("ingredients")
-        .insert({
-            user_id: userId,
-            name: name,
-            purchase_price: purchasePrice,
-            quantity: quantity,
-            unit: unit,
-            unit_cost: unitCost
-        });
-}const userId = await getCurrentUserId();
+const userId = await getCurrentUserId();
 
 if (userId) {
     const { error } = await supabaseClient
