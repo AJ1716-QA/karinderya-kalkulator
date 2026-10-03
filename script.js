@@ -4494,3 +4494,13 @@ supabaseClient.auth.onAuthStateChange(function () {
 });
 
 updateAppAccess();
+async function getCurrentUserId() {
+    const { data, error } =
+        await supabaseClient.auth.getUser();
+
+    if (error || !data.user) {
+        return null;
+    }
+
+    return data.user.id;
+}
