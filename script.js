@@ -528,7 +528,7 @@ function handleCustomOtherItem() {
    INGREDIENTS
 ========================================================= */
 
-function saveIngredient() {
+async function saveIngredient() {
 
     const selected =
         document.getElementById("ingredientName").value;
@@ -606,7 +606,20 @@ function saveIngredient() {
             unit: unit,
             unitCost: unitCost
         });
-    }
+    }const userId = await getCurrentUserId();
+
+if (userId) {
+    await supabaseClient
+        .from("ingredients")
+        .insert({
+            user_id: userId,
+            name: name,
+            purchase_price: purchasePrice,
+            quantity: quantity,
+            unit: unit,
+            unit_cost: unitCost
+        });
+}
 
     saveAllData();
 
