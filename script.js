@@ -4474,3 +4474,23 @@ document.getElementById("logoutBtn").addEventListener("click", async function ()
     document.getElementById("authMessage").textContent =
         "You have been logged out.";
 });
+async function updateAppAccess() {
+    const authScreen = document.getElementById("authScreen");
+    const appContainer = document.getElementById("appContainer");
+
+    const { data } = await supabaseClient.auth.getSession();
+
+    if (data.session) {
+        authScreen.style.display = "none";
+        appContainer.style.display = "block";
+    } else {
+        authScreen.style.display = "block";
+        appContainer.style.display = "none";
+    }
+}
+
+supabaseClient.auth.onAuthStateChange(function () {
+    updateAppAccess();
+});
+
+updateAppAccess();
