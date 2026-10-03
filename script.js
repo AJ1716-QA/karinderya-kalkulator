@@ -4425,3 +4425,52 @@ if ("serviceWorker" in navigator) {
     });
 
 }
+document.getElementById("signupBtn").addEventListener("click", async function () {
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+
+    const { data, error } = await supabaseClient.auth.signUp({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+        document.getElementById("authMessage").textContent = error.message;
+        return;
+    }
+
+    document.getElementById("authMessage").textContent =
+        "Account created. Please check your email if confirmation is required.";
+});
+
+
+document.getElementById("loginBtn").addEventListener("click", async function () {
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+        document.getElementById("authMessage").textContent = error.message;
+        return;
+    }
+
+    document.getElementById("authMessage").textContent =
+        "Login successful.";
+});
+
+
+document.getElementById("logoutBtn").addEventListener("click", async function () {
+    const { error } = await supabaseClient.auth.signOut();
+
+    if (error) {
+        document.getElementById("authMessage").textContent = error.message;
+        return;
+    }
+
+    document.getElementById("authMessage").textContent =
+        "You have been logged out.";
+});
