@@ -619,6 +619,23 @@ if (userId) {
             unit: unit,
             unit_cost: unitCost
         });
+}const userId = await getCurrentUserId();
+
+if (userId) {
+    const { error } = await supabaseClient
+        .from("ingredients")
+        .insert({
+            user_id: userId,
+            name: name,
+            purchase_price: purchasePrice,
+            quantity: quantity,
+            unit: unit,
+            unit_cost: unitCost
+        });
+
+    if (error) {
+        console.error("Supabase ingredient save error:", error);
+    }
 }
 
     saveAllData();
