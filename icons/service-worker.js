@@ -1,4 +1,4 @@
-const CACHE_NAME = "karinderya-kalkulator-v1";
+const CACHE_NAME = "karinderya-kalkulator-v2";
 
 const APP_FILES = [
     "./",
