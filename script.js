@@ -598,14 +598,15 @@ async function saveIngredient() {
 
     } else {
 
-        ingredientPrices.push({
-    id: Date.now().toString(),
-    name: name,
-    purchasePrice: purchasePrice,
-    quantity: quantity,
-    unit: unit,
-    unitCost: unitCost
-});
+         ingredientPrices.push({
+            id: Date.now().toString(),
+            name: name,
+            purchasePrice: purchasePrice,
+            quantity: quantity,
+            unit: unit,
+            unitCost: unitCost
+        });
+    }
 
 const userId = await getCurrentUserId();
 
