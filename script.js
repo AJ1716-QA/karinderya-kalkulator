@@ -727,7 +727,114 @@ function deleteIngredient(id) {
 
     renderIngredientList();
 }
+/* =========================================================
+   LOAD AND RENDER OTHER ITEMS FROM SUPABASE
+========================================================= */
 
+async function renderOtherItemList() {
+
+    const container =
+        document.getElementById("otherItemList");
+
+    if (!container) {
+        return;
+    }
+
+    const userId =
+        await getCurrentUserId();
+
+    if (!userId) {
+        container.innerHTML =
+            '<div class="empty">Please log in to view saved items.</div>';
+
+        return;
+    }
+
+    const { data, error } =
+        await supabaseClient
+            .from("other_items")
+            .select("*")
+            .eq("user_id", userId)
+            .order("created_at", {
+                ascending: false
+            });
+
+    if (error) {
+
+        console.error(
+            "Supabase other items load error:",
+            error
+        );
+
+        container.innerHTML =
+            '<div class="empty">Unable to load saved other items.</div>';
+
+        return;
+    }
+
+    otherItems =
+        (data || []).map(function(item) {
+
+            return {
+                id: String(item.id),
+                name: item.name,
+                purchasePrice:
+                    numberValue(item.purchase_price),
+                quantity:
+                    numberValue(item.quantity),
+                unit:
+                    item.unit || "",
+                unitCost:
+                    numberValue(item.unit_cost),
+                sellingPrice:
+                    numberValue(item.selling_price)
+            };
+
+        });
+
+    saveAllData();
+
+    if (otherItems.length === 0) {
+
+        container.innerHTML =
+            '<div class="empty">No other items saved yet.</div>';
+
+        return;
+    }
+
+    container.innerHTML = "";
+
+    otherItems.forEach(function(item) {
+
+        const div =
+            document.createElement("div");
+
+        div.className = "list-item";
+
+        div.innerHTML =
+            '<div class="list-item-title">' +
+            escapeHtml(item.name) +
+            '</div>' +
+
+            '<div class="list-item-info">' +
+            "Purchase: " +
+            money(item.purchasePrice) +
+            " | Quantity: " +
+            item.quantity +
+            " " +
+            escapeHtml(item.unit) +
+            "<br>" +
+            "Unit Cost: " +
+            money(item.unitCost) +
+            "<br>" +
+            "Selling Price: " +
+            money(item.sellingPrice) +
+            "</div>";
+
+        container.appendChild(div);
+
+    });
+}
 
 /* =========================================================
    OTHER ITEMS
