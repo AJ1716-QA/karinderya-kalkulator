@@ -58,6 +58,8 @@ let userDataLoaded = false;
 
 let currentSalesSoldOutFoodIds = [];
 
+let editingOtherItemId = null;
+
  
 
 /* =========================================================
@@ -1854,311 +1856,313 @@ async function deleteIngredient(id) {
 
  
 
-async function saveOtherItem() {
+function getOtherItemField(primaryId, fallbackId) {
+
+    return document.getElementById(primaryId) || document.getElementById(fallbackId);
+
+}
 
  
 
-    const selected =
+function clearOtherItemForm() {
 
-        document.getElementById("otherItemName").value;
-
- 
-
-    let name = selected;
+    editingOtherItemId = null;
 
  
 
-    if (selected === "__custom__") {
+    const name = document.getElementById("otherItemName");
+
+    const purchase = getOtherItemField("otherItemPurchasePrice", "otherPurchasePrice");
+
+    const quantity = getOtherItemField("otherItemQuantity", "otherQuantity");
+
+    const unit = getOtherItemField("otherItemUnit", "otherUnit");
+
+    const selling = getOtherItemField("otherItemSellingPrice", "otherSellingPrice");
+
+    const unitCost = document.getElementById("otherItemUnitCost");
 
  
 
-        name =
+    if (name) name.value = "";
 
-            document.getElementById(
+    if (purchase) purchase.value = "";
 
-                "customOtherItemName"
+    if (quantity) quantity.value = "";
 
-            ).value.trim();
+    if (unit) unit.value = "";
 
-    }
+    if (selling) selling.value = "";
 
- 
-
-    const purchasePrice =
-
-        numberValue(
-
-            document.getElementById(
-
-                "otherPurchasePrice"
-
-            ).value
-
-        );
+    if (unitCost) unitCost.textContent = money(0);
 
  
 
-    const quantity =
+    const button = document.querySelector('[onclick="addOtherItem()"]');
 
-        numberValue(
+    if (button) button.textContent = "Add Other Item";
 
-            document.getElementById(
-
-                "otherQuantity"
-
-            ).value
-
-        );
+}
 
  
 
-    const unit =
+function editOtherItem(id) {
 
-        document.getElementById(
+    const item = otherItems.find(function(record) {
 
-            "otherUnit"
+        return String(record.id) === String(id);
 
-        ).value;
-
- 
-
-    const sellingPrice =
-
-        numberValue(
-
-            document.getElementById(
-
-                "otherSellingPrice"
-
-            ).value
-
-        );
+    });
 
  
 
-    if (!name) {
-
-        showMessage(
-
-            "otherItemMessage",
-
-            "Please select or enter an item.",
-
-            "error"
-
-        );
-
-        return;
-
-    }
+    if (!item) return;
 
  
 
-    if (
-
-        purchasePrice <= 0 ||
-
-        quantity <= 0 ||
-
-        sellingPrice <= 0
-
-    ) {
-
-        showMessage(
-
-            "otherItemMessage",
-
-            "Please enter valid purchase, quantity and selling prices.",
-
-            "error"
-
-        );
-
-        return;
-
-    }
+    editingOtherItemId = String(item.id);
 
  
 
-    const unitCost =
+    const name = document.getElementById("otherItemName");
 
-        purchasePrice / quantity;
+    const purchase = getOtherItemField("otherItemPurchasePrice", "otherPurchasePrice");
 
- 
+    const quantity = getOtherItemField("otherItemQuantity", "otherQuantity");
 
-    const existing =
+    const unit = getOtherItemField("otherItemUnit", "otherUnit");
 
-        otherItems.find(function(item) {
+    const selling = getOtherItemField("otherItemSellingPrice", "otherSellingPrice");
 
-            return item.name.toLowerCase() ===
-
-                name.toLowerCase();
-
-        });
+    const unitCost = document.getElementById("otherItemUnitCost");
 
  
 
-    if (existing) {
+    if (name) name.value = item.name || "";
+
+    if (purchase) purchase.value = item.purchasePrice ?? "";
+
+    if (quantity) quantity.value = item.quantity ?? "";
+
+    if (unit) unit.value = item.unit || "";
+
+    if (selling) selling.value = item.sellingPrice ?? "";
+
+    if (unitCost) unitCost.textContent = money(item.unitCost || 0);
 
  
 
-        existing.purchasePrice = purchasePrice;
+    const button = document.querySelector('[onclick="addOtherItem()"]');
 
-        existing.quantity = quantity;
-
-        existing.unit = unit;
-
-        existing.unitCost = unitCost;
-
-        existing.sellingPrice = sellingPrice;
+    if (button) button.textContent = "Update Other Item";
 
  
 
-    } else {
+    const section = document.getElementById("otherItemName");
+
+    if (section) section.scrollIntoView({ behavior: "smooth", block: "center" });
+
+}
 
  
 
-        otherItems.push({
+async function deleteOtherItem(id) {
 
-            id: Date.now().toString(),
-
-            name: name,
-
-            purchasePrice: purchasePrice,
-
-            quantity: quantity,
-
-            unit: unit,
-
-            unitCost: unitCost,
-
-            sellingPrice: sellingPrice
-
-        });
-
-    }
-
- 
-
-    /* SAVE OTHER ITEM TO SUPABASE */
+    if (!confirm("Delete this other item?")) return;
 
  
 
     const userId = await getCurrentUserId();
 
- 
-
-    if (userId) {
+    if (!userId) return;
 
  
 
-        const { error } =
+    const { error } = await supabaseClient
 
-            await supabaseClient
+        .from("other_items")
 
-                .from("other_items")
+        .delete()
 
-                .insert({
+        .eq("id", Number(id))
 
-                    user_id: userId,
-
-                    name: name,
-
-                    purchase_price: purchasePrice,
-
-                    quantity: quantity,
-
-                    unit: unit,
-
-                    unit_cost: unitCost,
-
-                    selling_price: sellingPrice
-
-                });
+        .eq("user_id", userId);
 
  
 
-        if (error) {
+    if (error) {
 
-            console.error(
+        console.error("Supabase other item delete error:", error);
 
-                "Supabase other item save error:",
+        showMessage("otherItemMessage", "Unable to delete other item.", "error");
 
-                error
-
-            );
-
-        }
+        return;
 
     }
 
  
 
-    saveAllData();
+    if (String(editingOtherItemId) === String(id)) {
+
+        clearOtherItemForm();
+
+    }
 
  
 
-    showMessage(
+    await renderOtherItemList();
 
-        "otherItemMessage",
-
-        "Other item saved successfully.",
-
-        "success"
-
-    );
-
- 
-
-    document.getElementById(
-
-        "otherPurchasePrice"
-
-    ).value = "";
-
- 
-
-    document.getElementById(
-
-        "otherQuantity"
-
-    ).value = "";
-
- 
-
-    document.getElementById(
-
-        "otherSellingPrice"
-
-    ).value = "";
-
- 
-
-    document.getElementById(
-
-        "customOtherItemName"
-
-    ).value = "";
-
- 
-
-    document.getElementById(
-
-        "otherItemName"
-
-    ).value = "";
-
- 
-
-    handleCustomOtherItem();
-
- 
-
-    renderOtherItemList();
+    showMessage("otherItemMessage", "Other item deleted successfully.", "success");
 
 }
 
  
+
+async function addOtherItem() {
+
+    const nameEl = document.getElementById("otherItemName");
+
+    const purchaseEl = getOtherItemField("otherItemPurchasePrice", "otherPurchasePrice");
+
+    const quantityEl = getOtherItemField("otherItemQuantity", "otherQuantity");
+
+    const unitEl = getOtherItemField("otherItemUnit", "otherUnit");
+
+    const sellingEl = getOtherItemField("otherItemSellingPrice", "otherSellingPrice");
+
+ 
+
+    const name = nameEl ? nameEl.value.trim() : "";
+
+    const purchasePrice = numberValue(purchaseEl ? purchaseEl.value : 0);
+
+    const quantity = numberValue(quantityEl ? quantityEl.value : 0);
+
+    const unit = unitEl ? unitEl.value.trim() : "";
+
+    const sellingPrice = numberValue(sellingEl ? sellingEl.value : 0);
+
+ 
+
+    if (!name) {
+
+        showMessage("otherItemMessage", "Please enter an item name.", "error");
+
+        return;
+
+    }
+
+ 
+
+    if (purchasePrice <= 0 || quantity <= 0 || sellingPrice <= 0) {
+
+        showMessage("otherItemMessage", "Please enter valid purchase, quantity and selling prices.", "error");
+
+        return;
+
+    }
+
+ 
+
+    const unitCost = purchasePrice / quantity;
+
+    const userId = await getCurrentUserId();
+
+    if (!userId) return;
+
+ 
+
+    if (editingOtherItemId) {
+
+        const { error } = await supabaseClient
+
+            .from("other_items")
+
+            .update({
+
+                name: name,
+
+                purchase_price: purchasePrice,
+
+                quantity: quantity,
+
+                unit: unit,
+
+                unit_cost: unitCost,
+
+                selling_price: sellingPrice
+
+            })
+
+            .eq("id", Number(editingOtherItemId))
+
+            .eq("user_id", userId);
+
+ 
+
+        if (error) {
+
+            console.error("Supabase other item update error:", error);
+
+            showMessage("otherItemMessage", "Unable to update other item.", "error");
+
+            return;
+
+        }
+
+ 
+
+        showMessage("otherItemMessage", "Other item updated successfully.", "success");
+
+    } else {
+
+        const { error } = await supabaseClient
+
+            .from("other_items")
+
+            .insert({
+
+                user_id: userId,
+
+                name: name,
+
+                purchase_price: purchasePrice,
+
+                quantity: quantity,
+
+                unit: unit,
+
+                unit_cost: unitCost,
+
+                selling_price: sellingPrice
+
+            });
+
+ 
+
+        if (error) {
+
+            console.error("Supabase other item save error:", error);
+
+            showMessage("otherItemMessage", "Unable to save other item.", "error");
+
+            return;
+
+        }
+
+ 
+
+        showMessage("otherItemMessage", "Other item saved successfully.", "success");
+
+    }
+
+ 
+
+    clearOtherItemForm();
+
+    await renderOtherItemList();
+
+}
 
  
 
@@ -2172,13 +2176,9 @@ async function renderOtherItemList() {
 
     const userId = await getCurrentUserId();
 
- 
-
     if (!userId) {
 
-        container.innerHTML =
-
-            '<div class="empty">Please log in to view saved items.</div>';
+        container.innerHTML = '<div class="empty">Please log in to view saved items.</div>';
 
         return;
 
@@ -2186,17 +2186,15 @@ async function renderOtherItemList() {
 
  
 
-    const { data, error } =
+    const { data, error } = await supabaseClient
 
-        await supabaseClient
+        .from("other_items")
 
-            .from("other_items")
+        .select("*")
 
-            .select("*")
+        .eq("user_id", userId)
 
-            .eq("user_id", userId)
-
-            .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false });
 
  
 
@@ -2204,9 +2202,7 @@ async function renderOtherItemList() {
 
         console.error("Supabase other items load error:", error);
 
-        container.innerHTML =
-
-            '<div class="empty">Unable to load saved other items.</div>';
+        container.innerHTML = '<div class="empty">Unable to load saved other items.</div>';
 
         return;
 
@@ -2214,37 +2210,33 @@ async function renderOtherItemList() {
 
  
 
-    otherItems =
+    otherItems = (data || []).map(function(item) {
 
-        (data || []).map(function(item) {
+        return {
 
-            return {
+            id: String(item.id),
 
-                id: String(item.id),
+            name: item.name,
 
-                name: item.name,
+            purchasePrice: numberValue(item.purchase_price),
 
-                purchasePrice: numberValue(item.purchase_price),
+            quantity: numberValue(item.quantity),
 
-                quantity: numberValue(item.quantity),
+            unit: item.unit || "",
 
-                unit: item.unit || "",
+            unitCost: numberValue(item.unit_cost),
 
-                unitCost: numberValue(item.unit_cost),
+            sellingPrice: numberValue(item.selling_price)
 
-                sellingPrice: numberValue(item.selling_price)
+        };
 
-            };
-
-        });
+    });
 
  
 
     if (otherItems.length === 0) {
 
-        container.innerHTML =
-
-            '<div class="empty">No other items saved yet.</div>';
+        container.innerHTML = '<div class="empty">No other items saved yet.</div>';
 
         return;
 
@@ -2262,47 +2254,27 @@ async function renderOtherItemList() {
 
         div.className = "list-item";
 
- 
-
         div.innerHTML =
 
-            '<div class="list-item-title">' +
-
-            escapeHtml(item.name) +
-
-            '</div>' +
-
- 
+            '<div class="list-item-title">' + escapeHtml(item.name) + '</div>' +
 
             '<div class="list-item-info">' +
 
-            "Purchase: " +
+            "Purchase: " + money(item.purchasePrice) + " | Quantity: " + item.quantity + " " + escapeHtml(item.unit) + "<br>" +
 
-            money(item.purchasePrice) +
+            "Unit Cost: " + money(item.unitCost) + "<br>" +
 
-            " | Quantity: " +
+            "Selling Price: " + money(item.sellingPrice) +
 
-            item.quantity +
+            '</div>' +
 
-            " " +
+            '<div class="button-row" style="margin-top:8px;">' +
 
-            escapeHtml(item.unit) +
+            '<button type="button" class="btn btn-secondary btn-small" onclick="editOtherItem(\'' + String(item.id).replace(/'/g, "\\'") + '\')">Edit</button>' +
 
-            "<br>" +
+            '<button type="button" class="btn btn-danger btn-small" onclick="deleteOtherItem(\'' + String(item.id).replace(/'/g, "\\'") + '\')">Delete</button>' +
 
-            "Unit Cost: " +
-
-            money(item.unitCost) +
-
-            "<br>" +
-
-            "Selling Price: " +
-
-            money(item.sellingPrice) +
-
-            "</div>";
-
- 
+            '</div>';
 
         container.appendChild(div);
 
@@ -2384,45 +2356,27 @@ async function loadRecipeScreen() {
 
 function addRecipeIngredient() {
 
- 
+    const container = document.getElementById("recipeIngredients");
 
-    const container =
+    const row = document.createElement("div");
 
-        document.getElementById(
-
-            "recipeIngredients"
-
-        );
-
- 
-
-    const row =
-
-        document.createElement("div");
-
- 
-
-    row.className =
-
-        "recipe-ingredient-row";
+    row.className = "recipe-ingredient-row";
 
  
 
     row.innerHTML =
 
-        '<div>' +
+        '<div style="position:relative;">' +
 
         '<label style="font-size:10px;font-weight:700;">Ingredient</label>' +
 
-        '<select class="recipe-ingredient-select" onchange="calculateRecipeTotal(); refreshRecipeIngredientDropdowns()">' +
+        '<input type="text" class="recipe-ingredient-search" autocomplete="off" placeholder="Type to search ingredient..." oninput="filterRecipeIngredientSearch(this)" onfocus="showRecipeIngredientSearch(this)">' +
 
-        '<option value="">Select...</option>' +
+        '<div class="recipe-ingredient-results" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:1000;background:#fff;border:1px solid #ccc;border-radius:6px;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>' +
 
-        '</select>' +
+        '<select class="recipe-ingredient-select" style="display:none;"></select>' +
 
         '</div>' +
-
- 
 
         '<div>' +
 
@@ -2432,37 +2386,23 @@ function addRecipeIngredient() {
 
         '</div>' +
 
- 
-
         '<div>' +
 
         '<label style="font-size:10px;font-weight:700;">Unit</label>' +
 
         '<select class="recipe-unit" onchange="calculateRecipeTotal()">' +
 
-        '<option value="kg">kg</option>' +
-
-        '<option value="g">g</option>' +
-
-        '<option value="liter">liter</option>' +
-
-        '<option value="ml">ml</option>' +
-
-        '<option value="piece">piece</option>' +
+        '<option value="kg">kg</option><option value="g">g</option><option value="liter">liter</option><option value="ml">ml</option><option value="piece">piece</option>' +
 
         '</select>' +
 
         '</div>' +
 
- 
-
-        '<button class="btn btn-danger btn-small" onclick="removeRecipeIngredient(this)">×</button>';
+        '<button type="button" class="btn btn-danger btn-small" onclick="removeRecipeIngredient(this)">×</button>';
 
  
 
     container.appendChild(row);
-
- 
 
     populateRecipeIngredientSelect(row);
 
@@ -2470,97 +2410,51 @@ function addRecipeIngredient() {
 
  
 
+function getSelectedRecipeIngredientIds(excludeSelect) {
+
+    const ids = [];
+
+    document.querySelectorAll(".recipe-ingredient-select").forEach(function(select) {
+
+        if (select !== excludeSelect && select.value) ids.push(String(select.value));
+
+    });
+
+    return ids;
+
+}
+
  
 
 function populateRecipeIngredientSelect(row) {
 
- 
+    const select = row.querySelector(".recipe-ingredient-select");
 
-    const select =
+    const input = row.querySelector(".recipe-ingredient-search");
 
-        row.querySelector(
-
-            ".recipe-ingredient-select"
-
-        );
+    if (!select || !input) return;
 
  
 
-    if (!select) {
+    const currentValue = String(select.value || "");
 
-        return;
-
-    }
+    const selectedIds = getSelectedRecipeIngredientIds(select);
 
  
 
-    const currentValue = select.value;
-
- 
-
-    const selectedIds = [];
-
- 
-
-    document
-
-        .querySelectorAll(".recipe-ingredient-select")
-
-        .forEach(function(otherSelect) {
-
- 
-
-            if (
-
-                otherSelect !== select &&
-
-                otherSelect.value
-
-            ) {
-
-                selectedIds.push(String(otherSelect.value));
-
-            }
-
-        });
-
- 
-
-    select.innerHTML =
-
-        '<option value="">Select...</option>';
-
- 
+    select.innerHTML = '<option value="">Select...</option>';
 
     ingredientPrices.forEach(function(item) {
 
- 
+        const id = String(item.id);
 
-        const option =
+        if (selectedIds.includes(id) && id !== currentValue) return;
 
-            document.createElement("option");
+        const option = document.createElement("option");
 
- 
-
-        option.value = item.id;
+        option.value = id;
 
         option.textContent = item.name;
-
- 
-
-        if (
-
-            selectedIds.includes(String(item.id)) &&
-
-            String(item.id) !== String(currentValue)
-
-        ) {
-
-            return;
-
-        }
-
- 
 
         select.appendChild(option);
 
@@ -2572,41 +2466,137 @@ function populateRecipeIngredientSelect(row) {
 
         select.value = currentValue;
 
+        const current = ingredientPrices.find(function(item) { return String(item.id) === currentValue; });
+
+        input.value = current ? current.name : "";
+
     }
 
 }
 
  
 
+function renderRecipeIngredientSearch(input, query) {
+
+    const row = input.closest(".recipe-ingredient-row");
+
+    if (!row) return;
+
+    const results = row.querySelector(".recipe-ingredient-results");
+
+    const select = row.querySelector(".recipe-ingredient-select");
+
+    if (!results || !select) return;
+
  
 
-function refreshRecipeIngredientDropdowns() {
+    const selectedIds = getSelectedRecipeIngredientIds(select);
+
+    const q = String(query || "").trim().toLowerCase();
+
+    const matches = ingredientPrices.filter(function(item) {
+
+        const id = String(item.id);
+
+        return !selectedIds.includes(id) && (!q || String(item.name).toLowerCase().includes(q));
+
+    }).slice(0, 30);
 
  
 
-    document
+    results.innerHTML = "";
 
-        .querySelectorAll(".recipe-ingredient-row")
+    if (!matches.length) {
 
-        .forEach(function(row) {
+        results.innerHTML = '<div style="padding:9px;color:#777;font-size:12px;">No available ingredients found.</div>';
 
-            populateRecipeIngredientSelect(row);
+        results.style.display = "block";
 
-        });
+        return;
+
+    }
+
+ 
+
+    matches.forEach(function(item) {
+
+        const option = document.createElement("div");
+
+        option.textContent = item.name;
+
+        option.style.cssText = "padding:9px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid #eee;";
+
+        option.onmousedown = function(event) {
+
+            event.preventDefault();
+
+            selectRecipeIngredient(input, item.id);
+
+        };
+
+        results.appendChild(option);
+
+    });
+
+    results.style.display = "block";
 
 }
 
  
 
- 
+function showRecipeIngredientSearch(input) {
 
-function removeRecipeIngredient(button) {
+    renderRecipeIngredientSearch(input, input.value);
 
- 
-
-    button.parentElement.remove();
+}
 
  
+
+function filterRecipeIngredientSearch(input) {
+
+    const row = input.closest(".recipe-ingredient-row");
+
+    if (!row) return;
+
+    const select = row.querySelector(".recipe-ingredient-select");
+
+    if (select && select.value) {
+
+        select.value = "";
+
+        calculateRecipeTotal();
+
+        refreshRecipeIngredientDropdowns();
+
+    }
+
+    renderRecipeIngredientSearch(input, input.value);
+
+}
+
+ 
+
+function selectRecipeIngredient(input, id) {
+
+    const row = input.closest(".recipe-ingredient-row");
+
+    if (!row) return;
+
+    const select = row.querySelector(".recipe-ingredient-select");
+
+    const results = row.querySelector(".recipe-ingredient-results");
+
+    const item = ingredientPrices.find(function(record) { return String(record.id) === String(id); });
+
+    if (!select || !item) return;
+
+ 
+
+    select.value = String(item.id);
+
+    input.value = item.name;
+
+    if (results) results.style.display = "none";
 
     calculateRecipeTotal();
 
@@ -2615,6 +2605,30 @@ function removeRecipeIngredient(button) {
 }
 
  
+
+function refreshRecipeIngredientDropdowns() {
+
+    document.querySelectorAll(".recipe-ingredient-row").forEach(function(row) {
+
+        populateRecipeIngredientSelect(row);
+
+    });
+
+}
+
+ 
+
+function removeRecipeIngredient(button) {
+
+    const row = button.closest(".recipe-ingredient-row");
+
+    if (row) row.remove();
+
+    calculateRecipeTotal();
+
+    refreshRecipeIngredientDropdowns();
+
+}
 
  
 
