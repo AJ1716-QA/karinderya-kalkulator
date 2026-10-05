@@ -1140,7 +1140,7 @@ function addRecipeIngredient() {
     row.innerHTML =
         '<div>' +
         '<label style="font-size:10px;font-weight:700;">Ingredient</label>' +
-        '<select class="recipe-ingredient-select" onchange="calculateRecipeTotal()">' +
+        <select class="recipe-ingredient-select" onchange="calculateRecipeTotal(); refreshRecipeIngredientDropdowns();"> +
         '<option value="">Select...</option>' +
         '</select>' +
         '</div>' +
@@ -1172,9 +1172,28 @@ function addRecipeIngredient() {
 function populateRecipeIngredientSelect(row) {
 
     const select =
-        row.querySelector(
-            ".recipe-ingredient-select"
-        );
+        row.querySelector(".recipe-ingredient-select");
+
+    if (!select) return;
+
+    const currentValue = select.value;
+
+    const selectedIds = [];
+
+    document
+        .querySelectorAll(".recipe-ingredient-select")
+        .forEach(function(otherSelect) {
+
+            if (
+                otherSelect !== select &&
+                otherSelect.value
+            ) {
+                selectedIds.push(String(otherSelect.value));
+            }
+        });
+
+    select.innerHTML =
+        '<option value="">Select...</option>';
 
     ingredientPrices.forEach(function(item) {
 
@@ -1184,10 +1203,30 @@ function populateRecipeIngredientSelect(row) {
         option.value = item.id;
         option.textContent = item.name;
 
+        if (
+            selectedIds.includes(String(item.id)) &&
+            String(item.id) !== String(currentValue)
+        ) {
+            option.disabled = true;
+        }
+
         select.appendChild(option);
     });
-}
 
+    if (currentValue) {
+        select.value = currentValue;
+    }
+}
+function refreshRecipeIngredientDropdowns() {
+
+    document
+        .querySelectorAll(".recipe-ingredient-row")
+        .forEach(function(row) {
+
+            populateRecipeIngredientSelect(row);
+
+        });
+}
 
 function removeRecipeIngredient(button) {
 
