@@ -658,7 +658,7 @@ if (userId) {
 }
 
 
-function renderIngredientList() {
+async function renderIngredientList() {
 
     const container =
         document.getElementById("ingredientList");
@@ -666,6 +666,58 @@ function renderIngredientList() {
     if (!container) {
         return;
     }
+
+    const userId =
+        await getCurrentUserId();
+
+    if (!userId) {
+        container.innerHTML =
+            '<div class="empty">Please log in to view saved ingredients.</div>';
+
+        return;
+    }
+
+    const { data, error } =
+        await supabaseClient
+            .from("ingredients")
+            .select("*")
+            .eq("user_id", userId)
+            .order("created_at", {
+                ascending: false
+            });
+
+    if (error) {
+
+        console.error(
+            "Supabase ingredients load error:",
+            error
+        );
+
+        container.innerHTML =
+            '<div class="empty">Unable to load saved ingredients.</div>';
+
+        return;
+    }
+
+    ingredientPrices =
+        (data || []).map(function(item) {
+
+            return {
+                id: String(item.id),
+                name: item.name,
+                purchasePrice:
+                    numberValue(item.purchase_price),
+                quantity:
+                    numberValue(item.quantity),
+                unit:
+                    item.unit || "",
+                unitCost:
+                    numberValue(item.unit_cost)
+            };
+
+        });
+
+    saveAllData();
 
     if (ingredientPrices.length === 0) {
 
@@ -708,9 +760,9 @@ function renderIngredientList() {
             "</div>";
 
         container.appendChild(div);
+
     });
 }
-
 
 function deleteIngredient(id) {
 
