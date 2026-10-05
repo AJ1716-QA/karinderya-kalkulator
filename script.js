@@ -1,3 +1,4 @@
+// Supabase commercial version
 const SUPABASE_URL = "https://msfapslfenhsshzspwua.supabase.co";
 
 const SUPABASE_KEY = "sb_publishable_ZNFssu6P5t-0DuRF6bflgw_l_t1EVBI";
