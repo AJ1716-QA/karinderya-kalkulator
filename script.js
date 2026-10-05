@@ -17,33 +17,141 @@ const supabaseClient = window.supabase.createClient(
    LOCAL STORAGE
 ========================================================= */
 
-let savedRecipes =
-    JSON.parse(localStorage.getItem("savedRecipes")) || [];
+let savedRecipes = [];
+let savedMenus = [];
+let ingredientPrices = [];
+let otherItems = [];
+let dailySalesRecords = [];
+let profitRecords = [];
+let targetFoodCost = 40;
 
-let savedMenus =
-    JSON.parse(localStorage.getItem("savedMenus")) || [];
-
-let ingredientPrices =
-    JSON.parse(localStorage.getItem("ingredientPrices")) || [];
-
-let otherItems =
-    JSON.parse(localStorage.getItem("otherItems")) || [];
-
-let dailySalesRecords =
-    JSON.parse(localStorage.getItem("dailySalesRecords")) || [];
-
-let profitRecords =
-    JSON.parse(localStorage.getItem("profitRecords")) || [];
-
-let targetFoodCost =
-    Number(localStorage.getItem("targetFoodCost"));
-
-if (!targetFoodCost || targetFoodCost <= 0) {
-    targetFoodCost = 40;
-}
-
+let currentUserId = null;
+let userDataLoaded = false;
 let currentSalesSoldOutFoodIds = [];
 
+/* =========================================================
+   USER-SCOPED LOCAL DATA
+   =========================================================
+   Recipes, menus, daily sales and profit records are kept
+   locally, but under the authenticated user's ID.
+   This prevents Account 2 from seeing Account 1's local data.
+========================================================= */
+
+function userStorageKey(name) {
+    if (!currentUserId) {
+        return null;
+    }
+    return "kk_" + currentUserId + "_" + name;
+}
+
+function readUserData(name, fallback) {
+    const key = userStorageKey(name);
+    if (!key) return fallback;
+
+    try {
+        const value = localStorage.getItem(key);
+        return value === null ? fallback : JSON.parse(value);
+    } catch (error) {
+        console.error("Unable to read user data:", name, error);
+        return fallback;
+    }
+}
+
+function saveUserData(name, value) {
+    const key = userStorageKey(name);
+    if (!key) return;
+
+    localStorage.setItem(key, JSON.stringify(value));
+}
+
+function loadUserScopedData(userId) {
+    currentUserId = userId || null;
+    userDataLoaded = false;
+
+    if (!currentUserId) {
+        savedRecipes = [];
+        savedMenus = [];
+        ingredientPrices = [];
+        otherItems = [];
+        dailySalesRecords = [];
+        profitRecords = [];
+        targetFoodCost = 40;
+        currentSalesSoldOutFoodIds = [];
+        return;
+    }
+
+    /*
+       IMPORTANT:
+       The old version stored all non-Supabase data in unscoped
+       localStorage. On the first authenticated login after this
+       update, migrate that old data to THIS account only.
+       The first account to log in after deployment must be Account 1.
+    */
+    const migrationKey = "kk_legacy_data_migrated";
+
+    if (
+        localStorage.getItem(migrationKey) !== "yes" &&
+        (
+            localStorage.getItem("savedRecipes") !== null ||
+            localStorage.getItem("savedMenus") !== null ||
+            localStorage.getItem("dailySalesRecords") !== null ||
+            localStorage.getItem("profitRecords") !== null
+        )
+    ) {
+        try {
+            const legacyRecipes =
+                JSON.parse(localStorage.getItem("savedRecipes")) || [];
+            const legacyMenus =
+                JSON.parse(localStorage.getItem("savedMenus")) || [];
+            const legacySales =
+                JSON.parse(localStorage.getItem("dailySalesRecords")) || [];
+            const legacyProfit =
+                JSON.parse(localStorage.getItem("profitRecords")) || [];
+            const legacyTarget =
+                Number(localStorage.getItem("targetFoodCost"));
+
+            saveUserData("savedRecipes", legacyRecipes);
+            saveUserData("savedMenus", legacyMenus);
+            saveUserData("dailySalesRecords", legacySales);
+            saveUserData("profitRecords", legacyProfit);
+
+            if (legacyTarget > 0) {
+                saveUserData("targetFoodCost", legacyTarget);
+            }
+
+            localStorage.setItem(migrationKey, "yes");
+
+            localStorage.removeItem("savedRecipes");
+            localStorage.removeItem("savedMenus");
+            localStorage.removeItem("dailySalesRecords");
+            localStorage.removeItem("profitRecords");
+            localStorage.removeItem("targetFoodCost");
+        } catch (error) {
+            console.error("Legacy data migration error:", error);
+        }
+    }
+
+    savedRecipes = readUserData("savedRecipes", []);
+    savedMenus = readUserData("savedMenus", []);
+    dailySalesRecords = readUserData("dailySalesRecords", []);
+    profitRecords = readUserData("profitRecords", []);
+
+    targetFoodCost =
+        Number(readUserData("targetFoodCost", 40));
+
+    if (!targetFoodCost || targetFoodCost <= 0) {
+        targetFoodCost = 40;
+    }
+
+    /*
+       Ingredients and Other Items are cloud data. They are loaded
+       separately from Supabase after authentication.
+    */
+    ingredientPrices = [];
+    otherItems = [];
+
+    userDataLoaded = true;
+}
 
 /* =========================================================
    MASTER INGREDIENT LIST
@@ -328,43 +436,16 @@ function escapeHtml(value) {
 
 
 function saveAllData() {
+    if (!currentUserId || !userDataLoaded) {
+        return;
+    }
 
-    localStorage.setItem(
-        "savedRecipes",
-        JSON.stringify(savedRecipes)
-    );
-
-    localStorage.setItem(
-        "savedMenus",
-        JSON.stringify(savedMenus)
-    );
-
-    localStorage.setItem(
-        "ingredientPrices",
-        JSON.stringify(ingredientPrices)
-    );
-
-    localStorage.setItem(
-        "otherItems",
-        JSON.stringify(otherItems)
-    );
-
-    localStorage.setItem(
-        "dailySalesRecords",
-        JSON.stringify(dailySalesRecords)
-    );
-
-    localStorage.setItem(
-        "profitRecords",
-        JSON.stringify(profitRecords)
-    );
-
-    localStorage.setItem(
-        "targetFoodCost",
-        String(targetFoodCost)
-    );
+    saveUserData("savedRecipes", savedRecipes);
+    saveUserData("savedMenus", savedMenus);
+    saveUserData("dailySalesRecords", dailySalesRecords);
+    saveUserData("profitRecords", profitRecords);
+    saveUserData("targetFoodCost", targetFoodCost);
 }
-
 
 /* =========================================================
    SCREEN NAVIGATION
@@ -659,21 +740,14 @@ if (userId) {
 
 
 async function renderIngredientList() {
+    const container = document.getElementById("ingredientList");
+    if (!container) return;
 
-    const container =
-        document.getElementById("ingredientList");
-
-    if (!container) {
-        return;
-    }
-
-    const userId =
-        await getCurrentUserId();
+    const userId = await getCurrentUserId();
 
     if (!userId) {
         container.innerHTML =
             '<div class="empty">Please log in to view saved ingredients.</div>';
-
         return;
     }
 
@@ -682,58 +756,37 @@ async function renderIngredientList() {
             .from("ingredients")
             .select("*")
             .eq("user_id", userId)
-            .order("created_at", {
-                ascending: false
-            });
+            .order("created_at", { ascending: false });
 
     if (error) {
-
-        console.error(
-            "Supabase ingredients load error:",
-            error
-        );
-
+        console.error("Supabase ingredients load error:", error);
         container.innerHTML =
             '<div class="empty">Unable to load saved ingredients.</div>';
-
         return;
     }
 
     ingredientPrices =
         (data || []).map(function(item) {
-
             return {
                 id: String(item.id),
                 name: item.name,
-                purchasePrice:
-                    numberValue(item.purchase_price),
-                quantity:
-                    numberValue(item.quantity),
-                unit:
-                    item.unit || "",
-                unitCost:
-                    numberValue(item.unit_cost)
+                purchasePrice: numberValue(item.purchase_price),
+                quantity: numberValue(item.quantity),
+                unit: item.unit || "",
+                unitCost: numberValue(item.unit_cost)
             };
-
         });
 
-    saveAllData();
-
     if (ingredientPrices.length === 0) {
-
         container.innerHTML =
             '<div class="empty">No ingredients saved yet.</div>';
-
         return;
     }
 
     container.innerHTML = "";
 
     ingredientPrices.forEach(function(item) {
-
-        const div =
-            document.createElement("div");
-
+        const div = document.createElement("div");
         div.className = "list-item";
 
         div.innerHTML =
@@ -760,133 +813,35 @@ async function renderIngredientList() {
             "</div>";
 
         container.appendChild(div);
-
     });
 }
 
-function deleteIngredient(id) {
 
+async function deleteIngredient(id) {
     if (!confirm("Delete this ingredient?")) {
         return;
     }
 
-    ingredientPrices =
-        ingredientPrices.filter(function(item) {
-            return item.id !== id;
-        });
-
-    saveAllData();
-
-    renderIngredientList();
-}
-/* =========================================================
-   LOAD AND RENDER OTHER ITEMS FROM SUPABASE
-========================================================= */
-
-async function renderOtherItemList() {
-
-    const container =
-        document.getElementById("otherItemList");
-
-    if (!container) {
-        return;
-    }
-
-    const userId =
-        await getCurrentUserId();
-
-    if (!userId) {
-        container.innerHTML =
-            '<div class="empty">Please log in to view saved items.</div>';
-
-        return;
-    }
-
-    const { data, error } =
+    const { error } =
         await supabaseClient
-            .from("other_items")
-            .select("*")
-            .eq("user_id", userId)
-            .order("created_at", {
-                ascending: false
-            });
+            .from("ingredients")
+            .delete()
+            .eq("id", Number(id))
+            .eq("user_id", currentUserId);
 
     if (error) {
-
-        console.error(
-            "Supabase other items load error:",
-            error
+        console.error("Supabase ingredient delete error:", error);
+        showMessage(
+            "ingredientMessage",
+            "Unable to delete ingredient.",
+            "error"
         );
-
-        container.innerHTML =
-            '<div class="empty">Unable to load saved other items.</div>';
-
         return;
     }
 
-    otherItems =
-        (data || []).map(function(item) {
-
-            return {
-                id: String(item.id),
-                name: item.name,
-                purchasePrice:
-                    numberValue(item.purchase_price),
-                quantity:
-                    numberValue(item.quantity),
-                unit:
-                    item.unit || "",
-                unitCost:
-                    numberValue(item.unit_cost),
-                sellingPrice:
-                    numberValue(item.selling_price)
-            };
-
-        });
-
-    saveAllData();
-
-    if (otherItems.length === 0) {
-
-        container.innerHTML =
-            '<div class="empty">No other items saved yet.</div>';
-
-        return;
-    }
-
-    container.innerHTML = "";
-
-    otherItems.forEach(function(item) {
-
-        const div =
-            document.createElement("div");
-
-        div.className = "list-item";
-
-        div.innerHTML =
-            '<div class="list-item-title">' +
-            escapeHtml(item.name) +
-            '</div>' +
-
-            '<div class="list-item-info">' +
-            "Purchase: " +
-            money(item.purchasePrice) +
-            " | Quantity: " +
-            item.quantity +
-            " " +
-            escapeHtml(item.unit) +
-            "<br>" +
-            "Unit Cost: " +
-            money(item.unitCost) +
-            "<br>" +
-            "Selling Price: " +
-            money(item.sellingPrice) +
-            "</div>";
-
-        container.appendChild(div);
-
-    });
+    await renderIngredientList();
 }
+
 
 /* =========================================================
    OTHER ITEMS
@@ -1044,6 +999,83 @@ async function saveOtherItem() {
 
     renderOtherItemList();
 }
+
+
+async function renderOtherItemList() {
+    const container = document.getElementById("otherItemList");
+    if (!container) return;
+
+    const userId = await getCurrentUserId();
+
+    if (!userId) {
+        container.innerHTML =
+            '<div class="empty">Please log in to view saved items.</div>';
+        return;
+    }
+
+    const { data, error } =
+        await supabaseClient
+            .from("other_items")
+            .select("*")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false });
+
+    if (error) {
+        console.error("Supabase other items load error:", error);
+        container.innerHTML =
+            '<div class="empty">Unable to load saved other items.</div>';
+        return;
+    }
+
+    otherItems =
+        (data || []).map(function(item) {
+            return {
+                id: String(item.id),
+                name: item.name,
+                purchasePrice: numberValue(item.purchase_price),
+                quantity: numberValue(item.quantity),
+                unit: item.unit || "",
+                unitCost: numberValue(item.unit_cost),
+                sellingPrice: numberValue(item.selling_price)
+            };
+        });
+
+    if (otherItems.length === 0) {
+        container.innerHTML =
+            '<div class="empty">No other items saved yet.</div>';
+        return;
+    }
+
+    container.innerHTML = "";
+
+    otherItems.forEach(function(item) {
+        const div = document.createElement("div");
+        div.className = "list-item";
+
+        div.innerHTML =
+            '<div class="list-item-title">' +
+            escapeHtml(item.name) +
+            '</div>' +
+
+            '<div class="list-item-info">' +
+            "Purchase: " +
+            money(item.purchasePrice) +
+            " | Quantity: " +
+            item.quantity +
+            " " +
+            escapeHtml(item.unit) +
+            "<br>" +
+            "Unit Cost: " +
+            money(item.unitCost) +
+            "<br>" +
+            "Selling Price: " +
+            money(item.sellingPrice) +
+            "</div>";
+
+        container.appendChild(div);
+    });
+}
+
 
 /* =========================================================
    RECIPE
@@ -1686,10 +1718,7 @@ function saveTargetFoodCost() {
 
     targetFoodCost = value;
 
-    localStorage.setItem(
-        "targetFoodCost",
-        String(targetFoodCost)
-    );
+    saveAllData();
 
     loadMenuOfDay();
 
@@ -4458,81 +4487,86 @@ function showMessage(
    INITIALIZATION
 ========================================================= */
 
+async function initializeUserData() {
+    const { data, error } =
+        await supabaseClient.auth.getUser();
+
+    if (error || !data.user) {
+        currentUserId = null;
+        userDataLoaded = false;
+        return;
+    }
+
+    loadUserScopedData(data.user.id);
+
+    await renderIngredientList();
+    await renderOtherItemList();
+
+    updateDashboard();
+}
+
+
 document.addEventListener(
     "DOMContentLoaded",
-    function() {
+    async function() {
 
         populateMasterIngredientSelect();
-
         populateMasterOtherItemSelect();
 
         const recipeDate =
-            document.getElementById(
-                "recipeDate"
-            );
+            document.getElementById("recipeDate");
 
         if (recipeDate) {
-            recipeDate.value =
-                todayString();
+            recipeDate.value = todayString();
         }
 
         const savedRecipeDate =
-            document.getElementById(
-                "savedRecipeDate"
-            );
+            document.getElementById("savedRecipeDate");
 
         if (savedRecipeDate) {
-            savedRecipeDate.value =
-                todayString();
+            savedRecipeDate.value = todayString();
         }
 
         const menuDate =
-            document.getElementById(
-                "menuDate"
-            );
+            document.getElementById("menuDate");
 
         if (menuDate) {
-            menuDate.value =
-                todayString();
+            menuDate.value = todayString();
         }
 
         const salesDate =
-            document.getElementById(
-                "salesDate"
-            );
+            document.getElementById("salesDate");
 
         if (salesDate) {
-            salesDate.value =
-                todayString();
+            salesDate.value = todayString();
         }
 
         const profitDate =
-            document.getElementById(
-                "profitDate"
-            );
+            document.getElementById("profitDate");
 
         if (profitDate) {
-            profitDate.value =
-                todayString();
+            profitDate.value = todayString();
         }
 
         const targetInput =
-            document.getElementById(
-                "targetFoodCost"
-            );
+            document.getElementById("targetFoodCost");
 
         if (targetInput) {
-            targetInput.value =
-                targetFoodCost;
+            targetInput.value = targetFoodCost;
         }
 
-        updateDashboard();
+        const { data } =
+            await supabaseClient.auth.getSession();
 
-        renderIngredientList();
+        if (data.session) {
+            await initializeUserData();
+        }
 
-        renderOtherItemList();
+        await updateAppAccess();
     }
 );
+
+
 /* =========================================================
    MOBILE APP / SERVICE WORKER
 ========================================================= */
@@ -4556,17 +4590,25 @@ if ("serviceWorker" in navigator) {
     });
 
 }
+
+
+/* =========================================================
+   AUTHENTICATION
+========================================================= */
+
 document.getElementById("signupBtn").addEventListener("click", async function () {
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
 
-    const { data, error } = await supabaseClient.auth.signUp({
-        email: email,
-        password: password
-    });
+    const { data, error } =
+        await supabaseClient.auth.signUp({
+            email: email,
+            password: password
+        });
 
     if (error) {
-        document.getElementById("authMessage").textContent = error.message;
+        document.getElementById("authMessage").textContent =
+            error.message;
         return;
     }
 
@@ -4579,19 +4621,24 @@ document.getElementById("loginBtn").addEventListener("click", async function () 
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
-    });
+    const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
 
     if (error) {
-        document.getElementById("authMessage").textContent = error.message;
+        document.getElementById("authMessage").textContent =
+            error.message;
         return;
     }
+
+    await initializeUserData();
 
     document.getElementById("authMessage").textContent =
         "Login successful.";
 });
+
 
 document.getElementById("forgotPasswordBtn").addEventListener("click", async function () {
 
@@ -4622,38 +4669,100 @@ document.getElementById("forgotPasswordBtn").addEventListener("click", async fun
     document.getElementById("authMessage").textContent =
         "Password reset email sent. Please check your email.";
 });
+
+
 document.getElementById("logoutBtn").addEventListener("click", async function () {
-    const { error } = await supabaseClient.auth.signOut();
+
+    const { error } =
+        await supabaseClient.auth.signOut();
 
     if (error) {
-        document.getElementById("authMessage").textContent = error.message;
+        document.getElementById("authMessage").textContent =
+            error.message;
         return;
     }
+
+    currentUserId = null;
+    userDataLoaded = false;
+
+    savedRecipes = [];
+    savedMenus = [];
+    ingredientPrices = [];
+    otherItems = [];
+    dailySalesRecords = [];
+    profitRecords = [];
+    targetFoodCost = 40;
 
     document.getElementById("authMessage").textContent =
         "You have been logged out.";
 });
-async function updateAppAccess() {
-    const authScreen = document.getElementById("authScreen");
-    const appContainer = document.getElementById("appContent");
 
-    const { data } = await supabaseClient.auth.getSession();
+
+async function updateAppAccess() {
+
+    const authScreen =
+        document.getElementById("authScreen");
+
+    const appContainer =
+        document.getElementById("appContent");
+
+    const { data } =
+        await supabaseClient.auth.getSession();
 
     if (data.session) {
+
         authScreen.style.display = "none";
         appContainer.style.display = "block";
+
     } else {
+
         authScreen.style.display = "block";
         appContainer.style.display = "none";
     }
 }
 
-supabaseClient.auth.onAuthStateChange(function () {
-    updateAppAccess();
-});
 
-updateAppAccess();
+supabaseClient.auth.onAuthStateChange(
+    async function(event, session) {
+
+        if (session) {
+            loadUserScopedData(session.user.id);
+
+            /*
+               Supabase auth callbacks can occur while the page is
+               still settling. Refresh cloud master data here so
+               the new account gets its own ingredients/items.
+            */
+            await renderIngredientList();
+            await renderOtherItemList();
+            updateDashboard();
+
+        } else {
+
+            currentUserId = null;
+            userDataLoaded = false;
+
+            savedRecipes = [];
+            savedMenus = [];
+            ingredientPrices = [];
+            otherItems = [];
+            dailySalesRecords = [];
+            profitRecords = [];
+            targetFoodCost = 40;
+            currentSalesSoldOutFoodIds = [];
+        }
+
+        await updateAppAccess();
+    }
+);
+
+
 async function getCurrentUserId() {
+
+    if (currentUserId) {
+        return currentUserId;
+    }
+
     const { data, error } =
         await supabaseClient.auth.getUser();
 
@@ -4661,5 +4770,8 @@ async function getCurrentUserId() {
         return null;
     }
 
-    return data.user.id;
+    currentUserId = data.user.id;
+
+    return currentUserId;
 }
+
