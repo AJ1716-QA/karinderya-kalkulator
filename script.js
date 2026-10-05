@@ -4583,7 +4583,7 @@ document.getElementById("logoutBtn").addEventListener("click", async function ()
 });
 async function updateAppAccess() {
     const authScreen = document.getElementById("authScreen");
-    const appContainer = document.getElementById("appContainer");
+    const appContainer = document.getElementById("appContent");
 
     const { data } = await supabaseClient.auth.getSession();
 
