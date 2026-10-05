@@ -4436,7 +4436,35 @@ document.getElementById("loginBtn").addEventListener("click", async function () 
         "Login successful.";
 });
 
+document.getElementById("forgotPasswordBtn").addEventListener("click", async function () {
 
+    const email =
+        document.getElementById("authEmail").value.trim();
+
+    if (!email) {
+        document.getElementById("authMessage").textContent =
+            "Please enter your email address first.";
+        return;
+    }
+
+    const { error } =
+        await supabaseClient.auth.resetPasswordForEmail(
+            email,
+            {
+                redirectTo:
+                    "https://aj1716-qa.github.io/karinderya-kalkulator/"
+            }
+        );
+
+    if (error) {
+        document.getElementById("authMessage").textContent =
+            error.message;
+        return;
+    }
+
+    document.getElementById("authMessage").textContent =
+        "Password reset email sent. Please check your email.";
+});
 document.getElementById("logoutBtn").addEventListener("click", async function () {
     const { error } = await supabaseClient.auth.signOut();
 
