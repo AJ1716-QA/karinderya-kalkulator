@@ -885,8 +885,6 @@ async function saveOtherItem() {
 
     renderOtherItemList();
 }
-}
-
 
 /* =========================================================
    RECIPE
