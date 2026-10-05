@@ -733,7 +733,7 @@ function deleteIngredient(id) {
    OTHER ITEMS
 ========================================================= */
 
-function saveOtherItem() {
+async function saveOtherItem() {
 
     const selected =
         document.getElementById("otherItemName").value;
@@ -826,6 +826,33 @@ function saveOtherItem() {
         });
     }
 
+    /* SAVE OTHER ITEM TO SUPABASE */
+
+    const userId = await getCurrentUserId();
+
+    if (userId) {
+
+        const { error } =
+            await supabaseClient
+                .from("other_items")
+                .insert({
+                    user_id: userId,
+                    name: name,
+                    purchase_price: purchasePrice,
+                    quantity: quantity,
+                    unit: unit,
+                    unit_cost: unitCost,
+                    selling_price: sellingPrice
+                });
+
+        if (error) {
+            console.error(
+                "Supabase other item save error:",
+                error
+            );
+        }
+    }
+
     saveAllData();
 
     showMessage(
@@ -858,79 +885,6 @@ function saveOtherItem() {
 
     renderOtherItemList();
 }
-
-
-function renderOtherItemList() {
-
-    const container =
-        document.getElementById("otherItemList");
-
-    if (!container) {
-        return;
-    }
-
-    if (otherItems.length === 0) {
-
-        container.innerHTML =
-            '<div class="empty">No other items saved yet.</div>';
-
-        return;
-    }
-
-    container.innerHTML = "";
-
-    otherItems.forEach(function(item) {
-
-        const div =
-            document.createElement("div");
-
-        div.className = "list-item";
-
-        div.innerHTML =
-            '<div class="list-item-title">' +
-            escapeHtml(item.name) +
-            '</div>' +
-
-            '<div class="list-item-info">' +
-            "Purchase: " +
-            money(item.purchasePrice) +
-            " / " +
-            item.quantity +
-            " " +
-            escapeHtml(item.unit) +
-            "<br>" +
-            "Unit Cost: " +
-            money(item.unitCost) +
-            "<br>" +
-            "Selling Price: " +
-            money(item.sellingPrice) +
-            "</div>" +
-
-            '<div style="margin-top:8px;">' +
-            '<button class="btn btn-danger btn-small" onclick="deleteOtherItem(\'' +
-            item.id +
-            '\')">Delete</button>' +
-            "</div>";
-
-        container.appendChild(div);
-    });
-}
-
-
-function deleteOtherItem(id) {
-
-    if (!confirm("Delete this other item?")) {
-        return;
-    }
-
-    otherItems =
-        otherItems.filter(function(item) {
-            return item.id !== id;
-        });
-
-    saveAllData();
-
-    renderOtherItemList();
 }
 
 
