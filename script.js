@@ -1138,12 +1138,12 @@ function addRecipeIngredient() {
         "recipe-ingredient-row";
 
     row.innerHTML =
-        '<div>' +
-        '<label style="font-size:10px;font-weight:700;">Ingredient</label>' +
-        <select class="recipe-ingredient-select" onchange="calculateRecipeTotal(); refreshRecipeIngredientDropdowns();"> +
-        '<option value="">Select...</option>' +
-        '</select>' +
-        '</div>' +
+    '<div>' +
+    '<label style="font-size:10px;font-weight:700;">Ingredient</label>' +
+    '<select class="recipe-ingredient-select" onchange="calculateRecipeTotal()">' +
+    '<option value="">Select...</option>' +
+    '</select>' +
+    '</div>' +
 
         '<div>' +
         '<label style="font-size:10px;font-weight:700;">Amount</label>' +
@@ -1216,16 +1216,6 @@ function populateRecipeIngredientSelect(row) {
     if (currentValue) {
         select.value = currentValue;
     }
-}
-function refreshRecipeIngredientDropdowns() {
-
-    document
-        .querySelectorAll(".recipe-ingredient-row")
-        .forEach(function(row) {
-
-            populateRecipeIngredientSelect(row);
-
-        });
 }
 
 function removeRecipeIngredient(button) {
