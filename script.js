@@ -451,7 +451,7 @@ function saveAllData() {
    SCREEN NAVIGATION
 ========================================================= */
 
-function showScreen(screenId) {
+async function showScreen(screenId) {
 
     const screens =
         document.querySelectorAll(".screen");
@@ -479,7 +479,8 @@ function showScreen(screenId) {
     }
 
     if (screenId === "recipeScreen") {
-        loadRecipeScreen();
+    await loadRecipeScreen();
+}
     }
 
     if (screenId === "menuScreen") {
@@ -1080,8 +1081,15 @@ async function renderOtherItemList() {
 /* =========================================================
    RECIPE
 ========================================================= */
+async function loadRecipeScreen() {
 
-function loadRecipeScreen() {
+    /*
+       IMPORTANT:
+       Ingredients are stored in Supabase.
+       Make sure the current user's ingredients
+       are loaded before creating recipe rows.
+    */
+    await renderIngredientList();
 
     const dateInput =
         document.getElementById("recipeDate");
@@ -1097,17 +1105,24 @@ function loadRecipeScreen() {
         savedDate.value = dateInput.value;
     }
 
-    if (
-        document.getElementById(
-            "recipeIngredients"
-        ).children.length === 0
-    ) {
+    const container =
+        document.getElementById("recipeIngredients");
+
+    if (!container) {
+        return;
+    }
+
+    /*
+       If there are no recipe rows yet,
+       create the first one AFTER ingredients
+       have finished loading.
+    */
+    if (container.children.length === 0) {
         addRecipeIngredient();
     }
 
     loadSavedRecipes();
 }
-
 
 function addRecipeIngredient() {
 
