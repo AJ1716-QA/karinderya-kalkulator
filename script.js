@@ -2556,7 +2556,7 @@ function populateRecipeIngredientSelect(row) {
 
         ) {
 
-            option.disabled = true;
+            return;
 
         }
 
@@ -2609,6 +2609,8 @@ function removeRecipeIngredient(button) {
  
 
     calculateRecipeTotal();
+
+    refreshRecipeIngredientDropdowns();
 
 }
 
