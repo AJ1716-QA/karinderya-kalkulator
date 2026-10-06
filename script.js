@@ -28,6 +28,8 @@ let targetFoodCost = 40;
 let currentUserId = null;
 let userDataLoaded = false;
 let currentSalesSoldOutFoodIds = [];
+let ingredientRenderRequest = 0;
+let otherItemRenderRequest = 0;
 
 /* =========================================================
    USER-SCOPED LOCAL DATA
@@ -506,7 +508,22 @@ function showScreen(screenId) {
    INGREDIENT MASTER DROPDOWN
 ========================================================= */
 
-function populateMasterIngredientSelect(keepName){const select=document.getElementById("ingredientName");if(!select)return;const current=keepName||select.value;const savedNames=new Set(ingredientPrices.map(x=>x.name.toLowerCase()));select.innerHTML='<option value="">Select ingredient...</option>';masterIngredients.forEach(name=>{if(name!=="__custom__"&&savedNames.has(name.toLowerCase())&&name.toLowerCase()!==String(current).toLowerCase())return;const o=document.createElement("option");o.value=name;o.textContent=name==="__custom__"?"➕ Add Custom Ingredient":name;select.appendChild(o);});if(current)select.value=current;}
+function populateMasterIngredientSelect(keepName){
+    const select=document.getElementById("ingredientName");
+    if(!select)return;
+    const current=keepName!==undefined&&keepName!==null?String(keepName):String(select.value||"");
+    const savedNames=new Set(ingredientPrices.map(x=>String(x.name||"").trim().toLowerCase()));
+    select.innerHTML='<option value="">Select ingredient...</option>';
+    masterIngredients.forEach(function(name){
+        const lower=String(name).toLowerCase();
+        if(name!=="__custom__"&&savedNames.has(lower)&&lower!==current.toLowerCase())return;
+        const o=document.createElement("option");
+        o.value=name;
+        o.textContent=name==="__custom__"?"➕ Add Custom Ingredient":name;
+        select.appendChild(o);
+    });
+    if(current)select.value=current;
+}
 function populateMasterOtherItemSelect(keepName){const select=document.getElementById("otherItemName");if(!select)return;const current=keepName||select.value;const savedNames=new Set(otherItems.map(x=>x.name.toLowerCase()));select.innerHTML='<option value="">Select other item...</option>';masterOtherItems.forEach(name=>{if(name!=="__custom__"&&savedNames.has(name.toLowerCase())&&name.toLowerCase()!==String(current).toLowerCase())return;const o=document.createElement("option");o.value=name;o.textContent=name==="__custom__"?"➕ Add Custom Item":name;select.appendChild(o);});if(current)select.value=current;}
 
 function handleCustomIngredient() {
@@ -591,20 +608,24 @@ function editIngredient(id){
 }
 
 async function renderIngredientList() {
-    const container=document.getElementById("ingredientList"); if(!container)return;
-    const userId=await getCurrentUserId(); if(!userId)return;
+    const container=document.getElementById("ingredientList");
+    if(!container)return;
+    const requestId=++ingredientRenderRequest;
+    const userId=await getCurrentUserId();
+    if(!userId)return;
     const {data,error}=await supabaseClient.from("ingredients").select("*").eq("user_id",userId).order("created_at",{ascending:false});
+    if(requestId!==ingredientRenderRequest)return;
     if(error){console.error(error);container.innerHTML='<div class="empty">Unable to load saved ingredients.</div>';return;}
-    ingredientPrices=(data||[]).map(x=>({id:String(x.id),name:x.name,purchasePrice:numberValue(x.purchase_price),quantity:numberValue(x.quantity),unit:x.unit||"",unitCost:numberValue(x.unit_cost)}));
+    ingredientPrices=(data||[]).map(function(x){return {id:String(x.id),name:x.name,purchasePrice:numberValue(x.purchase_price),quantity:numberValue(x.quantity),unit:x.unit||"",unitCost:numberValue(x.unit_cost)};});
     container.innerHTML=ingredientPrices.length?"":'<div class="empty">No ingredients saved yet.</div>';
-    ingredientPrices.forEach(item=>{
-        const div=document.createElement("div");div.className="list-item saved-row";
+    ingredientPrices.forEach(function(item){
+        const div=document.createElement("div");
+        div.className="list-item saved-row";
         div.innerHTML='<div class="saved-row-main"><strong>'+escapeHtml(item.name)+'</strong><span>'+money(item.purchasePrice)+' / '+item.quantity+' '+escapeHtml(item.unit)+'</span></div><div class="saved-row-actions"><button class="btn btn-secondary btn-small" onclick="editIngredient(\''+item.id+'\')">Edit</button><button class="btn btn-danger btn-small" onclick="deleteIngredient(\''+item.id+'\')">Delete</button></div>';
         container.appendChild(div);
     });
     populateMasterIngredientSelect();
 }
-
 async function deleteIngredient(id){
     if(!confirm("Delete this ingredient?"))return;
     const {error}=await supabaseClient.from("ingredients").delete().eq("id",Number(id)).eq("user_id",currentUserId);
@@ -663,175 +684,71 @@ function loadRecipeScreen() {
 
 
 function getRecipeSelectedIngredientIds(){return Array.from(document.querySelectorAll(".recipe-ingredient-select")).map(e=>String(e.value)).filter(Boolean);}
-function addRecipeIngredient(){const c=document.getElementById("recipeIngredients"),row=document.createElement("div");row.className="recipe-ingredient-row";row.innerHTML='<div><label>Ingredient</label><select class="recipe-ingredient-select" onchange="calculateRecipeTotal();refreshRecipeIngredientDropdowns()"><option value="">Select...</option></select></div><div><label>Amount</label><input type="number" class="recipe-amount" min="0" step="0.001" oninput="calculateRecipeTotal()"></div><div><label>Unit</label><select class="recipe-unit" onchange="calculateRecipeTotal()"><option value="kg">kg</option><option value="g">g</option><option value="mg">mg</option><option value="liter">liter</option><option value="ml">ml</option><option value="cup">cup</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option><option value="fl_oz">fl oz</option><option value="pint">pint</option><option value="quart">quart</option><option value="gallon">gallon</option><option value="piece">piece</option><option value="dozen">dozen</option><option value="pinch">pinch</option><option value="dash">dash</option><option value="handful">handful</option><option value="bunch">bunch</option><option value="clove">clove</option><option value="stalk">stalk</option><option value="leaf">leaf</option><option value="pack">pack</option><option value="can">can</option><option value="bottle">bottle</option><option value="slice">slice</option></select></div><button class="btn btn-danger btn-small" onclick="removeRecipeIngredient(this)">×</button>';c.appendChild(row);populateRecipeIngredientSelect(row);}
-function populateRecipeIngredientSelect(row){const select=row.querySelector(".recipe-ingredient-select"),current=select.value,used=getRecipeSelectedIngredientIds().filter(id=>id!==String(current));select.innerHTML='<option value="">Select...</option>';ingredientPrices.forEach(item=>{if(used.includes(String(item.id)))return;const o=document.createElement("option");o.value=item.id;o.textContent=item.name;select.appendChild(o);});if(current)select.value=current;}
-function refreshRecipeIngredientDropdowns(){document.querySelectorAll(".recipe-ingredient-row").forEach(populateRecipeIngredientSelect);}
-function removeRecipeIngredient(button){button.closest(".recipe-ingredient-row").remove();if(!document.querySelector("#recipeIngredients .recipe-ingredient-row"))addRecipeIngredient();calculateRecipeTotal();refreshRecipeIngredientDropdowns();}
-
-function getIngredientUnitCost(item) {
-
-    if (!item) {
-        return 0;
-    }
-
-    return numberValue(item.unitCost);
+function addRecipeIngredient(){
+    const c=document.getElementById("recipeIngredients");
+    if(!c)return;
+    const row=document.createElement("div");
+    row.className="recipe-ingredient-row";
+    row.innerHTML='<div><select class="recipe-ingredient-select" aria-label="Ingredient" onchange="calculateRecipeTotal();refreshRecipeIngredientDropdowns()"><option value="">Select ingredient...</option></select></div><div><input type="number" class="recipe-amount" aria-label="Amount" min="0" step="0.001" placeholder="Amount" oninput="calculateRecipeTotal()"></div><div><select class="recipe-unit" aria-label="Unit" onchange="calculateRecipeTotal()"><option value="kg">kg</option><option value="g">g</option><option value="mg">mg</option><option value="liter">liter</option><option value="ml">ml</option><option value="cup">cup</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option><option value="fl_oz">fl oz</option><option value="pint">pint</option><option value="quart">quart</option><option value="gallon">gallon</option><option value="piece">piece</option><option value="dozen">dozen</option><option value="pinch">pinch</option><option value="dash">dash</option><option value="handful">handful</option><option value="bunch">bunch</option><option value="clove">clove</option><option value="stalk">stalk</option><option value="leaf">leaf</option><option value="pack">pack</option><option value="can">can</option><option value="bottle">bottle</option><option value="slice">slice</option></select></div><button type="button" class="btn btn-danger btn-small" aria-label="Remove ingredient" onclick="removeRecipeIngredient(this)">×</button>';
+    c.appendChild(row);
+    populateRecipeIngredientSelect(row);
 }
-
-
-function convertAmount(
-    amount,
-    fromUnit,
-    toUnit
-) {
-
-    amount = numberValue(amount);
-
-    if (fromUnit === toUnit) {
-        return amount;
-    }
-
-    if (
-        fromUnit === "kg" &&
-        toUnit === "g"
-    ) {
-        return amount * 1000;
-    }
-
-    if (
-        fromUnit === "g" &&
-        toUnit === "kg"
-    ) {
-        return amount / 1000;
-    }
-
-    if (
-        fromUnit === "liter" &&
-        toUnit === "ml"
-    ) {
-        return amount * 1000;
-    }
-
-    if (
-        fromUnit === "ml" &&
-        toUnit === "liter"
-    ) {
-        return amount / 1000;
-    }
-
-    return amount;
-}
-
-
-function calculateRecipeTotal() {
-
-    const rows =
-        document.querySelectorAll(
-            "#recipeIngredients .recipe-ingredient-row"
-        );
-
-    let total = 0;
-
-    rows.forEach(function(row) {
-
-        const ingredientId =
-            row.querySelector(
-                ".recipe-ingredient-select"
-            ).value;
-
-        const amount =
-            numberValue(
-                row.querySelector(
-                    ".recipe-amount"
-                ).value
-            );
-
-        const unit =
-            row.querySelector(
-                ".recipe-unit"
-            ).value;
-
-        const ingredient =
-            ingredientPrices.find(
-                function(item) {
-                    return item.id === ingredientId;
-                }
-            );
-
-        if (!ingredient || amount <= 0) {
-            return;
-        }
-
-        let cost = 0;
-
-        if (
-            ingredient.unit === unit
-        ) {
-
-            cost =
-                amount *
-                getIngredientUnitCost(ingredient);
-
-        } else if (
-            (
-                ingredient.unit === "kg" ||
-                ingredient.unit === "g"
-            ) &&
-            (
-                unit === "kg" ||
-                unit === "g"
-            )
-        ) {
-
-            const converted =
-                convertAmount(
-                    amount,
-                    unit,
-                    ingredient.unit
-                );
-
-            cost =
-                converted *
-                getIngredientUnitCost(ingredient);
-
-        } else if (
-            (
-                ingredient.unit === "liter" ||
-                ingredient.unit === "ml"
-            ) &&
-            (
-                unit === "liter" ||
-                unit === "ml"
-            )
-        ) {
-
-            const converted =
-                convertAmount(
-                    amount,
-                    unit,
-                    ingredient.unit
-                );
-
-            cost =
-                converted *
-                getIngredientUnitCost(ingredient);
-
-        } else {
-
-            cost =
-                amount *
-                getIngredientUnitCost(ingredient);
-        }
-
-        total += cost;
+function populateRecipeIngredientSelect(row){
+    const select=row.querySelector(".recipe-ingredient-select"),current=String(select.value||""),used=getRecipeSelectedIngredientIds().filter(function(id){return id!==current;});
+    select.innerHTML='<option value="">Select ingredient...</option>';
+    ingredientPrices.forEach(function(item){
+        if(used.includes(String(item.id)))return;
+        const o=document.createElement("option");o.value=item.id;o.textContent=item.name;select.appendChild(o);
     });
+    if(current)select.value=current;
+}
+function refreshRecipeIngredientDropdowns(){document.querySelectorAll(".recipe-ingredient-row").forEach(function(row){populateRecipeIngredientSelect(row);});}
+function removeRecipeIngredient(button){const row=button.closest(".recipe-ingredient-row");if(row)row.remove();if(!document.querySelector("#recipeIngredients .recipe-ingredient-row"))addRecipeIngredient();calculateRecipeTotal();refreshRecipeIngredientDropdowns();}
 
-    document.getElementById(
-        "recipeTotalCost"
-    ).textContent = money(total);
+function getIngredientUnitCost(item){return item?numberValue(item.unitCost):0;}
 
+/* Standard conversions use kg/g/mg for mass, liter/ml/cup/etc. for volume,
+   and piece/dozen for count. Weight-to-volume is intentionally not guessed. */
+function getUnitDimension(unit){
+    const mass={kg:1,g:0.001,mg:0.000001};
+    const volume={liter:1,ml:0.001,cup:0.2365882365,tbsp:0.0147867648,tsp:0.00492892159,fl_oz:0.0295735296,pint:0.473176473,quart:0.946352946,gallon:3.785411784};
+    const count={piece:1,dozen:12};
+    if(Object.prototype.hasOwnProperty.call(mass,unit))return {type:"mass",factor:mass[unit]};
+    if(Object.prototype.hasOwnProperty.call(volume,unit))return {type:"volume",factor:volume[unit]};
+    if(Object.prototype.hasOwnProperty.call(count,unit))return {type:"count",factor:count[unit]};
+    return {type:"other",factor:1};
+}
+function convertAmount(amount,fromUnit,toUnit){
+    amount=numberValue(amount);
+    if(fromUnit===toUnit)return amount;
+    const from=getUnitDimension(fromUnit),to=getUnitDimension(toUnit);
+    if(from.type!==to.type)return null;
+    return amount*from.factor/to.factor;
+}
+function calculateIngredientCost(ingredient,amount,recipeUnit){
+    if(!ingredient||amount<=0)return 0;
+    const storedUnit=String(ingredient.unit||"");
+    const unitCost=getIngredientUnitCost(ingredient);
+    if(storedUnit===recipeUnit)return amount*unitCost;
+    const converted=convertAmount(amount,recipeUnit,storedUnit);
+    if(converted===null)return 0;
+    return converted*unitCost;
+}
+function calculateRecipeTotal(){
+    const rows=document.querySelectorAll("#recipeIngredients .recipe-ingredient-row");
+    let total=0;
+    rows.forEach(function(row){
+        const ingredientId=row.querySelector(".recipe-ingredient-select").value;
+        const amount=numberValue(row.querySelector(".recipe-amount").value);
+        const unit=row.querySelector(".recipe-unit").value;
+        const ingredient=ingredientPrices.find(function(item){return String(item.id)===String(ingredientId);});
+        if(!ingredient||amount<=0)return;
+        total+=calculateIngredientCost(ingredient,amount,unit);
+    });
+    const totalEl=document.getElementById("recipeTotalCost");
+    if(totalEl)totalEl.textContent=money(total);
     return total;
 }
-
 
 function saveRecipe() {
 
@@ -865,107 +782,16 @@ function saveRecipe() {
     let totalCost = 0;
 
     rows.forEach(function(row) {
-
-        const ingredientId =
-            row.querySelector(
-                ".recipe-ingredient-select"
-            ).value;
-
-        const amount =
-            numberValue(
-                row.querySelector(
-                    ".recipe-amount"
-                ).value
-            );
-
-        const unit =
-            row.querySelector(
-                ".recipe-unit"
-            ).value;
-
-        const ingredient =
-            ingredientPrices.find(
-                function(item) {
-                    return item.id === ingredientId;
-                }
-            );
-
-        if (!ingredient || amount <= 0) {
-            return;
-        }
-
-        let cost = 0;
-
-        if (
-            ingredient.unit === unit
-        ) {
-
-            cost =
-                amount *
-                getIngredientUnitCost(ingredient);
-
-        } else if (
-            (
-                ingredient.unit === "kg" ||
-                ingredient.unit === "g"
-            ) &&
-            (
-                unit === "kg" ||
-                unit === "g"
-            )
-        ) {
-
-            const converted =
-                convertAmount(
-                    amount,
-                    unit,
-                    ingredient.unit
-                );
-
-            cost =
-                converted *
-                getIngredientUnitCost(ingredient);
-
-        } else if (
-            (
-                ingredient.unit === "liter" ||
-                ingredient.unit === "ml"
-            ) &&
-            (
-                unit === "liter" ||
-                unit === "ml"
-            )
-        ) {
-
-            const converted =
-                convertAmount(
-                    amount,
-                    unit,
-                    ingredient.unit
-                );
-
-            cost =
-                converted *
-                getIngredientUnitCost(ingredient);
-
-        } else {
-
-            cost =
-                amount *
-                getIngredientUnitCost(ingredient);
-        }
-
-        totalCost += cost;
-
-        ingredients.push({
-            ingredientId: ingredient.id,
-            ingredientName: ingredient.name,
-            amount: amount,
-            unit: unit,
-            cost: cost
-        });
+        const ingredientId=row.querySelector(".recipe-ingredient-select").value;
+        const amount=numberValue(row.querySelector(".recipe-amount").value);
+        const unit=row.querySelector(".recipe-unit").value;
+        const ingredient=ingredientPrices.find(function(item){return String(item.id)===String(ingredientId);});
+        if(!ingredient||amount<=0)return;
+        const cost=calculateIngredientCost(ingredient,amount,unit);
+        if(cost<=0)return;
+        totalCost+=cost;
+        ingredients.push({ingredientId:String(ingredient.id),ingredientName:ingredient.name,amount:amount,unit:unit,cost:cost});
     });
-
     if (ingredients.length === 0) {
 
         showMessage(
@@ -1112,13 +938,99 @@ function getSavedMenuForDate(date) {
 }
 
 
-function saveTargetFoodCost(){const input=document.getElementById("targetFoodCost");const value=numberValue(input.value);if(value<=0||value>=100){input.value=targetFoodCost;return;}targetFoodCost=value;saveAllData();refreshMenuCalculations();}
-function loadMenuOfDay(){const date=document.getElementById("menuDate");if(!date.value)date.value=todayString();const target=document.getElementById("targetFoodCost");target.value=targetFoodCost;populateMenuRecipeSelect(date.value);renderMenuItems(date.value);}
-function populateMenuRecipeSelect(date){const select=document.getElementById("menuRecipeSelect");if(!select)return;const saved=getSavedMenuForDate(date);const used=(saved&&saved.items||[]).map(x=>String(x.recipeId));select.innerHTML='<option value="">-- Select Recipe --</option>';getRecipesForDate(date).forEach(r=>{if(used.includes(String(r.id)))return;const o=document.createElement("option");o.value=r.id;o.textContent=r.name;select.appendChild(o);});}
-function selectMenuRecipe(){const id=document.getElementById("menuRecipeSelect").value,entry=document.getElementById("menuRecipeEntry");if(!id){entry.style.display="none";return;}const r=savedRecipes.find(x=>String(x.id)===String(id));if(!r){entry.style.display="none";return;}entry.style.display="block";document.getElementById("selectedMenuRecipeCost").textContent=money(r.totalCost);document.getElementById("menuServings").value=1;document.getElementById("menuSellingPrice").value=roundNumber(calculateSuggestedSellingPrice(r.totalCost,1));calculateMenuEntryForm();}
-function calculateMenuEntryForm(){const id=document.getElementById("menuRecipeSelect").value,r=savedRecipes.find(x=>String(x.id)===String(id));if(!r)return;const servings=Math.max(1,numberValue(document.getElementById("menuServings").value));const suggested=calculateSuggestedSellingPrice(r.totalCost,servings);const selling=numberValue(document.getElementById("menuSellingPrice").value);document.getElementById("menuSellingPrice").value=roundNumber(suggested);document.getElementById("menuEntryCostServing").textContent=money(r.totalCost/servings);document.getElementById("menuEntrySales").textContent=money(suggested*servings);document.getElementById("menuEntryFoodCost").textContent=(suggested*servings?((r.totalCost/(suggested*servings))*100):0).toFixed(2)+"%";document.getElementById("menuEntryProfit").textContent=money(suggested*servings-r.totalCost);}
-function saveNewMenuItem(){const date=document.getElementById("menuDate").value,id=document.getElementById("menuRecipeSelect").value,r=savedRecipes.find(x=>String(x.id)===String(id));if(!r)return;const servings=Math.max(1,numberValue(document.getElementById("menuServings").value)),selling=numberValue(document.getElementById("menuSellingPrice").value)||calculateSuggestedSellingPrice(r.totalCost,servings);let menu=getSavedMenuForDate(date);if(!menu){menu={id:Date.now().toString(),date,items:[]};savedMenus.push(menu);}menu.items=menu.items||[];menu.items.push({recipeId:r.id,recipeName:r.name,recipeCost:r.totalCost,servings,suggestedSellingPrice:calculateSuggestedSellingPrice(r.totalCost,servings),sellingPrice:selling});saveAllData();document.getElementById("menuRecipeSelect").value="";document.getElementById("menuRecipeEntry").style.display="none";populateMenuRecipeSelect(date);renderMenuItems(date);showMessage("menuMessage",r.name+" added to Today's Menu.","success");}
-
+function saveTargetFoodCost(){
+    const input=document.getElementById("targetFoodCost");
+    const value=numberValue(input.value);
+    if(value<=0||value>=100){input.value=targetFoodCost;return;}
+    targetFoodCost=value;
+    saveAllData();
+    refreshMenuCalculations();
+}
+function loadMenuOfDay(){
+    const date=document.getElementById("menuDate");
+    if(!date.value)date.value=todayString();
+    const target=document.getElementById("targetFoodCost");
+    target.value=targetFoodCost;
+    populateMenuRecipeSelect(date.value);
+    renderMenuItems(date.value);
+    resetMenuEntry(false);
+}
+function populateMenuRecipeSelect(date){
+    const select=document.getElementById("menuRecipeSelect");
+    if(!select)return;
+    const saved=getSavedMenuForDate(date);
+    const used=new Set((saved&&saved.items||[]).map(function(x){return String(x.recipeId);}));
+    const current=select.value;
+    select.innerHTML='<option value="">-- Select Recipe --</option>';
+    savedRecipes.slice().sort(function(a,b){return String(a.name).localeCompare(String(b.name));}).forEach(function(r){
+        if(used.has(String(r.id)))return;
+        const o=document.createElement("option");
+        o.value=r.id;
+        o.textContent=r.name+(r.date&&r.date!==date?" — "+r.date:"");
+        select.appendChild(o);
+    });
+    if(current&&!used.has(String(current)))select.value=current;
+}
+function selectMenuRecipe(){
+    const id=document.getElementById("menuRecipeSelect").value;
+    const entry=document.getElementById("menuRecipeEntry");
+    if(!id){resetMenuEntry(false);return;}
+    const r=savedRecipes.find(function(x){return String(x.id)===String(id);});
+    if(!r){resetMenuEntry(false);return;}
+    entry.style.display="block";
+    document.getElementById("selectedMenuRecipeCost").textContent=money(r.totalCost);
+    document.getElementById("menuServings").value=1;
+    document.getElementById("menuSellingPrice").value=roundNumber(calculateSuggestedSellingPrice(r.totalCost,1));
+    document.getElementById("menuTargetProfit").value=30;
+    calculateMenuEntryForm();
+}
+function calculateMenuEntryForm(){
+    const id=document.getElementById("menuRecipeSelect").value;
+    const r=savedRecipes.find(function(x){return String(x.id)===String(id);});
+    if(!r)return;
+    const servings=Math.max(1,numberValue(document.getElementById("menuServings").value));
+    let selling=numberValue(document.getElementById("menuSellingPrice").value);
+    if(selling<=0){selling=calculateSuggestedSellingPrice(r.totalCost,servings);document.getElementById("menuSellingPrice").value=roundNumber(selling);}
+    const sales=selling*servings;
+    const foodCost=sales>0?(r.totalCost/sales*100):0;
+    const profit=sales-r.totalCost;
+    document.getElementById("menuEntryCostServing").textContent=money(r.totalCost/servings);
+    document.getElementById("menuEntrySales").textContent=money(sales);
+    document.getElementById("menuEntryFoodCost").textContent=foodCost.toFixed(2)+"%";
+    document.getElementById("menuEntryProfit").textContent=money(profit);
+    const status=document.getElementById("menuEntryStatus");
+    status.textContent="Suggested price: "+money(calculateSuggestedSellingPrice(r.totalCost,servings))+" | Actual food cost: "+foodCost.toFixed(2)+"% | Profit margin: "+(sales>0?(profit/sales*100):0).toFixed(2)+"%";
+}
+function resetMenuEntry(hide){
+    const entry=document.getElementById("menuRecipeEntry");
+    const select=document.getElementById("menuRecipeSelect");
+    if(select)select.value="";
+    if(hide&&entry)entry.style.display="none";
+    if(!hide&&entry)entry.style.display="none";
+    const cost=document.getElementById("selectedMenuRecipeCost");if(cost)cost.textContent=money(0);
+    const ids=["menuServings","menuSellingPrice","menuEntryCostServing","menuEntrySales","menuEntryFoodCost","menuEntryProfit","menuEntryStatus"];
+    const values={menuServings:"1",menuSellingPrice:"0",menuEntryCostServing:money(0),menuEntrySales:money(0),menuEntryFoodCost:"0.00%",menuEntryProfit:money(0),menuEntryStatus:""};
+    ids.forEach(function(id){const e=document.getElementById(id);if(!e)return;if(e.tagName==="INPUT")e.value=values[id];else e.textContent=values[id];});
+}
+function saveNewMenuItem(){
+    const date=document.getElementById("menuDate").value;
+    const id=document.getElementById("menuRecipeSelect").value;
+    const r=savedRecipes.find(function(x){return String(x.id)===String(id);});
+    if(!date||!r){showMessage("menuMessage","Please select a recipe first.","error");return;}
+    const servings=Math.max(1,numberValue(document.getElementById("menuServings").value));
+    let selling=numberValue(document.getElementById("menuSellingPrice").value);
+    if(selling<=0)selling=calculateSuggestedSellingPrice(r.totalCost,servings);
+    let menu=getSavedMenuForDate(date);
+    if(!menu){menu={id:Date.now().toString(),date:date,items:[]};savedMenus.push(menu);}
+    menu.items=Array.isArray(menu.items)?menu.items:[];
+    if(menu.items.some(function(x){return String(x.recipeId)===String(r.id);})){showMessage("menuMessage","This recipe is already in Today's Menu.","error");return;}
+    menu.items.push({recipeId:String(r.id),recipeName:r.name,recipeCost:r.totalCost,servings:servings,suggestedSellingPrice:calculateSuggestedSellingPrice(r.totalCost,servings),sellingPrice:selling});
+    saveAllData();
+    renderMenuItems(date);
+    populateMenuRecipeSelect(date);
+    resetMenuEntry(false);
+    showMessage("menuMessage",r.name+" added to Today's Menu.","success");
+}
 function calculateSuggestedSellingPrice(
     recipeCost,
     quantity
@@ -1146,7 +1058,42 @@ function calculateSuggestedSellingPrice(
 }
 
 
-function renderMenuItems(date){const c=document.getElementById("menuItems"),menu=getSavedMenuForDate(date);if(!menu||!menu.items||!menu.items.length){c.innerHTML='<div class="menu-empty">No menu items added yet. Select a recipe above and press Add Menu Item.</div>';return;}c.innerHTML="";menu.items.forEach(item=>{const d=document.createElement("div");d.className="menu-item";d.dataset.recipeId=item.recipeId;const suggested=calculateSuggestedSellingPrice(item.recipeCost,item.servings),sales=item.sellingPrice*item.servings,fc=sales?item.recipeCost/sales*100:0,profit=sales?((sales-item.recipeCost)/sales*100):0;d.innerHTML='<div class="menu-top"><div><div class="menu-name">'+escapeHtml(item.recipeName)+'</div><div class="menu-cost">Recipe Cost: '+money(item.recipeCost)+'</div></div><div class="menu-field"><label>Servings</label><input type="number" class="menu-quantity" min="1" step="1" value="'+item.servings+'" oninput="calculateMenuEntry(this)"></div><div class="menu-field"><label>Selling Price</label><input type="number" class="menu-selling-price" min="0" step="0.01" value="'+roundNumber(item.sellingPrice)+'" oninput="calculateMenuEntry(this)"></div></div><div class="menu-info"><div class="menu-info-box"><div class="menu-info-label">Suggested Price</div><div class="menu-info-value menu-suggested">'+money(suggested)+'</div></div><div class="menu-info-box"><div class="menu-info-label">Food Cost</div><div class="menu-info-value menu-food-cost">'+fc.toFixed(2)+'%</div></div><div class="menu-info-box"><div class="menu-info-label">Profit</div><div class="menu-info-value menu-profit">'+profit.toFixed(2)+'%</div></div></div><div class="menu-actions"><button class="btn btn-primary btn-small" onclick="saveMenuItem(this)">Save / Update</button><button class="btn btn-danger btn-small" onclick="deleteMenuItem(this)">Delete</button></div>';c.appendChild(d);});}
+function renderMenuItems(date){
+    const c=document.getElementById("menuItems");
+    const menu=getSavedMenuForDate(date);
+    if(!menu||!Array.isArray(menu.items)||!menu.items.length){
+        c.innerHTML='<div class="menu-empty">No menu items added yet. Select a recipe above and press Add Menu Item.</div>';
+        updateMenuSummary(0,0,0);
+        return;
+    }
+    c.innerHTML="";
+    let totalCost=0,totalSales=0,totalProfit=0;
+    menu.items.forEach(function(item){
+        const servings=Math.max(1,numberValue(item.servings));
+        const selling=numberValue(item.sellingPrice);
+        const suggested=calculateSuggestedSellingPrice(item.recipeCost,servings);
+        const sales=selling*servings;
+        const fc=sales?item.recipeCost/sales*100:0;
+        const profit=sales-item.recipeCost;
+        const profitPercent=sales?(profit/sales*100):0;
+        totalCost+=numberValue(item.recipeCost);
+        totalSales+=sales;
+        totalProfit+=profit;
+        const d=document.createElement("div");
+        d.className="menu-item";
+        d.dataset.recipeId=String(item.recipeId);
+        d.innerHTML='<div class="menu-top"><div><div class="menu-name">'+escapeHtml(item.recipeName)+'</div><div class="menu-cost">Recipe Cost: '+money(item.recipeCost)+'</div></div><div class="menu-field"><label>Servings</label><input type="number" class="menu-quantity" min="1" step="1" value="'+servings+'" oninput="calculateMenuEntry(this)"></div><div class="menu-field"><label>Selling Price</label><input type="number" class="menu-selling-price" min="0" step="0.01" value="'+roundNumber(selling)+'" oninput="calculateMenuEntry(this)"></div></div><div class="menu-info"><div class="menu-info-box"><div class="menu-info-label">Suggested Price / Serving</div><div class="menu-info-value menu-suggested">'+money(suggested)+'</div></div><div class="menu-info-box"><div class="menu-info-label">Actual Food Cost</div><div class="menu-info-value menu-food-cost">'+fc.toFixed(2)+'%</div></div><div class="menu-info-box"><div class="menu-info-label">Profit Margin</div><div class="menu-info-value menu-profit">'+profitPercent.toFixed(2)+'%</div></div></div><div class="small-text" style="margin-top:7px">Sales: <strong class="menu-sales">'+money(sales)+'</strong> | Profit: <strong class="menu-profit-money">'+money(profit)+'</strong></div><div class="menu-actions"><button class="btn btn-primary btn-small" onclick="saveMenuItem(this)">Save / Update</button><button class="btn btn-danger btn-small" onclick="deleteMenuItem(this)">Delete</button></div>';
+        c.appendChild(d);
+    });
+    updateMenuSummary(totalCost,totalSales,totalProfit);
+}
+function updateMenuSummary(totalCost,totalSales,totalProfit){
+    const a=document.getElementById("menuTotalCost"),b=document.getElementById("menuTotalSales"),c=document.getElementById("menuTotalProfit"),d=document.getElementById("menuTotalMargin");
+    if(a)a.textContent=money(totalCost);
+    if(b)b.textContent=money(totalSales);
+    if(c)c.textContent=money(totalProfit);
+    if(d)d.textContent=(totalSales?(totalProfit/totalSales*100):0).toFixed(2)+"%";
+}
 function refreshMenuCalculations(){const date=document.getElementById("menuDate")?.value;if(date)renderMenuItems(date);calculateMenuEntryForm();}
 function calculateMenuEntry(input) {
 
@@ -1163,7 +1110,7 @@ function calculateMenuEntry(input) {
     const recipe =
         savedRecipes.find(
             function(r) {
-                return r.id === recipeId;
+                return String(r.id) === String(recipeId);
             }
         );
 
@@ -1236,6 +1183,10 @@ function calculateMenuEntry(input) {
         ".menu-profit"
     ).textContent =
         profitPercent.toFixed(2) + "%";
+    const salesEl=item.querySelector(".menu-sales");
+    const profitMoneyEl=item.querySelector(".menu-profit-money");
+    if(salesEl)salesEl.textContent=money(sales);
+    if(profitMoneyEl)profitMoneyEl.textContent=money(sales-recipe.totalCost);
 }
 
 
@@ -1259,7 +1210,7 @@ function saveMenuItem(button) {
     const recipe =
         savedRecipes.find(
             function(r) {
-                return r.id === recipeId;
+                return String(r.id) === String(recipeId);
             }
         );
 
@@ -1324,7 +1275,7 @@ function saveMenuItem(button) {
     const existing =
         menu.items.find(
             function(existingItem) {
-                return existingItem.recipeId === recipeId;
+                return String(existingItem.recipeId) === String(recipeId);
             }
         );
 
@@ -1364,6 +1315,8 @@ function saveMenuItem(button) {
     }
 
     saveAllData();
+    renderMenuItems(date);
+    populateMenuRecipeSelect(date);
 
     showMessage(
         "menuMessage",
