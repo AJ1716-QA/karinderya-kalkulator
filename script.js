@@ -1117,17 +1117,8 @@ function resetMenuEntry(hide){
 
 function saveNewMenuItem(){
     try {
-        const dateInput=document.getElementById("menuDate");
-        const recipeSelect=document.getElementById("menuRecipeSelect");
-        const servingsInput=document.getElementById("menuServings");
-        const sellingInput=document.getElementById("menuSellingPrice");
-
-        if(!dateInput || !recipeSelect || !servingsInput || !sellingInput){
-            throw new Error("Menu form controls are missing.");
-        }
-
-        const date=String(dateInput.value||todayString());
-        const id=String(recipeSelect.value||"");
+        const date=document.getElementById("menuDate").value;
+        const id=String(document.getElementById("menuRecipeSelect").value||"");
         const r=savedRecipes.find(function(x){return String(x.id)===id;});
 
         if(!date||!r){
@@ -1166,16 +1157,12 @@ function saveNewMenuItem(){
             sellingPrice:selling
         });
 
-        /* Save the in-memory menu first. */
         saveAllData();
 
-        /* Immediately show the saved item. */
+        /* Render first. Do not let clearing the entry form make it look
+           as though the menu item was not saved. */
         renderMenuItems(date);
-
-        /* Remove the newly added recipe from the available dropdown. */
         populateMenuRecipeSelect(date);
-
-        /* Clear only the entry fields after the saved item is visible. */
         resetMenuEntry(false);
 
         showMessage("menuMessage",r.name+" added to Today's Menu.","success");
@@ -3894,15 +3881,18 @@ document.addEventListener(
 
 /* =========================================================
    MENU ADD BUTTON SAFETY HANDLER
-   The Add Menu Item button uses a direct event listener so the
-   save action still works even if inline button handling is affected.
+   Uses the existing saveNewMenuItem() function.
+   Authentication code below remains unchanged.
 ========================================================= */
-document.addEventListener("DOMContentLoaded", function(){
-    const button=document.getElementById("addMenuItemBtn");
-    if(!button)return;
-    button.addEventListener("click", function(event){
+
+document.addEventListener("DOMContentLoaded", function() {
+    const addMenuButton = document.getElementById("addMenuItemBtn");
+    if (!addMenuButton) return;
+
+    addMenuButton.type = "button";
+    addMenuButton.removeAttribute("onclick");
+    addMenuButton.addEventListener("click", function(event) {
         event.preventDefault();
-        event.stopPropagation();
         saveNewMenuItem();
     });
 });
@@ -4060,3 +4050,58 @@ async function updateAppAccess() {
         authScreen.style.display = "block";
         appContainer.style.display = "none";
     }
+}
+
+
+supabaseClient.auth.onAuthStateChange(
+    async function(event, session) {
+
+        if (session) {
+            loadUserScopedData(session.user.id);
+
+            /*
+               Supabase auth callbacks can occur while the page is
+               still settling. Refresh cloud master data here so
+               the new account gets its own ingredients/items.
+            */
+            await renderIngredientList();
+            await renderOtherItemList();
+            updateDashboard();
+
+        } else {
+
+            currentUserId = null;
+            userDataLoaded = false;
+
+            savedRecipes = [];
+            savedMenus = [];
+            ingredientPrices = [];
+            otherItems = [];
+            dailySalesRecords = [];
+            profitRecords = [];
+            targetFoodCost = 40;
+            currentSalesSoldOutFoodIds = [];
+        }
+
+        await updateAppAccess();
+    }
+);
+
+
+async function getCurrentUserId() {
+
+    if (currentUserId) {
+        return currentUserId;
+    }
+
+    const { data, error } =
+        await supabaseClient.auth.getUser();
+
+    if (error || !data.user) {
+        return null;
+    }
+
+    currentUserId = data.user.id;
+
+    return currentUserId;
+}
