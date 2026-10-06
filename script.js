@@ -1721,7 +1721,11 @@ function selectRecipeIngredient(row, ingredientId) {
 
     calculateRecipeTotal();
 
-    refreshRecipeIngredientSearchResults();
+refreshRecipeIngredientDropdowns();
+
+syncRecipeIngredientSearchInputs();
+
+refreshRecipeIngredientSearchResults();
 }
 
 
@@ -1856,7 +1860,6 @@ function convertAmount(
     return amount;
 }
 
-
 function calculateRecipeTotal() {
 
     const rows =
@@ -1966,7 +1969,42 @@ function calculateRecipeTotal() {
 
     return total;
 }
+function syncRecipeIngredientSearchInputs() {
 
+    document
+        .querySelectorAll(
+            ".recipe-ingredient-row"
+        )
+        .forEach(function(row) {
+
+            const select =
+                row.querySelector(
+                    ".recipe-ingredient-select"
+                );
+
+            const input =
+                row.querySelector(
+                    ".recipe-ingredient-search"
+                );
+
+            if (!select || !input) {
+                return;
+            }
+
+            const ingredient =
+                ingredientPrices.find(
+                    function(item) {
+                        return String(item.id) ===
+                            String(select.value);
+                    }
+                );
+
+            if (ingredient) {
+                input.value =
+                    ingredient.name;
+            }
+        });
+}
 
 function saveRecipe() {
 
