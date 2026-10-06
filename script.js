@@ -2300,263 +2300,13 @@ async function renderOtherItemList() {
 
             money(item.sellingPrice) +
 
-            "</div>" +
-
- 
-
-            '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
-
-            '<button class="btn btn-secondary btn-small" onclick="editOtherItem(\'' +
-
-            item.id +
-
-            '\')">Edit</button>' +
-
-            '<button class="btn btn-danger btn-small" onclick="deleteOtherItem(\'' +
-
-            item.id +
-
-            '\')">Delete</button>' +
-
-            '</div>';
+            "</div>";
 
  
 
         container.appendChild(div);
 
     });
-
-}
-
- 
-
- 
-
-async function editOtherItem(id) {
-
- 
-
-    const item = otherItems.find(function(otherItem) {
-
-        return String(otherItem.id) === String(id);
-
-    });
-
- 
-
-    if (!item) {
-
-        return;
-
-    }
-
- 
-
-    const purchasePriceInput = prompt(
-
-        "Purchase price:",
-
-        item.purchasePrice
-
-    );
-
- 
-
-    if (purchasePriceInput === null) {
-
-        return;
-
-    }
-
- 
-
-    const quantityInput = prompt(
-
-        "Quantity:",
-
-        item.quantity
-
-    );
-
- 
-
-    if (quantityInput === null) {
-
-        return;
-
-    }
-
- 
-
-    const unitInput = prompt(
-
-        "Unit (kg, g, liter, ml, piece, etc.):",
-
-        item.unit
-
-    );
-
- 
-
-    if (unitInput === null) {
-
-        return;
-
-    }
-
- 
-
-    const sellingPriceInput = prompt(
-
-        "Selling price:",
-
-        item.sellingPrice
-
-    );
-
- 
-
-    if (sellingPriceInput === null) {
-
-        return;
-
-    }
-
- 
-
-    const purchasePrice = numberValue(purchasePriceInput);
-
-    const quantity = numberValue(quantityInput);
-
-    const unit = unitInput.trim();
-
-    const sellingPrice = numberValue(sellingPriceInput);
-
- 
-
-    if (purchasePrice < 0 || quantity <= 0 || sellingPrice <= 0 || !unit) {
-
-        alert("Please enter valid purchase price, quantity, unit, and selling price.");
-
-        return;
-
-    }
-
- 
-
-    const unitCost = purchasePrice / quantity;
-
- 
-
-    const { error } =
-
-        await supabaseClient
-
-            .from("other_items")
-
-            .update({
-
-                purchase_price: purchasePrice,
-
-                quantity: quantity,
-
-                unit: unit,
-
-                unit_cost: unitCost,
-
-                selling_price: sellingPrice
-
-            })
-
-            .eq("id", Number(id))
-
-            .eq("user_id", currentUserId);
-
- 
-
-    if (error) {
-
-        console.error("Supabase other item edit error:", error);
-
-        showMessage(
-
-            "otherItemMessage",
-
-            "Unable to update other item.",
-
-            "error"
-
-        );
-
-        return;
-
-    }
-
- 
-
-    await renderOtherItemList();
-
-    populateMasterOtherItemSelect();
-
-    renderSalesOtherDropdown(document.getElementById("salesDate")?.value || "");
-
-}
-
- 
-
- 
-
-async function deleteOtherItem(id) {
-
- 
-
-    if (!confirm("Delete this other item?")) {
-
-        return;
-
-    }
-
- 
-
-    const { error } =
-
-        await supabaseClient
-
-            .from("other_items")
-
-            .delete()
-
-            .eq("id", Number(id))
-
-            .eq("user_id", currentUserId);
-
- 
-
-    if (error) {
-
-        console.error("Supabase other item delete error:", error);
-
-        showMessage(
-
-            "otherItemMessage",
-
-            "Unable to delete other item.",
-
-            "error"
-
-        );
-
-        return;
-
-    }
-
- 
-
-    await renderOtherItemList();
-
-    populateMasterOtherItemSelect();
-
-    renderSalesOtherDropdown(document.getElementById("salesDate")?.value || "");
 
 }
 
@@ -2632,46 +2382,6 @@ async function loadRecipeScreen() {
 
  
 
-function getRecipeSelectedIngredientIds() {
-
- 
-
-    const selectedIds = new Set();
-
- 
-
-    document
-
-        .querySelectorAll("#recipeIngredients .recipe-ingredient-row")
-
-        .forEach(function(row) {
-
- 
-
-            const selectedId =
-
-                row.dataset.ingredientId || "";
-
- 
-
-            if (selectedId) {
-
-                selectedIds.add(String(selectedId));
-
-            }
-
-        });
-
- 
-
-    return selectedIds;
-
-}
-
- 
-
- 
-
 function addRecipeIngredient() {
 
  
@@ -2683,14 +2393,6 @@ function addRecipeIngredient() {
             "recipeIngredients"
 
         );
-
- 
-
-    if (!container) {
-
-        return;
-
-    }
 
  
 
@@ -2706,19 +2408,17 @@ function addRecipeIngredient() {
 
  
 
-    row.dataset.ingredientId = "";
-
- 
-
     row.innerHTML =
 
-        '<div style="position:relative;">' +
+        '<div>' +
 
         '<label style="font-size:10px;font-weight:700;">Ingredient</label>' +
 
-        '<input type="text" class="recipe-ingredient-search" autocomplete="off" placeholder="Search ingredient..." oninput="searchRecipeIngredients(this);" onclick="searchRecipeIngredients(this);">' +
+        '<select class="recipe-ingredient-select" onchange="calculateRecipeTotal(); refreshRecipeIngredientDropdowns()">' +
 
-        '<div class="recipe-ingredient-results" style="position:absolute;left:0;right:0;top:100%;z-index:1000;background:#fff;border:1px solid #ccc;border-radius:6px;max-height:180px;overflow-y:auto;display:none;box-shadow:0 3px 8px rgba(0,0,0,.12);"></div>' +
+        '<option value="">Select...</option>' +
+
+        '</select>' +
 
         '</div>' +
 
@@ -2756,7 +2456,7 @@ function addRecipeIngredient() {
 
  
 
-        '<button type="button" class="btn btn-danger btn-small" onclick="removeRecipeIngredient(this)">×</button>';
+        '<button class="btn btn-danger btn-small" onclick="removeRecipeIngredient(this)">×</button>';
 
  
 
@@ -2764,205 +2464,7 @@ function addRecipeIngredient() {
 
  
 
-    refreshRecipeIngredientDropdowns();
-
-}
-
- 
-
- 
-
-function searchRecipeIngredients(input) {
-
- 
-
-    const row = input.closest(".recipe-ingredient-row");
-
- 
-
-    if (!row) {
-
-        return;
-
-    }
-
- 
-
-    const results =
-
-        row.querySelector(".recipe-ingredient-results");
-
- 
-
-    if (!results) {
-
-        return;
-
-    }
-
- 
-
-    const searchText =
-
-        String(input.value || "").trim().toLowerCase();
-
- 
-
-    const selectedIds = getRecipeSelectedIngredientIds();
-
-    const currentId = String(row.dataset.ingredientId || "");
-
- 
-
-    results.innerHTML = "";
-
- 
-
-    const matches = ingredientPrices.filter(function(item) {
-
-        const id = String(item.id);
-
- 
-
-        if (selectedIds.has(id) && id !== currentId) {
-
-            return false;
-
-        }
-
- 
-
-        if (!searchText) {
-
-            return true;
-
-        }
-
- 
-
-        return String(item.name || "").toLowerCase().includes(searchText);
-
-    }).slice(0, 30);
-
- 
-
-    if (matches.length === 0) {
-
-        results.innerHTML =
-
-            '<div style="padding:8px;font-size:12px;color:#777;">No available ingredient found.</div>';
-
-        results.style.display = "block";
-
-        return;
-
-    }
-
- 
-
-    matches.forEach(function(item) {
-
-        const option = document.createElement("div");
-
- 
-
-        option.textContent = item.name;
-
-        option.style.cssText =
-
-            "padding:9px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid #eee;background:#fff;";
-
- 
-
-        option.onmousedown = function(event) {
-
-            event.preventDefault();
-
-            chooseRecipeIngredient(row, item.id);
-
-        };
-
- 
-
-        results.appendChild(option);
-
-    });
-
- 
-
-    results.style.display = "block";
-
-}
-
- 
-
- 
-
-function chooseRecipeIngredient(row, ingredientId) {
-
- 
-
-    const ingredient = ingredientPrices.find(function(item) {
-
-        return String(item.id) === String(ingredientId);
-
-    });
-
- 
-
-    if (!ingredient) {
-
-        return;
-
-    }
-
- 
-
-    const selectedIds = getRecipeSelectedIngredientIds();
-
-    const currentId = String(row.dataset.ingredientId || "");
-
- 
-
-    if (selectedIds.has(String(ingredientId)) && currentId !== String(ingredientId)) {
-
-        return;
-
-    }
-
- 
-
-    row.dataset.ingredientId = String(ingredient.id);
-
- 
-
-    const input = row.querySelector(".recipe-ingredient-search");
-
-    const results = row.querySelector(".recipe-ingredient-results");
-
- 
-
-    if (input) {
-
-        input.value = ingredient.name;
-
-    }
-
- 
-
-    if (results) {
-
-        results.innerHTML = "";
-
-        results.style.display = "none";
-
-    }
-
- 
-
-    refreshRecipeIngredientDropdowns();
-
-    calculateRecipeTotal();
+    populateRecipeIngredientSelect(row);
 
 }
 
@@ -2974,7 +2476,17 @@ function populateRecipeIngredientSelect(row) {
 
  
 
-    if (!row) {
+    const select =
+
+        row.querySelector(
+
+            ".recipe-ingredient-select"
+
+        );
+
+ 
+
+    if (!select) {
 
         return;
 
@@ -2982,49 +2494,83 @@ function populateRecipeIngredientSelect(row) {
 
  
 
-    const input =
-
-        row.querySelector(".recipe-ingredient-search");
+    const currentValue = select.value;
 
  
 
-    if (!input) {
-
-        return;
-
-    }
+    const selectedIds = [];
 
  
 
-    const currentId = String(row.dataset.ingredientId || "");
+    document
 
-    const currentIngredient = ingredientPrices.find(function(item) {
+        .querySelectorAll(".recipe-ingredient-select")
 
-        return String(item.id) === currentId;
+        .forEach(function(otherSelect) {
+
+ 
+
+            if (
+
+                otherSelect !== select &&
+
+                otherSelect.value
+
+            ) {
+
+                selectedIds.push(String(otherSelect.value));
+
+            }
+
+        });
+
+ 
+
+    select.innerHTML =
+
+        '<option value="">Select...</option>';
+
+ 
+
+    ingredientPrices.forEach(function(item) {
+
+ 
+
+        const option =
+
+            document.createElement("option");
+
+ 
+
+        option.value = item.id;
+
+        option.textContent = item.name;
+
+ 
+
+        if (
+
+            selectedIds.includes(String(item.id)) &&
+
+            String(item.id) !== String(currentValue)
+
+        ) {
+
+            return;
+
+        }
+
+ 
+
+        select.appendChild(option);
 
     });
 
  
 
-    if (currentIngredient) {
+    if (currentValue) {
 
-        input.value = currentIngredient.name;
-
-    }
-
- 
-
-    const results =
-
-        row.querySelector(".recipe-ingredient-results");
-
- 
-
-    if (results) {
-
-        results.style.display = "none";
-
-        results.innerHTML = "";
+        select.value = currentValue;
 
     }
 
@@ -3038,61 +2584,13 @@ function refreshRecipeIngredientDropdowns() {
 
  
 
-    const selectedIds = getRecipeSelectedIngredientIds();
-
- 
-
     document
 
-        .querySelectorAll("#recipeIngredients .recipe-ingredient-row")
+        .querySelectorAll(".recipe-ingredient-row")
 
         .forEach(function(row) {
 
- 
-
-            const input =
-
-                row.querySelector(".recipe-ingredient-search");
-
- 
-
-            const currentId =
-
-                String(row.dataset.ingredientId || "");
-
- 
-
-            if (input && currentId) {
-
-                const currentIngredient = ingredientPrices.find(function(item) {
-
-                    return String(item.id) === currentId;
-
-                });
-
- 
-
-                if (currentIngredient) {
-
-                    input.value = currentIngredient.name;
-
-                }
-
-            }
-
- 
-
-            const results =
-
-                row.querySelector(".recipe-ingredient-results");
-
- 
-
-            if (results && results.style.display === "block" && input) {
-
-                searchRecipeIngredients(input);
-
-            }
+            populateRecipeIngredientSelect(row);
 
         });
 
@@ -3106,15 +2604,7 @@ function removeRecipeIngredient(button) {
 
  
 
-    const row = button.closest(".recipe-ingredient-row");
-
- 
-
-    if (row) {
-
-        row.remove();
-
-    }
+    button.parentElement.remove();
 
  
 
@@ -10301,13 +9791,3 @@ async function getCurrentUserId() {
         return null;
 
     }
-
- 
-
-    currentUserId = data.user.id;
-
- 
-
-    return currentUserId;
-
-}
