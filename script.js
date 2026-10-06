@@ -437,6 +437,12 @@ function escapeHtml(value) {
 }
 
 
+function refreshLocalRecipeCache(){
+    if(!currentUserId || !userDataLoaded)return;
+    const stored=readUserData("savedRecipes", []);
+    savedRecipes=Array.isArray(stored)?stored.filter(function(r){return r&&r.id!=null&&r.name; }):[];
+}
+
 function saveAllData() {
     if (!currentUserId || !userDataLoaded) {
         return;
@@ -845,6 +851,7 @@ function saveRecipe() {
     }
 
     saveAllData();
+    refreshLocalRecipeCache();
 
     showMessage(
         "recipeMessage",
@@ -868,6 +875,7 @@ function saveRecipe() {
         document.getElementById(
             "menuDate"
         ).value = date;
+        loadMenuOfDay();
     }
 }
 
@@ -995,9 +1003,17 @@ function saveTargetFoodCost(){
 
 function loadMenuOfDay(){
     const date=document.getElementById("menuDate");
+    if(!date)return;
     if(!date.value)date.value=todayString();
+
+    /* Always reload the current user's saved recipes before building the
+       menu selector. This prevents the selector from using an old/stale
+       in-memory list. */
+    refreshLocalRecipeCache();
+
     const target=document.getElementById("targetFoodCost");
     if(target)target.value=targetFoodCost;
+
     populateMenuRecipeSelect(date.value);
     renderMenuItems(date.value);
     resetMenuEntry(false);
@@ -1007,8 +1023,10 @@ function populateMenuRecipeSelect(date){
     const select=document.getElementById("menuRecipeSelect");
     if(!select)return;
 
+    refreshLocalRecipeCache();
+
     const saved=getSavedMenuForDate(date);
-    const used=new Set((saved&&Array.isArray(saved.items)?saved.items:[]).map(function(x){return String(x.recipeId);}));
+    const used=new Set((saved&&Array.isArray(saved.items)?saved.items:[]).map(function(x){return String(x.recipeId); }));
     const previous=String(select.value||"");
 
     select.innerHTML="";
@@ -1017,14 +1035,20 @@ function populateMenuRecipeSelect(date){
     first.textContent="-- Select Recipe --";
     select.appendChild(first);
 
-    /* IMPORTANT: show ALL saved recipes, not only today's recipes. */
-    savedRecipes.slice().sort(function(a,b){
+    const recipes=Array.isArray(savedRecipes)?savedRecipes.slice():[];
+
+    recipes.sort(function(a,b){
         return String(a.name||"").localeCompare(String(b.name||""));
-    }).forEach(function(r){
-        if(used.has(String(r.id)))return;
+    });
+
+    recipes.forEach(function(r){
+        const id=String(r.id||"");
+        if(!id || used.has(id))return;
+
         const option=document.createElement("option");
-        option.value=String(r.id);
-        option.textContent=String(r.name||"Unnamed Recipe") + (r.date && r.date!==date ? " — saved " + r.date : "");
+        option.value=id;
+        option.textContent=String(r.name||"Unnamed Recipe") +
+            (r.date && String(r.date)!==String(date) ? " — saved " + r.date : "");
         select.appendChild(option);
     });
 
@@ -1032,6 +1056,9 @@ function populateMenuRecipeSelect(date){
         const exists=Array.from(select.options).some(function(o){return String(o.value)===previous;});
         if(exists)select.value=previous;
     }
+
+    /* Keep a visible diagnostic in the console without interrupting the app. */
+    console.log("Menu recipe selector refreshed. Recipes available:", recipes.length, "Options:", Math.max(0, select.options.length-1));
 }
 
 function selectMenuRecipe(){
@@ -1116,18 +1143,31 @@ function resetMenuEntry(hide){
 }
 
 function saveNewMenuItem(){
+    const dateEl=document.getElementById("menuDate");
+    const select=document.getElementById("menuRecipeSelect");
+    const servingsEl=document.getElementById("menuServings");
+    const sellingEl=document.getElementById("menuSellingPrice");
+
     try {
-        const date=document.getElementById("menuDate").value;
-        const id=String(document.getElementById("menuRecipeSelect").value||"");
+        refreshLocalRecipeCache();
+
+        const date=dateEl?dateEl.value:"";
+        const id=select?String(select.value||""):"";
         const r=savedRecipes.find(function(x){return String(x.id)===id;});
 
-        if(!date||!r){
-            showMessage("menuMessage","Please select a recipe first.","error");
+        console.log("Add Menu Item clicked:", {date:date, recipeId:id, recipe:r, recipeCount:savedRecipes.length});
+
+        if(!date){
+            showMessage("menuMessage","Please select the menu date.","error");
+            return false;
+        }
+        if(!id || !r){
+            showMessage("menuMessage","Please select a recipe first. There are currently "+savedRecipes.length+" saved recipe(s).","error");
             return false;
         }
 
-        const servings=Math.max(1,numberValue(document.getElementById("menuServings").value));
-        let selling=numberValue(document.getElementById("menuSellingPrice").value);
+        const servings=Math.max(1,numberValue(servingsEl?servingsEl.value:1));
+        let selling=numberValue(sellingEl?sellingEl.value:0);
         if(selling<=0)selling=calculateSuggestedSellingPrice(r.totalCost,servings);
         if(selling<=0){
             showMessage("menuMessage","Please enter a valid selling price.","error");
@@ -1136,21 +1176,22 @@ function saveNewMenuItem(){
 
         let menu=getSavedMenuForDate(date);
         if(!menu){
-            menu={id:Date.now().toString(),date:date,items:[]};
+            menu={id:String(Date.now()),date:date,items:[]};
             savedMenus.push(menu);
         }
         if(!Array.isArray(menu.items))menu.items=[];
 
         if(menu.items.some(function(x){return String(x.recipeId)===id;})){
             showMessage("menuMessage","This recipe is already in Today's Menu.","error");
-            populateMenuRecipeSelect(date);
             renderMenuItems(date);
+            populateMenuRecipeSelect(date);
+            resetMenuEntry(false);
             return false;
         }
 
         menu.items.push({
-            recipeId:String(r.id),
-            recipeName:r.name,
+            recipeId:id,
+            recipeName:String(r.name||""),
             recipeCost:numberValue(r.totalCost),
             servings:servings,
             suggestedSellingPrice:calculateSuggestedSellingPrice(r.totalCost,servings),
@@ -1159,17 +1200,16 @@ function saveNewMenuItem(){
 
         saveAllData();
 
-        /* Render first. Do not let clearing the entry form make it look
-           as though the menu item was not saved. */
+        /* Render while the newly-added item is still selected in memory. */
         renderMenuItems(date);
         populateMenuRecipeSelect(date);
         resetMenuEntry(false);
 
-        showMessage("menuMessage",r.name+" added to Today's Menu.","success");
-        return true;
+        showMessage("menuMessage",String(r.name)+" added to Today's Menu.","success");
+        return false;
     } catch(error) {
         console.error("saveNewMenuItem error:",error);
-        showMessage("menuMessage","Unable to add the menu item. Please check the browser console for the error.","error");
+        showMessage("menuMessage","Add Menu Item failed: "+(error&&error.message?error.message:String(error)),"error");
         return false;
     }
 }
@@ -4068,6 +4108,17 @@ supabaseClient.auth.onAuthStateChange(
     }
 );
 
+
+
+/* Explicit Menu of the Day button binding. The button is type=button, so
+   this does not depend on form submission or inline onclick behavior. */
+const menuAddButton = document.getElementById("menuAddButton");
+if(menuAddButton){
+    menuAddButton.addEventListener("click", function(event){
+        event.preventDefault();
+        saveNewMenuItem();
+    });
+}
 
 async function getCurrentUserId() {
 
