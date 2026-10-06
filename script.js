@@ -437,12 +437,6 @@ function escapeHtml(value) {
 }
 
 
-function refreshLocalRecipeCache(){
-    if(!currentUserId || !userDataLoaded)return;
-    const stored=readUserData("savedRecipes", []);
-    savedRecipes=Array.isArray(stored)?stored.filter(function(r){return r&&r.id!=null&&r.name; }):[];
-}
-
 function saveAllData() {
     if (!currentUserId || !userDataLoaded) {
         return;
@@ -851,7 +845,6 @@ function saveRecipe() {
     }
 
     saveAllData();
-    refreshLocalRecipeCache();
 
     showMessage(
         "recipeMessage",
@@ -875,7 +868,6 @@ function saveRecipe() {
         document.getElementById(
             "menuDate"
         ).value = date;
-        loadMenuOfDay();
     }
 }
 
@@ -1003,17 +995,9 @@ function saveTargetFoodCost(){
 
 function loadMenuOfDay(){
     const date=document.getElementById("menuDate");
-    if(!date)return;
     if(!date.value)date.value=todayString();
-
-    /* Always reload the current user's saved recipes before building the
-       menu selector. This prevents the selector from using an old/stale
-       in-memory list. */
-    refreshLocalRecipeCache();
-
     const target=document.getElementById("targetFoodCost");
     if(target)target.value=targetFoodCost;
-
     populateMenuRecipeSelect(date.value);
     renderMenuItems(date.value);
     resetMenuEntry(false);
@@ -1023,10 +1007,8 @@ function populateMenuRecipeSelect(date){
     const select=document.getElementById("menuRecipeSelect");
     if(!select)return;
 
-    refreshLocalRecipeCache();
-
     const saved=getSavedMenuForDate(date);
-    const used=new Set((saved&&Array.isArray(saved.items)?saved.items:[]).map(function(x){return String(x.recipeId); }));
+    const used=new Set((saved&&Array.isArray(saved.items)?saved.items:[]).map(function(x){return String(x.recipeId);}));
     const previous=String(select.value||"");
 
     select.innerHTML="";
@@ -1035,20 +1017,14 @@ function populateMenuRecipeSelect(date){
     first.textContent="-- Select Recipe --";
     select.appendChild(first);
 
-    const recipes=Array.isArray(savedRecipes)?savedRecipes.slice():[];
-
-    recipes.sort(function(a,b){
+    /* IMPORTANT: show ALL saved recipes, not only today's recipes. */
+    savedRecipes.slice().sort(function(a,b){
         return String(a.name||"").localeCompare(String(b.name||""));
-    });
-
-    recipes.forEach(function(r){
-        const id=String(r.id||"");
-        if(!id || used.has(id))return;
-
+    }).forEach(function(r){
+        if(used.has(String(r.id)))return;
         const option=document.createElement("option");
-        option.value=id;
-        option.textContent=String(r.name||"Unnamed Recipe") +
-            (r.date && String(r.date)!==String(date) ? " — saved " + r.date : "");
+        option.value=String(r.id);
+        option.textContent=String(r.name||"Unnamed Recipe");
         select.appendChild(option);
     });
 
@@ -1056,9 +1032,6 @@ function populateMenuRecipeSelect(date){
         const exists=Array.from(select.options).some(function(o){return String(o.value)===previous;});
         if(exists)select.value=previous;
     }
-
-    /* Keep a visible diagnostic in the console without interrupting the app. */
-    console.log("Menu recipe selector refreshed. Recipes available:", recipes.length, "Options:", Math.max(0, select.options.length-1));
 }
 
 function selectMenuRecipe(){
@@ -1143,31 +1116,27 @@ function resetMenuEntry(hide){
 }
 
 function saveNewMenuItem(){
-    const dateEl=document.getElementById("menuDate");
-    const select=document.getElementById("menuRecipeSelect");
-    const servingsEl=document.getElementById("menuServings");
-    const sellingEl=document.getElementById("menuSellingPrice");
-
     try {
-        refreshLocalRecipeCache();
+        const dateInput=document.getElementById("menuDate");
+        const recipeSelect=document.getElementById("menuRecipeSelect");
+        const servingsInput=document.getElementById("menuServings");
+        const sellingInput=document.getElementById("menuSellingPrice");
 
-        const date=dateEl?dateEl.value:"";
-        const id=select?String(select.value||""):"";
+        if(!dateInput || !recipeSelect || !servingsInput || !sellingInput){
+            throw new Error("Menu form controls are missing.");
+        }
+
+        const date=String(dateInput.value||todayString());
+        const id=String(recipeSelect.value||"");
         const r=savedRecipes.find(function(x){return String(x.id)===id;});
 
-        console.log("Add Menu Item clicked:", {date:date, recipeId:id, recipe:r, recipeCount:savedRecipes.length});
-
-        if(!date){
-            showMessage("menuMessage","Please select the menu date.","error");
-            return false;
-        }
-        if(!id || !r){
-            showMessage("menuMessage","Please select a recipe first. There are currently "+savedRecipes.length+" saved recipe(s).","error");
+        if(!date||!r){
+            showMessage("menuMessage","Please select a recipe first.","error");
             return false;
         }
 
-        const servings=Math.max(1,numberValue(servingsEl?servingsEl.value:1));
-        let selling=numberValue(sellingEl?sellingEl.value:0);
+        const servings=Math.max(1,numberValue(document.getElementById("menuServings").value));
+        let selling=numberValue(document.getElementById("menuSellingPrice").value);
         if(selling<=0)selling=calculateSuggestedSellingPrice(r.totalCost,servings);
         if(selling<=0){
             showMessage("menuMessage","Please enter a valid selling price.","error");
@@ -1176,40 +1145,44 @@ function saveNewMenuItem(){
 
         let menu=getSavedMenuForDate(date);
         if(!menu){
-            menu={id:String(Date.now()),date:date,items:[]};
+            menu={id:Date.now().toString(),date:date,items:[]};
             savedMenus.push(menu);
         }
         if(!Array.isArray(menu.items))menu.items=[];
 
         if(menu.items.some(function(x){return String(x.recipeId)===id;})){
             showMessage("menuMessage","This recipe is already in Today's Menu.","error");
-            renderMenuItems(date);
             populateMenuRecipeSelect(date);
-            resetMenuEntry(false);
+            renderMenuItems(date);
             return false;
         }
 
         menu.items.push({
-            recipeId:id,
-            recipeName:String(r.name||""),
+            recipeId:String(r.id),
+            recipeName:r.name,
             recipeCost:numberValue(r.totalCost),
             servings:servings,
             suggestedSellingPrice:calculateSuggestedSellingPrice(r.totalCost,servings),
             sellingPrice:selling
         });
 
+        /* Save the in-memory menu first. */
         saveAllData();
 
-        /* Render while the newly-added item is still selected in memory. */
+        /* Immediately show the saved item. */
         renderMenuItems(date);
+
+        /* Remove the newly added recipe from the available dropdown. */
         populateMenuRecipeSelect(date);
+
+        /* Clear only the entry fields after the saved item is visible. */
         resetMenuEntry(false);
 
-        showMessage("menuMessage",String(r.name)+" added to Today's Menu.","success");
-        return false;
+        showMessage("menuMessage",r.name+" added to Today's Menu.","success");
+        return true;
     } catch(error) {
         console.error("saveNewMenuItem error:",error);
-        showMessage("menuMessage","Add Menu Item failed: "+(error&&error.message?error.message:String(error)),"error");
+        showMessage("menuMessage","Unable to add the menu item. Please check the browser console for the error.","error");
         return false;
     }
 }
@@ -3920,6 +3893,22 @@ document.addEventListener(
 
 
 /* =========================================================
+   MENU ADD BUTTON SAFETY HANDLER
+   The Add Menu Item button uses a direct event listener so the
+   save action still works even if inline button handling is affected.
+========================================================= */
+document.addEventListener("DOMContentLoaded", function(){
+    const button=document.getElementById("addMenuItemBtn");
+    if(!button)return;
+    button.addEventListener("click", function(event){
+        event.preventDefault();
+        event.stopPropagation();
+        saveNewMenuItem();
+    });
+});
+
+
+/* =========================================================
    MOBILE APP / SERVICE WORKER
 ========================================================= */
 
@@ -4071,69 +4060,3 @@ async function updateAppAccess() {
         authScreen.style.display = "block";
         appContainer.style.display = "none";
     }
-}
-
-
-supabaseClient.auth.onAuthStateChange(
-    async function(event, session) {
-
-        if (session) {
-            loadUserScopedData(session.user.id);
-
-            /*
-               Supabase auth callbacks can occur while the page is
-               still settling. Refresh cloud master data here so
-               the new account gets its own ingredients/items.
-            */
-            await renderIngredientList();
-            await renderOtherItemList();
-            updateDashboard();
-
-        } else {
-
-            currentUserId = null;
-            userDataLoaded = false;
-
-            savedRecipes = [];
-            savedMenus = [];
-            ingredientPrices = [];
-            otherItems = [];
-            dailySalesRecords = [];
-            profitRecords = [];
-            targetFoodCost = 40;
-            currentSalesSoldOutFoodIds = [];
-        }
-
-        await updateAppAccess();
-    }
-);
-
-
-
-/* Explicit Menu of the Day button binding. The button is type=button, so
-   this does not depend on form submission or inline onclick behavior. */
-const menuAddButton = document.getElementById("menuAddButton");
-if(menuAddButton){
-    menuAddButton.addEventListener("click", function(event){
-        event.preventDefault();
-        saveNewMenuItem();
-    });
-}
-
-async function getCurrentUserId() {
-
-    if (currentUserId) {
-        return currentUserId;
-    }
-
-    const { data, error } =
-        await supabaseClient.auth.getUser();
-
-    if (error || !data.user) {
-        return null;
-    }
-
-    currentUserId = data.user.id;
-
-    return currentUserId;
-}
