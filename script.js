@@ -669,7 +669,11 @@ async function deleteOtherItem(id){if(!confirm("Delete this other item?"))return
    RECIPE
 ========================================================= */
 
-function loadRecipeScreen() {
+async function loadRecipeScreen() {
+
+    /* Always refresh Ingredients from Supabase before building the Recipe dropdowns.
+       This prevents a newly saved ingredient from being missing until a later refresh. */
+    await renderIngredientList();
 
     const dateInput =
         document.getElementById("recipeDate");
@@ -1117,8 +1121,20 @@ function resetMenuEntry(hide){
 
 function saveNewMenuItem(){
     try {
-        const date=document.getElementById("menuDate").value;
-        const id=String(document.getElementById("menuRecipeSelect").value||"");
+        const dateElement=document.getElementById("menuDate");
+        const recipeSelect=document.getElementById("menuRecipeSelect");
+        const servingsElement=document.getElementById("menuServings");
+        const sellingElement=document.getElementById("menuSellingPrice");
+
+        if(!dateElement || !recipeSelect || !servingsElement || !sellingElement){
+            console.error("Menu form element is missing.");
+            showMessage("menuMessage","Menu form is incomplete. Please refresh the page.","error");
+            return false;
+        }
+
+        const date=dateElement.value || todayString();
+        dateElement.value=date;
+        const id=String(recipeSelect.value||"");
         const r=savedRecipes.find(function(x){return String(x.id)===id;});
 
         if(!date||!r){
@@ -3885,16 +3901,15 @@ document.addEventListener(
    Authentication code below remains unchanged.
 ========================================================= */
 
-document.addEventListener("DOMContentLoaded", function() {
+window.addEventListener("load", function() {
     const addMenuButton = document.getElementById("addMenuItemBtn");
     if (!addMenuButton) return;
 
     addMenuButton.type = "button";
-    addMenuButton.removeAttribute("onclick");
-    addMenuButton.addEventListener("click", function(event) {
-        event.preventDefault();
-        saveNewMenuItem();
-    });
+    addMenuButton.onclick = function(event) {
+        if (event) event.preventDefault();
+        return saveNewMenuItem();
+    };
 });
 
 
