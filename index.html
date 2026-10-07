@@ -8,7 +8,7 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f6f8;color:#1f2937}
 button,input,select{font-family:inherit}button{cursor:pointer}
-.app-header{background:#123B63;color:white;padding:20px 16px;text-align:center}
+.app-header{background:#123B63;color:white;padding:14px 16px;text-align:center;position:relative}.header-top{display:flex;align-items:center;justify-content:center;position:relative}.header-menu{position:absolute;right:0;top:50%;transform:translateY(-50%);background:transparent;color:white;border:0;font-size:28px;line-height:1;padding:4px 8px}.header-dropdown{display:none;position:absolute;right:0;top:54px;z-index:1000;background:white;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.2);padding:6px;min-width:130px}.header-dropdown.open{display:block}.header-dropdown button{width:100%;border:0;background:white;color:#1f2937;text-align:left;padding:10px 12px;border-radius:7px;font-weight:700}.header-dropdown button:hover{background:#f4f6f8}
 .app-header h1{margin:0;font-size:25px;font-weight:700}.app-header p{margin:6px 0 0;font-size:14px;opacity:.9}
 .container{max-width:900px;margin:auto;padding:16px}.screen{display:none}.screen.active{display:block}
 .section-title{font-size:21px;color:#123B63;margin:4px 0 14px;font-weight:700}
@@ -75,18 +75,18 @@ input:focus,select:focus{border-color:#123B63}.form-group{margin-bottom:13px}.fo
 </div>
 </div>
 <div id="appContent" style="display:none;">
-<header class="app-header"><h1>Karinderya Kalkulator</h1><p>Simple Business Calculator for Your Karinderya</p><button type="button" id="logoutBtn" class="btn btn-secondary" style="margin-top:10px;">Log Out</button></header>
+<header class="app-header"><div class="header-top"><h1>Karinderya Kalkulator</h1><button type="button" id="headerMenuBtn" class="header-menu" aria-label="More options" aria-expanded="false">⋮</button><div id="headerDropdown" class="header-dropdown"><button type="button" id="logoutBtn">Log Out</button></div></div><p>Simple Business Calculator for Your Karinderya</p></header>
 <div class="container">
 
 <section id="homeScreen" class="screen active">
 <div class="section-title">Dashboard</div>
 <div class="dashboard-grid">
-<div class="dashboard-card" onclick="showScreen('recipeScreen')"><div class="icon">🍳</div><strong>Recipe Cost</strong><span>Calculate food cost</span></div>
-<div class="dashboard-card" onclick="showScreen('menuScreen')"><div class="icon">🍽️</div><strong>Menu of the Day</strong><span>Set today's menu</span></div>
-<div class="dashboard-card" onclick="showScreen('salesScreen')"><div class="icon">🧾</div><strong>Daily Sales</strong><span>Record actual sales</span></div>
-<div class="dashboard-card" onclick="showScreen('profitScreen')"><div class="icon">📊</div><strong>Profit Calculator</strong><span>Check your profit</span></div>
-<div class="dashboard-card" onclick="showScreen('ingredientScreen')"><div class="icon">🥬</div><strong>Ingredient Prices</strong><span>Manage costs</span></div>
-<div class="dashboard-card" onclick="showScreen('recordsScreen')"><div class="icon">💾</div><strong>Saved Records</strong><span>View your records</span></div>
+<div class="dashboard-card" onclick="showScreen('ingredientScreen')"><div class="icon">🥬</div><strong>Ingredients</strong><span>Manage ingredient costs</span></div>
+<div class="dashboard-card" onclick="showScreen('ingredientScreen')"><div class="icon">🥤</div><strong>Other Items</strong><span>Manage resale items</span></div>
+<div class="dashboard-card" onclick="showScreen('recipeScreen')"><div class="icon">🍳</div><strong>Recipe of the Day</strong><span>Calculate food cost</span></div>
+<div class="dashboard-card" onclick="showScreen('menuScreen')"><div class="icon">🍽️</div><strong>Today’s Menu &amp; Sales</strong><span>Menu and actual sales</span></div>
+<div class="dashboard-card" onclick="showScreen('profitScreen')"><div class="icon">💸</div><strong>Daily Expenses</strong><span>Manage daily expenses</span></div>
+<div class="dashboard-card" onclick="showScreen('recordsScreen')"><div class="icon">💾</div><strong>Records</strong><span>View monthly records</span></div>
 </div>
 <div class="card" style="margin-top:14px"><div class="section-title" style="font-size:18px">Today's Summary</div><div class="summary-grid">
 <div class="summary-box"><span>Sales</span><strong id="todaySales">₱0.00</strong></div>
@@ -254,5 +254,16 @@ input:focus,select:focus{border-color:#123B63}.form-group{margin-bottom:13px}.fo
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="script.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+  var btn=document.getElementById("headerMenuBtn");
+  var menu=document.getElementById("headerDropdown");
+  if(btn&&menu){
+    btn.addEventListener("click",function(e){e.stopPropagation();var open=menu.classList.toggle("open");btn.setAttribute("aria-expanded",open?"true":"false");});
+    document.addEventListener("click",function(){menu.classList.remove("open");btn.setAttribute("aria-expanded","false");});
+    menu.addEventListener("click",function(e){e.stopPropagation();});
+  }
+});
+</script>
 </body>
 </html>
