@@ -990,9 +990,13 @@ function deleteSavedRecipe(id) {
 ========================================================= */
 
 function getRecipesForDate(date) {
-    /* Menu of the Day can use any saved recipe. The date is retained for
-       display/reference only; it must not hide recipes saved on another date. */
-    return savedRecipes.slice();
+    /* Menu of the Day must use ONLY recipes entered for the selected
+       Recipe of the Day date. Recipes saved on older or future dates
+       must not appear in this dropdown. */
+    const selectedDate = String(date || "");
+    return savedRecipes.filter(function(recipe) {
+        return String(recipe.date || "") === selectedDate;
+    });
 }
 
 function getSavedMenuForDate(date) {
@@ -1032,8 +1036,9 @@ function populateMenuRecipeSelect(date){
     first.textContent="-- Select Recipe --";
     select.appendChild(first);
 
-    /* IMPORTANT: show ALL saved recipes, not only today's recipes. */
-    savedRecipes.slice().sort(function(a,b){
+    /* IMPORTANT: Menu of the Day only shows recipes saved under the
+       selected Recipe of the Day date. Old recipes are excluded. */
+    getRecipesForDate(date).slice().sort(function(a,b){
         return String(a.name||"").localeCompare(String(b.name||""));
     }).forEach(function(r){
         if(used.has(String(r.id)))return;
