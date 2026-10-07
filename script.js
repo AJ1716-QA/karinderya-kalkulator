@@ -1185,11 +1185,19 @@ function saveNewMenuItem(){
 
         saveAllData();
 
-        /* Render first. Do not let clearing the entry form make it look
-           as though the menu item was not saved. */
+        /* Immediately rebuild the visible Today's Menu from the saved
+           in-memory menu object. Every previously-added item remains. */
+        const savedMenuAfterAdd=getSavedMenuForDate(date);
         renderMenuItems(date);
         populateMenuRecipeSelect(date);
         resetMenuEntry(false);
+
+        /* Re-render once more after the form is cleared so the visible list
+           is always the authoritative list for this date. */
+        if(savedMenuAfterAdd){
+            renderMenuItems(date);
+            populateMenuRecipeSelect(date);
+        }
 
         showMessage("menuMessage",r.name+" added to Today's Menu.","success");
         return true;
@@ -1229,6 +1237,10 @@ function calculateSuggestedSellingPrice(
 
 function renderMenuItems(date){
     const c=document.getElementById("menuItems");
+    if(!c){
+        console.error("Menu container #menuItems was not found.");
+        return;
+    }
     const menu=getSavedMenuForDate(date);
     if(!menu||!Array.isArray(menu.items)||!menu.items.length){
         c.innerHTML='<div class="menu-empty">No menu items added yet. Select a recipe above and press Add Menu Item.</div>';
@@ -1732,6 +1744,10 @@ function getAvailableSalesMenuItems(date) {
 /* ---------------------------------------------------------
    LOAD DAILY SALES
 --------------------------------------------------------- */
+
+function loadSalesScreen(){
+    loadDailySales();
+}
 
 function loadDailySales() {
 
