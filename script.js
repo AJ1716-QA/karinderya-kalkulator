@@ -789,7 +789,7 @@ function saveRecipe() {
 
     showMessage(
         "recipeMessage",
-        "Recipe saved successfully. It will automatically appear in Menu of the Day.",
+        "Recipe saved successfully for this date. It will appear in Today's Menu & Sales for the same date.",
         "success"
     );
 
