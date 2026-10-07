@@ -296,81 +296,7 @@ const masterIngredients = [
    MASTER OTHER ITEMS
 ========================================================= */
 
-const masterOtherItems = [
-
-    "Coca-Cola",
-    "Sprite",
-    "Royal",
-    "Pepsi",
-    "Mountain Dew",
-
-    "Wilkins",
-    "Nature's Spring",
-    "Absolute",
-    "Summit",
-
-    "Zest-O",
-    "C2",
-    "Tang",
-    "Nestea",
-    "Del Monte Juice",
-
-    "Lucky Me Pancit Canton",
-    "Lucky Me Noodles",
-    "Payless",
-    "Nissin",
-
-    "SkyFlakes",
-    "Fita",
-    "Hansel",
-    "Rebisco",
-    "Cream-O",
-    "Chippy",
-    "Piattos",
-    "Nova",
-    "Clover",
-
-    "Century Tuna",
-    "Ligo",
-    "Argentina",
-    "Purefoods",
-    "Mega",
-
-    "Nescafe",
-    "Great Taste",
-    "Kopiko",
-    "San Mig Coffee",
-
-    "Milo",
-    "Bear Brand",
-    "Ovaltine",
-
-    "Gardenia",
-    "Pinoy Tasty",
-    "Pandesal",
-
-    "Silver Swan",
-    "Datu Puti",
-    "Marca Pina",
-    "UFC",
-    "Del Monte",
-    "Mang Tomas",
-    "Mama Sita's",
-
-    "Safeguard",
-    "Palmolive",
-    "Sunsilk",
-    "Cream Silk",
-    "Colgate",
-    "Closeup",
-    "Tide",
-    "Surf",
-    "Downy",
-    "Zonrox",
-    "Joy",
-
-    "__custom__"
-];
+const masterOtherItems = [];
 
 
 /* =========================================================
@@ -535,7 +461,7 @@ function populateMasterIngredientSelect(keepName){
     });
     if(current)select.value=current;
 }
-function populateMasterOtherItemSelect(keepName){const select=document.getElementById("otherItemName");if(!select)return;const current=keepName||select.value;const savedNames=new Set(otherItems.map(x=>x.name.toLowerCase()));select.innerHTML='<option value="">Select other item...</option>';masterOtherItems.forEach(name=>{if(name!=="__custom__"&&savedNames.has(name.toLowerCase())&&name.toLowerCase()!==String(current).toLowerCase())return;const o=document.createElement("option");o.value=name;o.textContent=name==="__custom__"?"➕ Add Custom Item":name;select.appendChild(o);});if(current)select.value=current;}
+function populateMasterOtherItemSelect(keepName){const input=document.getElementById("otherItemName");if(!input)return;if(keepName!==undefined&&keepName!==null)input.value=keepName;}
 
 function handleCustomIngredient() {
 
@@ -671,8 +597,8 @@ async function saveOtherItem(editId){
     if(error){console.error(error);showMessage("otherItemMessage","Unable to save other item.","error");return;}
     await renderOtherItemList(); clearOtherItemForm(); showMessage("otherItemMessage",editId?"Other item updated successfully.":"Other item saved successfully.","success");
 }
-function clearOtherItemForm(){["otherPurchasePrice","otherQuantity","otherUnit","otherSellingPrice","customOtherItemName"].forEach(id=>{const e=document.getElementById(id);if(e)e.value=""});const e=document.getElementById("otherItemName");if(e)e.value="";const b=document.querySelector('#ingredientScreen button[onclick^="saveOtherItem"]');if(b){b.textContent="Save Other Item";b.onclick=()=>saveOtherItem();}handleCustomOtherItem();}
-function editOtherItem(id){const item=otherItems.find(x=>String(x.id)===String(id));if(!item)return;document.getElementById("otherItemName").value=item.name;document.getElementById("otherPurchasePrice").value=item.purchasePrice;document.getElementById("otherQuantity").value=item.quantity;document.getElementById("otherUnit").value=item.unit;document.getElementById("otherSellingPrice").value=item.sellingPrice;const b=document.querySelector('#ingredientScreen button[onclick^="saveOtherItem"]');if(b){b.textContent="Update Other Item";b.onclick=()=>saveOtherItem(id);}showScreen("ingredientScreen");populateMasterOtherItemSelect(item.name);handleCustomOtherItem();window.scrollTo(0,0);}
+function clearOtherItemForm(){["otherPurchasePrice","otherQuantity","otherUnit","otherSellingPrice","customOtherItemName"].forEach(id=>{const e=document.getElementById(id);if(e)e.value=""});const e=document.getElementById("otherItemName");if(e)e.value="";const b=document.querySelector('#otherItemScreen button[onclick^="saveOtherItem"]');if(b){b.textContent="Save Other Item";b.onclick=()=>saveOtherItem();}handleCustomOtherItem();}
+function editOtherItem(id){const item=otherItems.find(x=>String(x.id)===String(id));if(!item)return;document.getElementById("otherItemName").value=item.name;document.getElementById("otherPurchasePrice").value=item.purchasePrice;document.getElementById("otherQuantity").value=item.quantity;document.getElementById("otherUnit").value=item.unit;document.getElementById("otherSellingPrice").value=item.sellingPrice;const b=document.querySelector('#otherItemScreen button[onclick^="saveOtherItem"]');if(b){b.textContent="Update Other Item";b.onclick=()=>saveOtherItem(id);}showScreen("otherItemScreen");populateMasterOtherItemSelect(item.name);handleCustomOtherItem();window.scrollTo(0,0);}
 async function renderOtherItemList(){const c=document.getElementById("otherItemList");if(!c)return;const userId=await getCurrentUserId();if(!userId)return;const {data,error}=await supabaseClient.from("other_items").select("*").eq("user_id",userId).order("created_at",{ascending:false});if(error){c.innerHTML='<div class="empty">Unable to load saved other items.</div>';return;}otherItems=(data||[]).map(x=>({id:String(x.id),name:x.name,purchasePrice:numberValue(x.purchase_price),quantity:numberValue(x.quantity),unit:x.unit||"",unitCost:numberValue(x.unit_cost),sellingPrice:numberValue(x.selling_price)}));c.innerHTML=otherItems.length?"":'<div class="empty">No other items saved yet.</div>';otherItems.forEach(item=>{const d=document.createElement("div");d.className="list-item saved-row";d.innerHTML='<div class="saved-row-main"><strong>'+escapeHtml(item.name)+'</strong><span>Purchase '+money(item.purchasePrice)+' | Sell '+money(item.sellingPrice)+'</span></div><div class="saved-row-actions"><button class="btn btn-secondary btn-small" onclick="editOtherItem(\''+item.id+'\')">Edit</button><button class="btn btn-danger btn-small" onclick="deleteOtherItem(\''+item.id+'\')">Delete</button></div>';c.appendChild(d);});populateMasterOtherItemSelect();}
 async function deleteOtherItem(id){if(!confirm("Delete this other item?"))return;const {error}=await supabaseClient.from("other_items").delete().eq("id",Number(id)).eq("user_id",currentUserId);if(error){showMessage("otherItemMessage","Unable to delete other item.","error");return;}await renderOtherItemList();}
 
