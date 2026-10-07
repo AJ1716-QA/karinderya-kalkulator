@@ -4165,23 +4165,59 @@ function selectMenuRecipe(){
     document.getElementById('selectedMenuRecipeCost').textContent=money(r.totalCost);
     document.getElementById('menuEntryRecipeCost').textContent=money(r.totalCost);
     document.getElementById('menuSellingPrice').value='';
-    document.getElementById('menuServings').value='';
     calculateMenuEntryForm();
 }
 function calculateMenuEntryForm(){
-    const id=String(document.getElementById('menuRecipeSelect')?.value||''),r=savedRecipes.find(function(x){return String(x.id)===id;});if(!r)return;
-    const selling=numberValue(document.getElementById('menuSellingPrice').value),servings=numberValue(document.getElementById('menuServings').value),sales=selling*servings,profit=sales-numberValue(r.totalCost),pct=sales?profit/sales*100:0;
+    const id=String(document.getElementById('menuRecipeSelect')?.value||'');
+    const r=savedRecipes.find(function(x){return String(x.id)===id;});
+    if(!r)return;
+
+    const selling=numberValue(document.getElementById('menuSellingPrice').value);
+    const servings=0;
+    const sales=selling*servings;
+    const profit=sales-numberValue(r.totalCost);
+    const pct=sales?profit/sales*100:0;
     const set=function(id,v,cls){const e=document.getElementById(id);if(e){e.textContent=v;e.classList.remove('profit-positive','profit-negative');if(cls)e.classList.add(cls);}};
-    set('menuEntryRecipeCost',money(r.totalCost));set('menuEntrySelling',money(selling));set('menuEntryServings',String(servings));set('menuEntrySales',money(sales));set('menuEntryProfit',money(profit),profit>0?'profit-positive':profit<0?'profit-negative':'');set('menuEntryProfitPercent',pct.toFixed(2)+'%',pct>0?'profit-positive':pct<0?'profit-negative':'');
+
+    set('menuEntryRecipeCost',money(r.totalCost));
+    set('menuEntrySelling',money(selling));
+    set('menuEntryServings','Enter on saved card');
+    set('menuEntrySales',money(sales));
+    set('menuEntryProfit',money(profit),profit>0?'profit-positive':profit<0?'profit-negative':'');
+    set('menuEntryProfitPercent',pct.toFixed(2)+'%',pct>0?'profit-positive':pct<0?'profit-negative':'');
 }
+
 function addFoodMenuSale(){
-    const date=document.getElementById('menuDate').value||todayString(),id=String(document.getElementById('menuRecipeSelect').value||''),r=savedRecipes.find(function(x){return String(x.id)===id;});
-    const selling=numberValue(document.getElementById('menuSellingPrice').value),servings=numberValue(document.getElementById('menuServings').value);
-    if(!r||selling<=0||servings<=0){showMessage('menuMessage','Please select a recipe and enter Selling Price and Servings Sold.','error');return;}
-    const record=stage4TodayRecord(date);if(record.foodItems.some(function(x){return String(x.recipeId)===id;})){showMessage('menuMessage','This recipe is already added for today.','error');return;}
-    record.foodItems.push({id:createSalesRowId(),recipeId:id,recipeName:r.name,recipeCost:numberValue(r.totalCost),sellingPrice:selling,servingsSold:servings});
-    saveAllData();loadMenuOfDay();showMessage('menuMessage',r.name+' added to today\'s sales.','success');
+    const date=document.getElementById('menuDate').value||todayString();
+    const id=String(document.getElementById('menuRecipeSelect').value||'');
+    const r=savedRecipes.find(function(x){return String(x.id)===id;});
+    const selling=numberValue(document.getElementById('menuSellingPrice').value);
+
+    if(!r||selling<=0){
+        showMessage('menuMessage','Please select a recipe and enter Selling Price / Serving.','error');
+        return;
+    }
+
+    const record=stage4TodayRecord(date);
+    if(record.foodItems.some(function(x){return String(x.recipeId)===id;})){
+        showMessage('menuMessage','This recipe is already added for today.','error');
+        return;
+    }
+
+    record.foodItems.push({
+        id:createSalesRowId(),
+        recipeId:id,
+        recipeName:r.name,
+        recipeCost:numberValue(r.totalCost),
+        sellingPrice:selling,
+        servingsSold:0
+    });
+
+    saveAllData();
+    loadMenuOfDay();
+    showMessage('menuMessage',r.name+' added to today\'s menu. Enter servings sold on the saved card.','success');
 }
+
 function renderMenuItems(date){
     const c=document.getElementById('menuItems');if(!c)return;const record=stage4TodayRecord(date);c.innerHTML='';
     if(!record.foodItems.length){c.innerHTML='<div class="menu-empty">No food sales added yet.</div>';return;}
@@ -4221,11 +4257,31 @@ async function loadMenuOfDay(){
     if(!d)return;
     if(!d.value)d.value=todayString();
 
-    /* The master Other Items list is stored in Supabase. Always refresh it
-       before building the daily selector so the selector cannot be empty
-       because the in-memory list has not loaded yet. */
-    if(currentUserId){
-        await renderOtherItemList();
+    /* Other Items are stored in Supabase. Refresh the master list directly
+       before rendering the daily selector. */
+    const userId=await getCurrentUserId();
+    if(userId){
+        const {data,error}=await supabaseClient
+            .from('other_items')
+            .select('*')
+            .eq('user_id',userId)
+            .order('created_at',{ascending:false});
+
+        if(!error){
+            otherItems=(data||[]).map(function(x){
+                return {
+                    id:String(x.id),
+                    name:String(x.name||''),
+                    purchasePrice:numberValue(x.purchase_price),
+                    quantity:numberValue(x.quantity),
+                    unit:String(x.unit||''),
+                    unitCost:numberValue(x.unit_cost),
+                    sellingPrice:numberValue(x.selling_price)
+                };
+            });
+        }else{
+            console.error('Unable to refresh Other Items for daily sales:',error);
+        }
     }
 
     populateMenuRecipeSelect(d.value);
@@ -4253,8 +4309,9 @@ function renderMenuItems(date){
     if(!c)return;
     const record=stage4TodayRecord(date);
     c.innerHTML='';
+
     if(!record.foodItems.length){
-        c.innerHTML='<div class="menu-empty">No food sales added yet.</div>';
+        c.innerHTML='<div class="menu-empty">No food menus added yet.</div>';
         return;
     }
 
@@ -4263,8 +4320,9 @@ function renderMenuItems(date){
         const profit=sales-numberValue(item.recipeCost);
         const pct=sales?profit/sales*100:0;
         const soldOut=stage4IsFoodSoldOut(record,item.id);
+
         const d=document.createElement('div');
-        d.className='menu-item'+(soldOut?' stage4-sold-out':'');
+        d.className='menu-item'+(soldOut?' stage4-food-sold-out':'');
         d.dataset.foodId=item.id;
 
         const actions=soldOut
@@ -4275,20 +4333,18 @@ function renderMenuItems(date){
 
         d.innerHTML=
             '<div class="menu-top">'+
-                '<div>'+
-                    '<div class="menu-name">'+escapeHtml(item.recipeName)+'</div>'+
-                    (soldOut?'<div class="stage4-sold-out-label">SOLD OUT</div>':'')+
-                '</div>'+ 
-                '<div class="menu-actions">'+actions+'</div>'+ 
-            '</div>'+ 
+                '<div><div class="menu-name">'+escapeHtml(item.recipeName)+'</div>'+(soldOut?'<div class="stage4-sold-out-label">SOLD OUT</div>':'')+'</div>'+
+                '<div class="menu-actions">'+actions+'</div>'+
+            '</div>'+
             '<div class="menu-summary-grid-6">'+
-                stage4Box('Recipe Cost',money(item.recipeCost))+ 
-                stage4Box('Selling / Serving',money(item.sellingPrice))+ 
-                stage4Box('Servings Sold',item.servingsSold)+ 
-                stage4Box('Total Sales',money(sales))+ 
-                stage4Box('Profit',money(profit),profit)+ 
-                stage4Box('Profit %',pct.toFixed(2)+'%',profit)+ 
+                stage4Box('Recipe Cost',money(item.recipeCost))+
+                stage4Box('Selling / Serving',money(item.sellingPrice))+
+                '<div class="menu-summary-box menu-serving-input-box"><span>Servings Sold</span><input class="stage4-live-servings" type="number" min="0" step="1" value="'+numberValue(item.servingsSold)+'" inputmode="numeric" autocomplete="off" '+(soldOut?'disabled ':'')+'oninput="updateStage4FoodServings(this)"></div>'+
+                stage4Box('Total Sales',money(sales))+
+                stage4Box('Profit',money(profit),profit)+
+                stage4Box('Profit %',pct.toFixed(2)+'%',profit)+
             '</div>';
+
         c.appendChild(d);
     });
 }
@@ -4314,20 +4370,47 @@ function editStage4Food(btn){
     const item=record.foodItems.find(function(x){return String(x.id)===String(el.dataset.foodId);});
     if(!item)return;
 
-    /* Edit is the only action available after Sold Out. Opening Edit unlocks
-       the selling price and servings fields for correction. */
     el.innerHTML=
-        '<div class="menu-top">'+
-            '<div><div class="menu-name">'+escapeHtml(item.recipeName)+'</div></div>'+
-        '</div>'+ 
-        '<div class="form-grid">'+
-            '<div class="form-group"><label>Selling Price / Serving</label><input class="stage4-edit-price" type="number" min="0" step="0.01" value="'+numberValue(item.sellingPrice)+'" inputmode="decimal"></div>'+
-            '<div class="form-group"><label>Servings Sold</label><input class="stage4-edit-servings" type="number" min="0" step="1" value="'+numberValue(item.servingsSold)+'" inputmode="numeric"></div>'+
-        '</div>'+ 
+        '<div class="menu-top"><div><div class="menu-name">'+escapeHtml(item.recipeName)+'</div></div></div>'+
+        '<div class="form-group"><label>Selling Price / Serving</label><input class="stage4-edit-price mobile-large-input" type="number" min="0" step="0.01" value="'+numberValue(item.sellingPrice)+'" inputmode="decimal" autocomplete="off"></div>'+
         '<div class="button-row">'+
             '<button type="button" class="btn btn-primary btn-small" onclick="updateStage4Food(this)">Update</button>'+
             '<button type="button" class="btn btn-secondary btn-small" onclick="loadMenuOfDay()">Cancel</button>'+
         '</div>';
+}
+
+function updateStage4FoodServings(input){
+    const el=input.closest('.menu-item');
+    if(!el)return;
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    const item=record.foodItems.find(function(x){return String(x.id)===String(el.dataset.foodId);});
+    if(!item)return;
+
+    item.servingsSold=Math.max(0,Math.floor(numberValue(input.value)));
+
+    const sales=numberValue(item.sellingPrice)*item.servingsSold;
+    const profit=sales-numberValue(item.recipeCost);
+    const pct=sales?profit/sales*100:0;
+    const boxes=el.querySelectorAll('.menu-summary-box');
+
+    if(boxes[3])boxes[3].querySelector('strong').textContent=money(sales);
+    if(boxes[4]){
+        const strong=boxes[4].querySelector('strong');
+        strong.textContent=money(profit);
+        strong.classList.remove('profit-positive','profit-negative');
+        if(profit>0)strong.classList.add('profit-positive');
+        if(profit<0)strong.classList.add('profit-negative');
+    }
+    if(boxes[5]){
+        const strong=boxes[5].querySelector('strong');
+        strong.textContent=pct.toFixed(2)+'%';
+        strong.classList.remove('profit-positive','profit-negative');
+        if(pct>0)strong.classList.add('profit-positive');
+        if(pct<0)strong.classList.add('profit-negative');
+    }
+
+    calculateCombinedSales(date);
 }
 
 function updateStage4Food(btn){
@@ -4339,14 +4422,11 @@ function updateStage4Food(btn){
     if(!item)return;
 
     const p=numberValue(el.querySelector('.stage4-edit-price').value);
-    const q=numberValue(el.querySelector('.stage4-edit-servings').value);
-    if(p<=0||q<=0){
-        showMessage('menuMessage','Enter valid Selling Price and Servings Sold.','error');
+    if(p<=0){
+        showMessage('menuMessage','Enter a valid Selling Price.','error');
         return;
     }
-
     item.sellingPrice=p;
-    item.servingsSold=q;
     saveAllData();
     loadMenuOfDay();
 }
