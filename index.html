@@ -82,7 +82,7 @@ input:focus,select:focus{border-color:#123B63}.form-group{margin-bottom:13px}.fo
 <div class="section-title">Dashboard</div>
 <div class="dashboard-grid">
 <div class="dashboard-card" onclick="showScreen('ingredientScreen')"><div class="icon">🥬</div><strong>Ingredients</strong><span>Manage ingredient costs</span></div>
-<div class="dashboard-card" onclick="showScreen('ingredientScreen')"><div class="icon">🥤</div><strong>Other Items</strong><span>Manage resale items</span></div>
+<div class="dashboard-card" onclick="showScreen('otherItemScreen')"><div class="icon">🥤</div><strong>Other Items</strong><span>Manage resale items</span></div>
 <div class="dashboard-card" onclick="showScreen('recipeScreen')"><div class="icon">🍳</div><strong>Recipe of the Day</strong><span>Calculate food cost</span></div>
 <div class="dashboard-card" onclick="showScreen('menuScreen')"><div class="icon">🍽️</div><strong>Today’s Menu &amp; Sales</strong><span>Menu and actual sales</span></div>
 <div class="dashboard-card" onclick="showScreen('profitScreen')"><div class="icon">💸</div><strong>Daily Expenses</strong><span>Manage daily expenses</span></div>
@@ -188,6 +188,25 @@ input:focus,select:focus{border-color:#123B63}.form-group{margin-bottom:13px}.fo
 <div id="customIngredientGroup" style="display:none"><div class="form-group"><label>Custom Ingredient Name</label><input type="text" id="customIngredientName"></div></div><div class="button-row"><button class="btn btn-primary" onclick="saveIngredient()">Save Ingredient</button></div><div id="ingredientMessage" class="message"></div>
 </div>
 <div class="card"><div class="section-title" style="font-size:17px">Saved Ingredients</div><div id="ingredientList"></div></div>
+ </section>
+
+<section id="otherItemScreen" class="screen">
+<button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')">← Back</button>
+<div class="section-title">Other Items</div>
+<div class="card">
+<div class="section-title" style="font-size:17px">Add Other Item</div>
+<div class="small-text" style="margin-bottom:12px">Add only the resale items you actually sell in your store.</div>
+<div class="form-grid">
+<div class="form-group"><label>Item Name</label><input type="text" id="otherItemName" placeholder="Example: Sprite"></div>
+<div class="form-group"><label>Purchase Price</label><input type="number" id="otherPurchasePrice" min="0" step="0.01"></div>
+<div class="form-group"><label>Quantity Purchased</label><input type="number" id="otherQuantity" min="0" step="0.001"></div>
+<div class="form-group"><label>Unit</label><input type="text" id="otherUnit" placeholder="bottle"></div>
+<div class="form-group"><label>Selling Price</label><input type="number" id="otherSellingPrice" min="0" step="0.01"></div>
+</div>
+<div class="button-row"><button class="btn btn-primary" onclick="saveOtherItem()">Save Other Item</button></div><div id="otherItemMessage" class="message"></div>
+</div>
+<div class="card"><div class="section-title" style="font-size:17px">Saved Other Items</div><div id="otherItemList"></div></div>
+</section>
 <div class="card">
 <div class="section-title" style="font-size:17px">Other Items</div><div class="small-text" style="margin-bottom:12px">Use this section for items bought by carton, case, pack, or bulk.</div>
 <div class="form-grid">
