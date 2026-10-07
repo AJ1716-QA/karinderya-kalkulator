@@ -473,6 +473,16 @@ function showScreen(screenId) {
         updateDashboard();
     }
 
+    /* Always refresh cloud ingredients before opening Recipe Cost.
+       This guarantees newly saved ingredients are immediately available
+       in the recipe ingredient dropdown. */
+    if (screenId === "recipeScreen" && currentUserId) {
+        renderIngredientList().then(function(){
+            refreshRecipeIngredientDropdowns();
+            calculateRecipeTotal();
+        });
+    }
+
     if (screenId === "ingredientScreen") {
         populateMasterIngredientSelect();
         populateMasterOtherItemSelect();
@@ -1815,7 +1825,7 @@ function renderSalesOtherDropdown(date) {
 
     const select =
         document.getElementById(
-            "salesOtherSelect"
+            "otherSalesSelect"
         );
 
     if (!select) {
@@ -2373,7 +2383,7 @@ function addSalesOtherItem() {
 
     const select =
         document.getElementById(
-            "salesOtherSelect"
+            "otherSalesSelect"
         );
 
     if (!select) {
@@ -3903,13 +3913,24 @@ document.addEventListener(
 
 window.addEventListener("load", function() {
     const addMenuButton = document.getElementById("addMenuItemBtn");
-    if (!addMenuButton) return;
+    if (addMenuButton) {
+        addMenuButton.type = "button";
+        addMenuButton.addEventListener("click", function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            saveNewMenuItem();
+        });
+    }
 
-    addMenuButton.type = "button";
-    addMenuButton.onclick = function(event) {
-        if (event) event.preventDefault();
-        return saveNewMenuItem();
-    };
+    const addSalesFoodButton = document.getElementById("addSalesFoodBtn");
+    if (addSalesFoodButton) {
+        addSalesFoodButton.type = "button";
+        addSalesFoodButton.addEventListener("click", function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            addSalesFoodItem();
+        });
+    }
 });
 
 
