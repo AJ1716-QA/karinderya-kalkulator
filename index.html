@@ -71,6 +71,39 @@ input:focus,select:focus{border-color:#123B63}.form-group{margin-bottom:13px}.fo
 .stage4-sold-out{border-color:#94a3b8;background:#f1f5f9}
 .stage4-sold-out-label{display:inline-block;margin-top:5px;padding:3px 7px;border-radius:6px;background:#334155;color:white;font-size:10px;font-weight:700;letter-spacing:.4px}
 </style>
+
+<style>
+/* STAGE 4 MOBILE-FRIENDLY CONTROLS */
+.mobile-large-input{font-size:18px!important;min-height:50px!important;font-weight:600}
+.menu-add-note{font-size:14px;line-height:1.45;color:#4b5563;background:#f7f9fc;border:1px solid #dbe2e8;border-radius:10px;padding:10px 12px;margin-top:8px}
+.menu-name{font-size:18px!important}
+.menu-summary-box{padding:10px 6px!important;min-height:68px;display:flex;flex-direction:column;justify-content:center}
+.menu-summary-box span{font-size:11px!important;line-height:1.2}
+.menu-summary-box strong{font-size:15px!important;line-height:1.25;word-break:break-word}
+.stage4-live-servings{width:100%;min-height:38px;padding:7px 5px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font-size:16px;font-weight:700;text-align:center}
+.stage4-live-servings:disabled{background:#eef1f4;color:#6b7280}
+.menu-serving-input-box{background:#fff}
+.stage4-sold-out-label{display:inline-block;margin-top:5px;padding:4px 8px;border-radius:7px;background:#e5e7eb;color:#374151;font-size:12px;font-weight:800}
+.stage4-food-sold-out{opacity:.94}
+.daily-other-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.daily-other-grid input{font-size:17px!important;min-height:48px!important}
+@media(max-width:600px){
+  .container{padding:10px!important}
+  .card{padding:13px!important;margin-bottom:11px}
+  .section-title{font-size:22px!important}
+  label{font-size:15px!important}
+  input,select{font-size:17px;min-height:48px}
+  .menu-summary-grid-6{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+  .menu-summary-box{padding:8px 3px!important;min-height:70px}
+  .menu-summary-box span{font-size:10px!important}
+  .menu-summary-box strong{font-size:14px!important}
+  .menu-actions{gap:5px!important;flex-wrap:wrap}
+  .menu-actions .btn{font-size:13px!important;padding:8px 9px!important}
+  .daily-other-grid{gap:7px!important}
+  .daily-other-grid label{font-size:13px!important}
+  .daily-other-grid input{font-size:17px!important}
+}
+</style>
 </head>
 <body>
 <div id="authScreen" style="display:block;max-width:420px;margin:60px auto;padding:16px;">
@@ -134,18 +167,8 @@ input:focus,select:focus{border-color:#123B63}.form-group{margin-bottom:13px}.fo
 <div class="form-group"><label>Select Recipe</label><select id="menuRecipeSelect" onchange="selectMenuRecipe()"><option value="">-- Select Recipe --</option></select></div>
 <div id="menuRecipeEntry" style="display:none">
 <div class="form-group"><label>Recipe Cost</label><div id="selectedMenuRecipeCost" class="readonly-value">₱0.00</div></div>
-<div class="form-grid">
-<div class="form-group"><label>Selling Price / Serving</label><input type="number" id="menuSellingPrice" min="0" step="0.01" placeholder="0.00" oninput="calculateMenuEntryForm()"></div>
-<div class="form-group"><label>Servings Sold</label><input type="number" id="menuServings" min="0" step="1" placeholder="0" oninput="calculateMenuEntryForm()"></div>
-</div>
-<div class="menu-summary-grid-6">
-<div class="menu-summary-box"><span>Recipe Cost</span><strong id="menuEntryRecipeCost">₱0.00</strong></div>
-<div class="menu-summary-box"><span>Selling / Serving</span><strong id="menuEntrySelling">₱0.00</strong></div>
-<div class="menu-summary-box"><span>Servings Sold</span><strong id="menuEntryServings">0</strong></div>
-<div class="menu-summary-box"><span>Total Sales</span><strong id="menuEntrySales">₱0.00</strong></div>
-<div class="menu-summary-box"><span>Profit</span><strong id="menuEntryProfit">₱0.00</strong></div>
-<div class="menu-summary-box"><span>Profit %</span><strong id="menuEntryProfitPercent">0.00%</strong></div>
-</div>
+<div class="form-group"><label>Selling Price / Serving</label><input class="mobile-large-input" type="number" id="menuSellingPrice" min="0" step="0.01" placeholder="Enter selling price" inputmode="decimal" autocomplete="off" oninput="calculateMenuEntryForm()"></div>
+<div class="menu-add-note">After adding the food, enter and adjust <strong>Servings Sold</strong> directly on its saved card below. You can update it anytime during the day.</div>
 <div class="button-row"><button type="button" class="btn btn-primary" onclick="addFoodMenuSale()">Add Food</button></div>
 </div></div>
 <div id="menuMessage" class="message"></div>
