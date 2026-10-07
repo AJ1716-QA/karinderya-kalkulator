@@ -58,6 +58,15 @@ input:focus,select:focus{border-color:#123B63}.form-group{margin-bottom:13px}.fo
 .menu-item{background:#f8fafc;border:1px solid #dbe2e8;border-radius:12px;padding:12px;margin-top:10px}.menu-top{display:grid;grid-template-columns:minmax(0,1fr) 90px 110px;gap:8px;align-items:end}.menu-name{font-weight:700;color:#123B63;font-size:16px}.menu-cost{font-size:12px;color:#6b7280;margin-top:3px}.menu-field label{font-size:10px;margin-bottom:4px}.menu-field input{min-height:38px;padding:6px;font-size:13px}.menu-info{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}.menu-info-box{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:8px;text-align:center}.menu-info-label{font-size:9px;color:#6b7280}.menu-info-value{font-size:12px;font-weight:700;color:#123B63;margin-top:3px}.menu-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:10px}
 @media(max-width:500px){.menu-top{grid-template-columns:1fr 1fr}.menu-top>div:first-child{grid-column:1/-1}.menu-info{grid-template-columns:1fr 1fr 1fr}.menu-actions .btn{flex:1}}
 </style>
+<style>
+.readonly-value{padding:11px 12px;border:1px solid #d8dee8;border-radius:10px;background:#f7f9fc;font-weight:700}
+.menu-summary-grid-6{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+.menu-summary-grid-6 .menu-summary-box{min-width:0}
+.profit-positive{color:#16803c!important}.profit-negative{color:#c62828!important}
+.daily-other-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media(max-width:600px){.menu-summary-grid-6{grid-template-columns:repeat(3,minmax(0,1fr));}.daily-other-grid{grid-template-columns:1fr 1fr}.menu-summary-box strong{font-size:13px}}
+</style>
+
 </head>
 <body>
 <div id="authScreen" style="display:block;max-width:420px;margin:60px auto;padding:16px;">
@@ -113,64 +122,44 @@ input:focus,select:focus{border-color:#123B63}.form-group{margin-bottom:13px}.fo
 
 <section id="menuScreen" class="screen">
 <button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')">← Back</button>
-<div class="section-title">Menu of the Day</div>
+<div class="section-title">Today's Menu &amp; Sales</div>
 <div class="card">
-<div class="form-grid"><div class="form-group"><label>Date</label><input type="date" id="menuDate" onchange="loadMenuOfDay()"></div><div class="form-group"><label>Target Food Cost %</label><input type="number" id="targetFoodCost" min="1" max="99" step="0.01" onchange="saveTargetFoodCost()"></div></div>
+<div class="form-group"><label>Date</label><input type="date" id="menuDate" onchange="loadMenuOfDay()"></div>
 <div class="menu-entry-card">
-<div class="menu-entry-title">Add Menu Item</div>
+<div class="menu-entry-title">Add Food Menu</div>
 <div class="form-group"><label>Select Recipe</label><select id="menuRecipeSelect" onchange="selectMenuRecipe()"><option value="">-- Select Recipe --</option></select></div>
 <div id="menuRecipeEntry" style="display:none">
-<div class="small-text" style="margin-bottom:8px">Recipe Cost: <strong id="selectedMenuRecipeCost">₱0.00</strong></div>
-<div class="menu-entry-grid">
-<div><label>Servings</label><input type="number" id="menuServings" min="1" step="1" value="1" oninput="calculateMenuEntryForm()"></div>
-<div><label>Selling Price</label><input type="number" id="menuSellingPrice" min="0" step="0.01" value="0" oninput="calculateMenuEntryForm()"></div>
-<div><label>Target Profit %</label><input type="number" id="menuTargetProfit" min="0" step="0.01" value="30" oninput="calculateMenuEntryForm()"></div>
+<div class="form-group"><label>Recipe Cost</label><div id="selectedMenuRecipeCost" class="readonly-value">₱0.00</div></div>
+<div class="form-grid">
+<div class="form-group"><label>Selling Price / Serving</label><input type="number" id="menuSellingPrice" min="0" step="0.01" placeholder="0.00" oninput="calculateMenuEntryForm()"></div>
+<div class="form-group"><label>Servings Sold</label><input type="number" id="menuServings" min="0" step="1" placeholder="0" oninput="calculateMenuEntryForm()"></div>
 </div>
-<div class="menu-summary">
-<div class="menu-summary-box"><span>Cost/Serving</span><strong id="menuEntryCostServing">₱0.00</strong></div>
-<div class="menu-summary-box"><span>Expected Sales</span><strong id="menuEntrySales">₱0.00</strong></div>
-<div class="menu-summary-box"><span>Food Cost</span><strong id="menuEntryFoodCost">₱0.00</strong></div>
-<div class="menu-summary-box"><span>Expected Profit</span><strong id="menuEntryProfit">₱0.00</strong></div>
+<div class="menu-summary-grid-6">
+<div class="menu-summary-box"><span>Recipe Cost</span><strong id="menuEntryRecipeCost">₱0.00</strong></div>
+<div class="menu-summary-box"><span>Selling / Serving</span><strong id="menuEntrySelling">₱0.00</strong></div>
+<div class="menu-summary-box"><span>Servings Sold</span><strong id="menuEntryServings">0</strong></div>
+<div class="menu-summary-box"><span>Total Sales</span><strong id="menuEntrySales">₱0.00</strong></div>
+<div class="menu-summary-box"><span>Profit</span><strong id="menuEntryProfit">₱0.00</strong></div>
+<div class="menu-summary-box"><span>Profit %</span><strong id="menuEntryProfitPercent">0.00%</strong></div>
 </div>
-<div class="small-text" id="menuEntryStatus" style="margin-top:8px"></div>
-<div class="menu-save-row"><button type="button" class="btn btn-primary" id="addMenuItemBtn">Add Menu Item</button></div>
+<div class="button-row"><button type="button" class="btn btn-primary" onclick="addFoodMenuSale()">Add Food</button></div>
 </div></div>
 <div id="menuMessage" class="message"></div>
 </div>
-<div class="card"><div class="section-title" style="font-size:18px">Today's Menu</div><div id="menuItems"><div class="menu-empty">No menu items saved yet.</div></div></div>
-<div class="card"><div class="menu-summary">
-<div class="menu-summary-box"><span>Total Food Cost</span><strong id="menuTotalCost">₱0.00</strong></div>
-<div class="menu-summary-box"><span>Expected Sales</span><strong id="menuTotalSales">₱0.00</strong></div>
-<div class="menu-summary-box"><span>Expected Profit</span><strong id="menuTotalProfit">₱0.00</strong></div>
-<div class="menu-summary-box"><span>Margin</span><strong id="menuTotalMargin">0%</strong></div>
-</div></div>
-</section>
-
-<section id="salesScreen" class="screen">
-<button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')">← Back</button>
-<div class="section-title">Daily Sales</div>
+<div class="card"><div class="section-title" style="font-size:18px">Food Sales</div><div id="menuItems"><div class="menu-empty">No food sales added yet.</div></div></div>
 <div class="card">
-<div class="form-group"><label>Date</label><input type="date" id="salesDate" onchange="loadSalesScreen()"></div>
-<div class="section-title" style="font-size:17px">Cooked Food</div>
-<div class="form-group"><label>Select Saved Menu</label><select id="salesFoodSelect"><option value="">-- Select Menu Item --</option></select></div><div class="button-row"><button type="button" class="btn btn-primary" id="addSalesFoodBtn">ADD</button></div>
-<div id="salesFoodItems"></div><div id="salesFoodEmpty" class="menu-empty">No cooked food added.</div>
+<div class="section-title" style="font-size:18px">Other Items Sold</div>
+<div class="form-group"><label>Add Other Item</label><select id="dailyOtherItemSelect" onchange="addDailyOtherItemFromSelect()"><option value="">-- Select Other Item --</option></select></div>
+<div id="dailyOtherItemsList"><div class="menu-empty">No other items sold.</div></div>
 </div>
-<div class="card">
-<div class="section-title" style="font-size:17px">Other Items</div>
-<div class="form-group"><label>Add Other Item</label><select id="otherSalesSelect" onchange="addOtherItemSalesFromSelect()"><option value="">-- Select Other Item --</option></select></div>
-<div id="otherSalesRows"></div><div id="otherSalesEmpty" class="menu-empty">No other items added.</div>
-</div>
-<div class="card">
-<div class="section-title" style="font-size:17px">Sales Summary</div>
-<div class="sales-summary">
-<div class="sales-summary-box"><span>Cooked Food Sales</span><strong id="salesFoodTotal">₱0.00</strong></div>
-<div class="sales-summary-box"><span>Other Item Sales</span><strong id="salesOtherTotal">₱0.00</strong></div>
-<div class="sales-summary-box"><span>Total Sales</span><strong id="salesTotal">₱0.00</strong></div>
-<div class="sales-summary-box"><span>Total Cost</span><strong id="salesTotalCost">₱0.00</strong></div>
-<div class="sales-summary-box"><span>Gross Profit</span><strong id="salesGrossProfit">₱0.00</strong></div>
-</div>
-<div class="button-row"><button class="btn btn-primary" onclick="saveDailySales()">Save Daily Sales</button></div><div id="salesMessage" class="message"></div>
-</div>
+<div class="card"><div class="section-title" style="font-size:18px">Sales Summary</div><div class="menu-summary-grid-6">
+<div class="menu-summary-box"><span>Food Sales</span><strong id="combinedFoodSales">₱0.00</strong></div>
+<div class="menu-summary-box"><span>Other Item Sales</span><strong id="combinedOtherSales">₱0.00</strong></div>
+<div class="menu-summary-box"><span>Total Sales</span><strong id="combinedTotalSales">₱0.00</strong></div>
+<div class="menu-summary-box"><span>Total Cost</span><strong id="combinedTotalCost">₱0.00</strong></div>
+<div class="menu-summary-box"><span>Gross Profit</span><strong id="combinedGrossProfit">₱0.00</strong></div>
+<div class="menu-summary-box"><span>Profit %</span><strong id="combinedProfitPercent">0.00%</strong></div>
+</div><div class="button-row"><button type="button" class="btn btn-primary" onclick="saveCombinedMenuSales()">Save Today's Sales</button></div></div>
 </section>
 
 <section id="ingredientScreen" class="screen">
