@@ -1302,43 +1302,144 @@ function renderMenuItems(date){
     updateMenuSummary(totalCost,totalSales,totalProfit);
 }
 
+/* ---------------------------------------------------------
+   INLINE MENU EDITING
+   Edit opens INSIDE the selected saved menu row.
+   No need to scroll back to the top.
+--------------------------------------------------------- */
 function editMenuItem(button){
-    const item=button.closest(".menu-item");
+    const itemElement=button.closest(".menu-item");
     const date=document.getElementById("menuDate")?.value||todayString();
-    if(!item)return;
+    if(!itemElement)return;
 
-    const recipeId=String(item.dataset.recipeId||"");
+    /* If another row is already being edited, cancel it first. */
+    const openEdit=document.querySelector(".menu-item.menu-editing");
+    if(openEdit && openEdit!==itemElement){
+        cancelInlineMenuEdit(openEdit.querySelector("[data-menu-cancel]"));
+    }
+
+    const recipeId=String(itemElement.dataset.recipeId||"");
     const menu=getSavedMenuForDate(date);
-    const savedItem=menu&&Array.isArray(menu.items)?menu.items.find(function(x){return String(x.recipeId)===recipeId;}):null;
+    const savedItem=menu&&Array.isArray(menu.items)
+        ? menu.items.find(function(x){return String(x.recipeId)===recipeId;})
+        : null;
     if(!savedItem)return;
 
-    const recipe=savedRecipes.find(function(x){return String(x.id)===recipeId;});
-    if(!recipe)return;
+    itemElement.classList.add("menu-editing");
+    itemElement.dataset.originalServings=String(numberValue(savedItem.servings)||1);
+    itemElement.dataset.originalSelling=String(numberValue(savedItem.sellingPrice));
 
-    editingMenuRecipeId=recipeId;
+    renderInlineMenuEdit(itemElement,savedItem);
+}
+
+function renderInlineMenuEdit(itemElement,item){
+    const servings=Math.max(1,numberValue(item.servings));
+    const selling=numberValue(item.sellingPrice);
+    const recipeCost=numberValue(item.recipeCost);
+    const suggested=calculateSuggestedSellingPrice(recipeCost,servings);
+    const sales=selling*servings;
+    const foodCost=sales?(recipeCost/sales*100):0;
+    const profit=sales-recipeCost;
+    const margin=sales?(profit/sales*100):0;
+
+    itemElement.innerHTML=
+        '<div class="menu-top">'+
+            '<div><div class="menu-name">'+escapeHtml(item.recipeName)+'</div></div>'+
+        '</div>'+
+        '<div class="menu-edit-form">'+
+            '<div class="form-group">'+
+                '<label>Servings</label>'+
+                '<input type="number" class="menu-edit-servings" min="1" step="1" value="'+servings+'" oninput="updateInlineMenuEdit(this)">'+
+            '</div>'+
+            '<div class="form-group">'+
+                '<label>Selling Price / Serving</label>'+
+                '<input type="number" class="menu-edit-selling" min="0" step="0.01" value="'+roundNumber(selling)+'" oninput="updateInlineMenuEdit(this)">'+
+            '</div>'+
+        '</div>'+
+        '<div class="menu-info">'+
+            '<div class="menu-info-box"><div class="menu-info-label">Recipe Cost</div><div class="menu-info-value" data-edit-cost>'+money(recipeCost)+'</div></div>'+ 
+            '<div class="menu-info-box"><div class="menu-info-label">Suggested Price / Serving</div><div class="menu-info-value" data-edit-suggested>'+money(suggested)+'</div></div>'+ 
+            '<div class="menu-info-box"><div class="menu-info-label">Expected Sales</div><div class="menu-info-value" data-edit-sales>'+money(sales)+'</div></div>'+ 
+            '<div class="menu-info-box"><div class="menu-info-label">Food Cost</div><div class="menu-info-value" data-edit-food-cost>'+foodCost.toFixed(2)+'%</div></div>'+ 
+            '<div class="menu-info-box"><div class="menu-info-label">Expected Profit</div><div class="menu-info-value" data-edit-profit>'+money(profit)+'</div></div>'+ 
+            '<div class="menu-info-box"><div class="menu-info-label">Profit Margin</div><div class="menu-info-value" data-edit-margin>'+margin.toFixed(2)+'%</div></div>'+ 
+        '</div>'+ 
+        '<div class="menu-actions">'+
+            '<button type="button" class="btn btn-primary btn-small" data-menu-update onclick="updateInlineMenuItem(this)">Update</button>'+ 
+            '<button type="button" class="btn btn-secondary btn-small" data-menu-cancel onclick="cancelInlineMenuEdit(this)">Cancel</button>'+ 
+            '<button type="button" class="btn btn-danger btn-small" onclick="deleteMenuItem(this)">Delete</button>'+ 
+        '</div>';
+}
+
+function updateInlineMenuEdit(input){
+    const itemElement=input.closest(".menu-item");
+    if(!itemElement)return;
+
+    const date=document.getElementById("menuDate")?.value||todayString();
+    const recipeId=String(itemElement.dataset.recipeId||"");
+    const menu=getSavedMenuForDate(date);
+    const item=menu&&Array.isArray(menu.items)
+        ? menu.items.find(function(x){return String(x.recipeId)===recipeId;})
+        : null;
+    if(!item)return;
+
+    const servings=Math.max(1,numberValue(itemElement.querySelector(".menu-edit-servings")?.value));
+    const selling=numberValue(itemElement.querySelector(".menu-edit-selling")?.value);
+    const recipeCost=numberValue(item.recipeCost);
+    const suggested=calculateSuggestedSellingPrice(recipeCost,servings);
+    const sales=selling*servings;
+    const foodCost=sales?(recipeCost/sales*100):0;
+    const profit=sales-recipeCost;
+    const margin=sales?(profit/sales*100):0;
+
+    const set=function(selector,value){
+        const el=itemElement.querySelector(selector);
+        if(el)el.textContent=value;
+    };
+    set("[data-edit-suggested]",money(suggested));
+    set("[data-edit-sales]",money(sales));
+    set("[data-edit-food-cost]",foodCost.toFixed(2)+"%");
+    set("[data-edit-profit]",money(profit));
+    set("[data-edit-margin]",margin.toFixed(2)+"%");
+}
+
+function updateInlineMenuItem(button){
+    const itemElement=button.closest(".menu-item");
+    const date=document.getElementById("menuDate")?.value||todayString();
+    if(!itemElement)return;
+
+    const recipeId=String(itemElement.dataset.recipeId||"");
+    const menu=getSavedMenuForDate(date);
+    const item=menu&&Array.isArray(menu.items)
+        ? menu.items.find(function(x){return String(x.recipeId)===recipeId;})
+        : null;
+    if(!item)return;
+
+    const servings=Math.max(1,numberValue(itemElement.querySelector(".menu-edit-servings")?.value));
+    let selling=numberValue(itemElement.querySelector(".menu-edit-selling")?.value);
+    if(selling<=0)selling=calculateSuggestedSellingPrice(item.recipeCost,servings);
+    if(selling<=0){
+        showMessage("menuMessage","Please enter a valid selling price.","error");
+        return;
+    }
+
+    item.servings=servings;
+    item.sellingPrice=selling;
+    item.suggestedSellingPrice=calculateSuggestedSellingPrice(item.recipeCost,servings);
+
+    saveAllData();
+    renderMenuItems(date);
     populateMenuRecipeSelect(date);
+    showMessage("menuMessage",item.recipeName+" updated in Today's Menu.","success");
+}
 
-    const select=document.getElementById("menuRecipeSelect");
-    const entry=document.getElementById("menuRecipeEntry");
-    if(select)select.value=recipeId;
-    if(entry)entry.style.display="block";
+function cancelInlineMenuEdit(button){
+    const itemElement=button.closest(".menu-item");
+    const date=document.getElementById("menuDate")?.value||todayString();
+    if(!itemElement)return;
 
-    const cost=document.getElementById("selectedMenuRecipeCost");
-    if(cost)cost.textContent=money(recipe.totalCost);
-
-    const servings=document.getElementById("menuServings");
-    const selling=document.getElementById("menuSellingPrice");
-    const target=document.getElementById("menuTargetProfit");
-    if(servings)servings.value=numberValue(savedItem.servings)||1;
-    if(selling)selling.value=roundNumber(savedItem.sellingPrice);
-    if(target)target.value=30;
-
-    const addButton=document.getElementById("addMenuItemBtn");
-    if(addButton)addButton.textContent="Update Menu Item";
-
-    calculateMenuEntryForm();
-    const form=entry||document.getElementById("menuRecipeEntry");
-    if(form)form.scrollIntoView({behavior:"smooth",block:"center"});
+    /* Re-render from saved data, so any uncommitted typing disappears. */
+    renderMenuItems(date);
 }
 
 function updateMenuSummary(totalCost,totalSales,totalProfit){
@@ -1392,10 +1493,6 @@ function calculateMenuEntry(input) {
             quantity
         );
 
-    /*
-       If the selling price has never been
-       entered, use the suggested price.
-    */
     if (
         sellingPrice <= 0 &&
         suggested > 0
@@ -1423,33 +1520,35 @@ function calculateMenuEntry(input) {
               sales * 100
             : 0;
 
-    item.querySelector(
-        ".menu-suggested"
-    ).textContent =
-        money(suggested);
-
-    item.querySelector(
-        ".menu-food-cost"
-    ).textContent =
-        foodCostPercent.toFixed(2) + "%";
-
-    item.querySelector(
-        ".menu-profit"
-    ).textContent =
-        profitPercent.toFixed(2) + "%";
+    const suggestedEl=item.querySelector(".menu-suggested");
+    if(suggestedEl)suggestedEl.textContent=money(suggested);
+    const foodCostEl=item.querySelector(".menu-food-cost");
+    if(foodCostEl)foodCostEl.textContent=foodCostPercent.toFixed(2)+"%";
+    const profitEl=item.querySelector(".menu-profit");
+    if(profitEl)profitEl.textContent=profitPercent.toFixed(2)+"%";
     const salesEl=item.querySelector(".menu-sales");
     const profitMoneyEl=item.querySelector(".menu-profit-money");
     if(salesEl)salesEl.textContent=money(sales);
     if(profitMoneyEl)profitMoneyEl.textContent=money(sales-recipe.totalCost);
 }
 
-
 function saveMenuItem(button){
-    /* Kept for backward compatibility with older saved pages. */
+    /* Backward compatibility: old pages can still call this function. */
     editMenuItem(button);
 }
 
-function deleteMenuItem(button){const item=button.closest(".menu-item"),date=document.getElementById("menuDate").value;if(!item)return;const menu=getSavedMenuForDate(date);if(!menu)return;menu.items=menu.items.filter(x=>String(x.recipeId)!==String(item.dataset.recipeId));if(!menu.items.length)savedMenus=savedMenus.filter(x=>x!==menu);saveAllData();populateMenuRecipeSelect(date);renderMenuItems(date);}
+function deleteMenuItem(button){
+    const item=button.closest(".menu-item"),date=document.getElementById("menuDate").value;
+    if(!item)return;
+    const menu=getSavedMenuForDate(date);
+    if(!menu)return;
+    menu.items=menu.items.filter(x=>String(x.recipeId)!==String(item.dataset.recipeId));
+    if(!menu.items.length)savedMenus=savedMenus.filter(x=>x!==menu);
+    saveAllData();
+    populateMenuRecipeSelect(date);
+    renderMenuItems(date);
+    showMessage("menuMessage","Menu item deleted.","success");
+}
 
 /* =========================================================
    DAILY SALES
