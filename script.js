@@ -5492,3 +5492,126 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     };
 })();
+
+
+
+/* V5 MOBILE ADD SOLD OVERFLOW FIX */
+
+(function(){
+    const style=document.createElement('style');
+    style.id='kk-v5-add-sold-mobile-fix';
+    style.textContent=`
+        .menu-item,
+        .kk-prof-sales-row,
+        .kk-add-sold-control,
+        .kk-add-sold-control-row,
+        .kk-sold-total-box {
+            box-sizing:border-box;
+            max-width:100%;
+        }
+
+        .kk-prof-sales-row {
+            width:100%;
+            min-width:0;
+        }
+
+        .kk-add-sold-control-row {
+            width:100%;
+            min-width:0;
+            display:flex;
+            align-items:center;
+            gap:6px;
+        }
+
+        .kk-add-sold-control-row input.mobile-large-input,
+        .kk-add-sold-control-row input.stage4-add-sales-qty,
+        .kk-add-sold-control-row input.other-add-sold-qty {
+            box-sizing:border-box;
+            flex:0 0 68px;
+            width:68px;
+            min-width:68px;
+            max-width:68px;
+            height:42px;
+            padding:6px 7px;
+            text-align:center;
+            font-size:16px;
+        }
+
+        .kk-add-sold-control-row button {
+            box-sizing:border-box;
+            flex:1 1 auto;
+            min-width:0;
+            max-width:100%;
+            height:42px;
+            padding:6px 8px;
+            overflow:hidden;
+            white-space:nowrap;
+        }
+
+        @media (max-width:520px) {
+            .menu-item {
+                width:100%;
+                max-width:100%;
+                min-width:0;
+                overflow:hidden;
+            }
+
+            .kk-prof-sales-row {
+                grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) !important;
+                gap:7px !important;
+            }
+
+            .kk-add-sold-control {
+                min-width:0 !important;
+                width:100%;
+                overflow:hidden;
+            }
+
+            .kk-add-sold-control-row {
+                gap:5px;
+            }
+
+            .kk-add-sold-control-row input.mobile-large-input,
+            .kk-add-sold-control-row input.stage4-add-sales-qty,
+            .kk-add-sold-control-row input.other-add-sold-qty {
+                flex-basis:62px;
+                width:62px;
+                min-width:62px;
+                max-width:62px;
+                height:40px;
+                padding-left:4px;
+                padding-right:4px;
+            }
+
+            .kk-add-sold-control-row button {
+                height:40px;
+                padding-left:5px;
+                padding-right:5px;
+                font-size:12px;
+            }
+
+            .kk-sold-total-box {
+                min-width:0 !important;
+                width:100%;
+                overflow:hidden;
+            }
+        }
+
+        @media (max-width:380px) {
+            .kk-prof-sales-row {
+                grid-template-columns:minmax(0, 1fr) !important;
+            }
+
+            .kk-add-sold-control-row input.mobile-large-input,
+            .kk-add-sold-control-row input.stage4-add-sales-qty,
+            .kk-add-sold-control-row input.other-add-sold-qty {
+                flex-basis:64px;
+                width:64px;
+                min-width:64px;
+                max-width:64px;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+})();
+
