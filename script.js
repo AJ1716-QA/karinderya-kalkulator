@@ -4349,7 +4349,7 @@ function renderMenuItems(date){
                     '<div class="stage4-add-sales-title">Add Sold</div>'+ 
                     '<div class="stage4-add-sales-row">'+
                         '<button type="button" class="btn btn-secondary btn-small stage4-add-sales-minus" onclick="changeStage4AddSold(this,-1)" aria-label="Decrease quantity">−</button>'+ 
-                        '<input class="stage4-add-sales-qty mobile-large-input" type="number" min="1" step="1" value="1" inputmode="numeric" autocomplete="off" aria-label="Number of servings to add">'+
+                        '<input class="stage4-add-sales-qty mobile-large-input" type="number" min="1" max="999" step="1" value="1" inputmode="numeric" autocomplete="off" aria-label="Number of servings to add">'+
                         '<button type="button" class="btn btn-secondary btn-small stage4-add-sales-plus" onclick="changeStage4AddSold(this,1)" aria-label="Increase quantity">+</button>'+ 
                         '<button type="button" class="btn btn-primary btn-small" onclick="addStage4Sold(this)">ADD SOLD</button>'+ 
                     '</div>'+ 
@@ -5240,7 +5240,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 addSold='<div class="kk-add-sold-inline">'
                     +'<div class="kk-sold-total-box"><span>Servings Sold</span><strong>'+numberValue(item.servingsSold)+'</strong></div>'
                     +'<div class="kk-add-sold-control"><label>Add Sold</label><div class="kk-add-sold-control-row">'
-                    +'<input class="stage4-add-sales-qty mobile-large-input" type="number" min="1" step="1" value="1" inputmode="numeric" autocomplete="off" aria-label="Number of servings to add">'
+                    +'<input class="stage4-add-sales-qty mobile-large-input" type="number" min="1" max="999" step="1" value="1" inputmode="numeric" autocomplete="off" aria-label="Number of servings to add">'
                     +'<button type="button" class="btn btn-primary btn-small" onclick="addStage4Sold(this)">ADD SOLD</button>'
                     +'</div></div>'
                     +'</div>';
@@ -5293,7 +5293,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 +'<div class="kk-add-sold-inline">'
                 +'<div class="kk-sold-total-box"><span>Qty Sold</span><strong>'+numberValue(item.quantitySold)+'</strong></div>'
                 +'<div class="kk-add-sold-control"><label>Add Sold</label><div class="kk-add-sold-control-row">'
-                +'<input class="other-add-sold-qty mobile-large-input" type="number" min="1" step="1" value="1" inputmode="numeric" autocomplete="off" aria-label="Number of other items sold to add">'
+                +'<input class="other-add-sold-qty mobile-large-input" type="number" min="1" max="999" step="1" value="1" inputmode="numeric" autocomplete="off" aria-label="Number of other items sold to add">'
                 +'<button type="button" class="btn btn-primary btn-small" onclick="addDailyOtherSold(this)">ADD SOLD</button>'
                 +'</div></div>'
                 +'</div>'
@@ -5321,4 +5321,47 @@ document.addEventListener("DOMContentLoaded", function() {
         calculateCombinedSales(date);
         showMessage('menuMessage',item.name+' updated: '+item.quantitySold+' sold.','success');
     };
+})();
+
+
+/* =========================================================
+   CUMULATIVE ADD-SOLD MOBILE REFINEMENT V3
+   - Compact 3-digit quantity box (000-999)
+   - No browser + / - spinner controls
+   - Total Sold, Add Sold box, and ADD SOLD stay on one row
+   - Applies to Food Sales and Other Items Sold
+========================================================= */
+(function(){
+    const style=document.createElement('style');
+    style.id='kk-cumulative-add-sold-style-v3';
+    style.textContent=''
+      +'.kk-add-sold-inline{display:grid !important;grid-template-columns:minmax(78px,0.9fr) minmax(76px,0.8fr) auto;align-items:end;gap:7px;width:100%;margin-top:10px;} '
+      +'.kk-sold-total-box{box-sizing:border-box;min-width:0 !important;width:100%;padding:8px 9px !important;border-radius:8px;} '
+      +'.kk-sold-total-box span,.kk-add-sold-control label{font-size:12px !important;line-height:1.1;} '
+      +'.kk-sold-total-box strong{font-size:20px !important;line-height:1.1;} '
+      +'.kk-add-sold-control{min-width:0 !important;width:100%;} '
+      +'.kk-add-sold-control-row{display:flex !important;gap:5px !important;align-items:center !important;} '
+      +'.kk-add-sold-control-row input.stage4-add-sales-qty,.kk-add-sold-control-row input.other-add-sold-qty{width:72px !important;min-width:72px !important;max-width:72px !important;box-sizing:border-box;text-align:center;padding-left:6px !important;padding-right:6px !important;} '
+      +'.kk-add-sold-control-row input[type=number]::-webkit-inner-spin-button,.kk-add-sold-control-row input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;} '
+      +'.kk-add-sold-control-row input[type=number]{-moz-appearance:textfield;appearance:textfield;} '
+      +'.kk-add-sold-control-row button{white-space:nowrap !important;padding-left:9px !important;padding-right:9px !important;} '
+      +'.kk-add-sold-inline[style*="flex:1 1 100%"]{display:block !important;} '
+      +'@media(max-width:520px){.kk-add-sold-inline{grid-template-columns:minmax(72px,0.9fr) 72px auto;gap:5px;}.kk-sold-total-box{padding:7px 8px !important;}.kk-sold-total-box strong{font-size:19px !important;}.kk-add-sold-control label{font-size:11px !important;margin-bottom:3px !important;}.kk-add-sold-control-row input.stage4-add-sales-qty,.kk-add-sold-control-row input.other-add-sold-qty{width:68px !important;min-width:68px !important;max-width:68px !important;height:42px;}.kk-add-sold-control-row button{height:42px;font-size:12px;padding-left:8px !important;padding-right:8px !important;}.kk-add-sold-inline{margin-top:8px;}}';
+    document.head.appendChild(style);
+
+    function clampAddSoldInput(input){
+        if(!input)return;
+        let v=String(input.value||'').replace(/\D/g,'').slice(0,3);
+        if(v==='')return;
+        let n=parseInt(v,10);
+        if(!Number.isFinite(n)||n<1)n=1;
+        if(n>999)n=999;
+        input.value=String(n);
+    }
+
+    document.addEventListener('input',function(e){
+        if(e.target && (e.target.classList.contains('stage4-add-sales-qty') || e.target.classList.contains('other-add-sold-qty'))){
+            clampAddSoldInput(e.target);
+        }
+    });
 })();
