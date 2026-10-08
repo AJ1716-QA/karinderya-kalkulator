@@ -4590,3 +4590,453 @@ function deleteDailyOtherItem(btn){
     saveAllData();
     loadMenuOfDay();
 }
+
+/* =========================================================
+   OTHER ITEMS MASTER — FINAL FIX
+   Separate Dashboard > Other Items screen.
+
+   Fixes:
+   - Item Name is a working dropdown with saved items + Add New.
+   - Custom item name appears when Add New is selected.
+   - Unit is a working dropdown.
+   - Opening Other Items refreshes the user's Supabase data.
+   - Save/Edit/Delete use the current Supabase master list.
+   - Duplicate item names are blocked.
+   - No dependency on the old missing customOtherItemGroup element.
+========================================================= */
+
+const KK_OTHER_ITEM_UNITS = [
+    "piece",
+    "bottle",
+    "can",
+    "pack",
+    "box",
+    "sachet",
+    "tray",
+    "cup",
+    "dozen",
+    "kg",
+    "g",
+    "liter",
+    "ml"
+];
+
+function setupOtherItemForm(keepName) {
+    const nameField = document.getElementById("otherItemName");
+    const unitField = document.getElementById("otherUnit");
+
+    if (!nameField || !unitField) return;
+
+    /* Convert the old Item Name text input into a real dropdown once. */
+    if (nameField.tagName !== "SELECT") {
+        const select = document.createElement("select");
+        select.id = "otherItemName";
+        select.setAttribute("aria-label", "Item Name");
+        select.addEventListener("change", handleCustomOtherItem);
+        nameField.parentNode.replaceChild(select, nameField);
+    }
+
+    /* Convert Unit text input into a real dropdown once. */
+    const currentUnit = unitField.value || "";
+    if (unitField.tagName !== "SELECT") {
+        const selectUnit = document.createElement("select");
+        selectUnit.id = "otherUnit";
+        selectUnit.setAttribute("aria-label", "Unit");
+        unitField.parentNode.replaceChild(selectUnit, unitField);
+    }
+
+    populateOtherItemNameDropdown(keepName);
+    populateOtherItemUnitDropdown(currentUnit);
+    ensureCustomOtherItemField();
+    handleCustomOtherItem();
+}
+
+function populateOtherItemNameDropdown(keepName) {
+    const select = document.getElementById("otherItemName");
+    if (!select || select.tagName !== "SELECT") return;
+
+    const wanted = keepName !== undefined && keepName !== null
+        ? String(keepName)
+        : String(select.value || "");
+
+    const items = Array.isArray(otherItems) ? otherItems.slice() : [];
+
+    select.innerHTML = "";
+
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = "-- Select Other Item --";
+    select.appendChild(first);
+
+    items.sort(function(a, b) {
+        return String(a.name || "").localeCompare(String(b.name || ""));
+    }).forEach(function(item) {
+        const option = document.createElement("option");
+        option.value = String(item.name || "");
+        option.textContent = String(item.name || "Unnamed Item");
+        select.appendChild(option);
+    });
+
+    const custom = document.createElement("option");
+    custom.value = "__custom__";
+    custom.textContent = "➕ Add New Other Item";
+    select.appendChild(custom);
+
+    if (wanted) {
+        select.value = wanted;
+    }
+
+    if (select.value !== wanted && wanted === "__custom__") {
+        select.value = "__custom__";
+    }
+}
+
+function populateOtherItemUnitDropdown(keepUnit) {
+    const select = document.getElementById("otherUnit");
+    if (!select || select.tagName !== "SELECT") return;
+
+    const wanted = keepUnit !== undefined && keepUnit !== null
+        ? String(keepUnit)
+        : String(select.value || "");
+
+    select.innerHTML = "";
+
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = "-- Select Unit --";
+    select.appendChild(first);
+
+    KK_OTHER_ITEM_UNITS.forEach(function(unit) {
+        const option = document.createElement("option");
+        option.value = unit;
+        option.textContent = unit;
+        select.appendChild(option);
+    });
+
+    const other = document.createElement("option");
+    other.value = "other";
+    other.textContent = "Other / Custom Unit";
+    select.appendChild(other);
+
+    if (wanted) {
+        const exists = Array.from(select.options).some(function(o) {
+            return String(o.value) === wanted;
+        });
+
+        if (exists) {
+            select.value = wanted;
+        } else {
+            const customUnit = document.createElement("option");
+            customUnit.value = wanted;
+            customUnit.textContent = wanted;
+            select.appendChild(customUnit);
+            select.value = wanted;
+        }
+    }
+}
+
+function ensureCustomOtherItemField() {
+    const nameSelect = document.getElementById("otherItemName");
+    if (!nameSelect) return;
+
+    let group = document.getElementById("customOtherItemGroup");
+
+    if (!group) {
+        group = document.createElement("div");
+        group.id = "customOtherItemGroup";
+        group.style.display = "none";
+        group.innerHTML =
+            '<div class="form-group">' +
+                '<label>New Item Name</label>' +
+                '<input type="text" id="customOtherItemName" placeholder="Example: Sprite">' +
+            '</div>';
+        nameSelect.closest(".form-group").insertAdjacentElement("afterend", group);
+    }
+}
+
+function handleCustomOtherItem() {
+    const select = document.getElementById("otherItemName");
+    const group = document.getElementById("customOtherItemGroup");
+
+    if (!select || !group) return;
+
+    if (select.value === "__custom__") {
+        group.style.display = "block";
+        const custom = document.getElementById("customOtherItemName");
+        if (custom) custom.focus();
+    } else {
+        group.style.display = "none";
+    }
+}
+
+async function refreshOtherItemsFromSupabase() {
+    const userId = await getCurrentUserId();
+    if (!userId) return false;
+
+    const { data, error } = await supabaseClient
+        .from("other_items")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        console.error("Unable to refresh Other Items:", error);
+        const list = document.getElementById("otherItemList");
+        if (list) {
+            list.innerHTML = '<div class="empty">Unable to load saved other items.</div>';
+        }
+        return false;
+    }
+
+    otherItems = (data || []).map(function(x) {
+        return {
+            id: String(x.id),
+            name: String(x.name || ""),
+            purchasePrice: numberValue(x.purchase_price),
+            quantity: numberValue(x.quantity),
+            unit: String(x.unit || ""),
+            unitCost: numberValue(x.unit_cost),
+            sellingPrice: numberValue(x.selling_price)
+        };
+    });
+
+    return true;
+}
+
+async function renderOtherItemList() {
+    const container = document.getElementById("otherItemList");
+    if (!container) return;
+
+    const requestId = ++otherItemRenderRequest;
+    const loaded = await refreshOtherItemsFromSupabase();
+    if (!loaded || requestId !== otherItemRenderRequest) return;
+
+    container.innerHTML = "";
+
+    if (!otherItems.length) {
+        container.innerHTML = '<div class="empty">No other items saved yet.</div>';
+    } else {
+        otherItems.forEach(function(item) {
+            const div = document.createElement("div");
+            div.className = "saved-row";
+            div.innerHTML =
+                '<div class="saved-row-main">' +
+                    '<strong>' + escapeHtml(item.name) + '</strong>' +
+                    '<span>Purchase ' + money(item.purchasePrice) +
+                    ' | Qty ' + numberValue(item.quantity) + ' ' + escapeHtml(item.unit) +
+                    ' | Unit Cost ' + money(item.unitCost) +
+                    ' | Sell ' + money(item.sellingPrice) + '</span>' +
+                '</div>' +
+                '<div class="saved-row-actions">' +
+                    '<button type="button" class="btn btn-secondary btn-small" onclick="editOtherItem(\'' + item.id + '\')">Edit</button>' +
+                    '<button type="button" class="btn btn-danger btn-small" onclick="deleteOtherItem(\'' + item.id + '\')">Delete</button>' +
+                '</div>';
+            container.appendChild(div);
+        });
+    }
+
+    setupOtherItemForm();
+}
+
+async function saveOtherItem(editId) {
+    setupOtherItemForm();
+
+    const nameSelect = document.getElementById("otherItemName");
+    const customName = document.getElementById("customOtherItemName");
+    const purchaseInput = document.getElementById("otherPurchasePrice");
+    const quantityInput = document.getElementById("otherQuantity");
+    const unitSelect = document.getElementById("otherUnit");
+    const sellingInput = document.getElementById("otherSellingPrice");
+
+    if (!nameSelect || !purchaseInput || !quantityInput || !unitSelect || !sellingInput) {
+        showMessage("otherItemMessage", "Other Item form is incomplete. Please refresh the page.", "error");
+        return;
+    }
+
+    let name = String(nameSelect.value || "").trim();
+
+    if (name === "__custom__") {
+        name = customName ? customName.value.trim() : "";
+    }
+
+    let unit = String(unitSelect.value || "").trim();
+
+    if (unit === "other") {
+        const customUnit = window.prompt("Enter the unit name, for example: jar, sachet, bundle", "");
+        if (customUnit === null) return;
+        unit = customUnit.trim();
+    }
+
+    const purchasePrice = numberValue(purchaseInput.value);
+    const quantity = numberValue(quantityInput.value);
+    const sellingPrice = numberValue(sellingInput.value);
+
+    if (!name || purchasePrice <= 0 || quantity <= 0 || !unit || sellingPrice <= 0) {
+        showMessage("otherItemMessage", "Please enter Item Name, Purchase Price, Quantity, Unit and Selling Price.", "error");
+        return;
+    }
+
+    const duplicate = otherItems.find(function(item) {
+        return String(item.name || "").trim().toLowerCase() === name.toLowerCase() &&
+               String(item.id) !== String(editId || "");
+    });
+
+    if (duplicate) {
+        showMessage("otherItemMessage", "This item is already saved. Edit the existing item instead.", "error");
+        return;
+    }
+
+    const userId = await getCurrentUserId();
+    if (!userId) {
+        showMessage("otherItemMessage", "Please log in again before saving an Other Item.", "error");
+        return;
+    }
+
+    const unitCost = purchasePrice / quantity;
+    let error = null;
+
+    if (editId) {
+        const result = await supabaseClient
+            .from("other_items")
+            .update({
+                name: name,
+                purchase_price: purchasePrice,
+                quantity: quantity,
+                unit: unit,
+                unit_cost: unitCost,
+                selling_price: sellingPrice
+            })
+            .eq("id", Number(editId))
+            .eq("user_id", userId);
+        error = result.error;
+    } else {
+        const result = await supabaseClient
+            .from("other_items")
+            .insert({
+                user_id: userId,
+                name: name,
+                purchase_price: purchasePrice,
+                quantity: quantity,
+                unit: unit,
+                unit_cost: unitCost,
+                selling_price: sellingPrice
+            });
+        error = result.error;
+    }
+
+    if (error) {
+        console.error("Unable to save Other Item:", error);
+        showMessage("otherItemMessage", "Unable to save other item. Please check the Supabase error in the browser console.", "error");
+        return;
+    }
+
+    await renderOtherItemList();
+    clearOtherItemForm();
+
+    showMessage(
+        "otherItemMessage",
+        editId ? "Other item updated successfully." : "Other item saved successfully.",
+        "success"
+    );
+}
+
+function clearOtherItemForm() {
+    const purchase = document.getElementById("otherPurchasePrice");
+    const quantity = document.getElementById("otherQuantity");
+    const selling = document.getElementById("otherSellingPrice");
+    const customName = document.getElementById("customOtherItemName");
+
+    if (purchase) purchase.value = "";
+    if (quantity) quantity.value = "";
+    if (selling) selling.value = "";
+    if (customName) customName.value = "";
+
+    setupOtherItemForm("");
+
+    const unit = document.getElementById("otherUnit");
+    if (unit) unit.value = "";
+
+    const button = document.querySelector('#otherItemScreen button[onclick^="saveOtherItem"]');
+    if (button) {
+        button.textContent = "Save Other Item";
+        button.onclick = function() { saveOtherItem(); };
+    }
+
+    handleCustomOtherItem();
+}
+
+function editOtherItem(id) {
+    const item = otherItems.find(function(x) {
+        return String(x.id) === String(id);
+    });
+    if (!item) return;
+
+    showScreen("otherItemScreen");
+
+    setupOtherItemForm(item.name);
+
+    const nameSelect = document.getElementById("otherItemName");
+    if (nameSelect) nameSelect.value = item.name;
+
+    const purchase = document.getElementById("otherPurchasePrice");
+    const quantity = document.getElementById("otherQuantity");
+    const unit = document.getElementById("otherUnit");
+    const selling = document.getElementById("otherSellingPrice");
+
+    if (purchase) purchase.value = numberValue(item.purchasePrice);
+    if (quantity) quantity.value = numberValue(item.quantity);
+    if (unit) {
+        populateOtherItemUnitDropdown(item.unit);
+        unit.value = item.unit;
+    }
+    if (selling) selling.value = numberValue(item.sellingPrice);
+
+    const button = document.querySelector('#otherItemScreen button[onclick^="saveOtherItem"]');
+    if (button) {
+        button.textContent = "Update Other Item";
+        button.onclick = function() { saveOtherItem(id); };
+    }
+
+    handleCustomOtherItem();
+    window.scrollTo(0, 0);
+}
+
+async function deleteOtherItem(id) {
+    if (!confirm("Delete this other item?")) return;
+
+    const userId = await getCurrentUserId();
+    if (!userId) return;
+
+    const { error } = await supabaseClient
+        .from("other_items")
+        .delete()
+        .eq("id", Number(id))
+        .eq("user_id", userId);
+
+    if (error) {
+        console.error("Unable to delete Other Item:", error);
+        showMessage("otherItemMessage", "Unable to delete other item.", "error");
+        return;
+    }
+
+    await renderOtherItemList();
+    clearOtherItemForm();
+}
+
+/* Override screen navigation only to refresh the separate Other Items master screen. */
+const kkOriginalShowScreen = showScreen;
+showScreen = function(screenId) {
+    kkOriginalShowScreen(screenId);
+
+    if (screenId === "otherItemScreen") {
+        setupOtherItemForm();
+        renderOtherItemList();
+    }
+};
+
+/* Make sure the replacement controls are ready when the page is loaded. */
+document.addEventListener("DOMContentLoaded", function() {
+    if (document.getElementById("otherItemScreen")) {
+        setupOtherItemForm();
+    }
+});
