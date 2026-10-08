@@ -4334,16 +4334,26 @@ function renderMenuItems(date){
         d.innerHTML=
             '<div class="menu-top">'+
                 '<div><div class="menu-name">'+escapeHtml(item.recipeName)+'</div>'+(soldOut?'<div class="stage4-sold-out-label">SOLD OUT</div>':'')+'</div>'+
-                '<div class="menu-actions">'+actions+'</div>'+
+                '<div class="menu-actions">'+actions+'</div>'+ 
             '</div>'+
             '<div class="menu-summary-grid-6">'+
                 stage4Box('Recipe Cost',money(item.recipeCost))+
                 stage4Box('Selling / Serving',money(item.sellingPrice))+
-                '<div class="menu-summary-box menu-serving-input-box"><span>Servings Sold</span><input class="stage4-live-servings" type="number" min="0" step="1" value="'+numberValue(item.servingsSold)+'" inputmode="numeric" autocomplete="off" '+(soldOut?'disabled ':'')+'oninput="updateStage4FoodServings(this)"></div>'+
+                '<div class="menu-summary-box menu-serving-input-box"><span>Servings Sold</span><strong>'+numberValue(item.servingsSold)+'</strong></div>'+ 
                 stage4Box('Total Sales',money(sales))+
                 stage4Box('Profit',money(profit),profit)+
                 stage4Box('Profit %',pct.toFixed(2)+'%',profit)+
-            '</div>';
+            '</div>'+ 
+            (!soldOut ?
+                '<div class="stage4-add-sales-box">'+
+                    '<div class="stage4-add-sales-title">Add Sold</div>'+ 
+                    '<div class="stage4-add-sales-row">'+
+                        '<button type="button" class="btn btn-secondary btn-small stage4-add-sales-minus" onclick="changeStage4AddSold(this,-1)" aria-label="Decrease quantity">−</button>'+ 
+                        '<input class="stage4-add-sales-qty mobile-large-input" type="number" min="1" step="1" value="1" inputmode="numeric" autocomplete="off" aria-label="Number of servings to add">'+
+                        '<button type="button" class="btn btn-secondary btn-small stage4-add-sales-plus" onclick="changeStage4AddSold(this,1)" aria-label="Increase quantity">+</button>'+ 
+                        '<button type="button" class="btn btn-primary btn-small" onclick="addStage4Sold(this)">ADD SOLD</button>'+ 
+                    '</div>'+ 
+                '</div>' : '');
 
         c.appendChild(d);
     });
@@ -4362,6 +4372,37 @@ function soldOutStage4Food(btn){
     loadMenuOfDay();
 }
 
+function changeStage4AddSold(btn,delta){
+    const el=btn.closest('.menu-item');
+    if(!el)return;
+    const input=el.querySelector('.stage4-add-sales-qty');
+    if(!input)return;
+    const current=Math.max(1,Math.floor(numberValue(input.value)||1));
+    input.value=Math.max(1,current+delta);
+}
+
+function addStage4Sold(btn){
+    const el=btn.closest('.menu-item');
+    if(!el)return;
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    const item=record.foodItems.find(function(x){return String(x.id)===String(el.dataset.foodId);});
+    if(!item)return;
+
+    if(stage4IsFoodSoldOut(record,item.id)){
+        showMessage('menuMessage','This food is marked Sold Out. Press Edit first to reactivate it.','error');
+        return;
+    }
+
+    const input=el.querySelector('.stage4-add-sales-qty');
+    const addQty=Math.max(1,Math.floor(numberValue(input ? input.value : 1)));
+    item.servingsSold=Math.max(0,Math.floor(numberValue(item.servingsSold)))+addQty;
+
+    saveAllData();
+    loadMenuOfDay();
+    showMessage('menuMessage',item.recipeName+' updated: '+item.servingsSold+' servings sold.','success');
+}
+
 function editStage4Food(btn){
     const el=btn.closest('.menu-item');
     const date=document.getElementById('menuDate').value||todayString();
@@ -4370,47 +4411,21 @@ function editStage4Food(btn){
     const item=record.foodItems.find(function(x){return String(x.id)===String(el.dataset.foodId);});
     if(!item)return;
 
+    /* Editing a Sold Out item immediately makes the whole card active again. */
+    setStage4FoodSoldOut(record,item.id,false);
+    saveAllData();
+
+    el.classList.remove('stage4-food-sold-out');
     el.innerHTML=
-        '<div class="menu-top"><div><div class="menu-name">'+escapeHtml(item.recipeName)+'</div></div></div>'+
-        '<div class="form-group"><label>Selling Price / Serving</label><input class="stage4-edit-price mobile-large-input" type="number" min="0" step="0.01" value="'+numberValue(item.sellingPrice)+'" inputmode="decimal" autocomplete="off"></div>'+
+        '<div class="menu-top"><div><div class="menu-name">'+escapeHtml(item.recipeName)+'</div></div></div>'+ 
+        '<div class="form-grid">'+
+            '<div class="form-group"><label>Selling Price / Serving</label><input class="stage4-edit-price mobile-large-input" type="number" min="0" step="0.01" value="'+numberValue(item.sellingPrice)+'" inputmode="decimal" autocomplete="off"></div>'+ 
+            '<div class="form-group"><label>Servings Sold</label><input class="stage4-edit-servings mobile-large-input" type="number" min="0" step="1" value="'+numberValue(item.servingsSold)+'" inputmode="numeric" autocomplete="off"></div>'+ 
+        '</div>'+ 
         '<div class="button-row">'+
-            '<button type="button" class="btn btn-primary btn-small" onclick="updateStage4Food(this)">Update</button>'+
-            '<button type="button" class="btn btn-secondary btn-small" onclick="loadMenuOfDay()">Cancel</button>'+
+            '<button type="button" class="btn btn-primary btn-small" onclick="updateStage4Food(this)">Update</button>'+ 
+            '<button type="button" class="btn btn-secondary btn-small" onclick="loadMenuOfDay()">Cancel</button>'+ 
         '</div>';
-}
-
-function updateStage4FoodServings(input){
-    const el=input.closest('.menu-item');
-    if(!el)return;
-    const date=document.getElementById('menuDate').value||todayString();
-    const record=stage4TodayRecord(date);
-    const item=record.foodItems.find(function(x){return String(x.id)===String(el.dataset.foodId);});
-    if(!item)return;
-
-    item.servingsSold=Math.max(0,Math.floor(numberValue(input.value)));
-
-    const sales=numberValue(item.sellingPrice)*item.servingsSold;
-    const profit=sales-numberValue(item.recipeCost);
-    const pct=sales?profit/sales*100:0;
-    const boxes=el.querySelectorAll('.menu-summary-box');
-
-    if(boxes[3])boxes[3].querySelector('strong').textContent=money(sales);
-    if(boxes[4]){
-        const strong=boxes[4].querySelector('strong');
-        strong.textContent=money(profit);
-        strong.classList.remove('profit-positive','profit-negative');
-        if(profit>0)strong.classList.add('profit-positive');
-        if(profit<0)strong.classList.add('profit-negative');
-    }
-    if(boxes[5]){
-        const strong=boxes[5].querySelector('strong');
-        strong.textContent=pct.toFixed(2)+'%';
-        strong.classList.remove('profit-positive','profit-negative');
-        if(pct>0)strong.classList.add('profit-positive');
-        if(pct<0)strong.classList.add('profit-negative');
-    }
-
-    calculateCombinedSales(date);
 }
 
 function updateStage4Food(btn){
@@ -4421,14 +4436,24 @@ function updateStage4Food(btn){
     const item=record.foodItems.find(function(x){return String(x.id)===String(el.dataset.foodId);});
     if(!item)return;
 
-    const p=numberValue(el.querySelector('.stage4-edit-price').value);
+    const priceInput=el.querySelector('.stage4-edit-price');
+    const servingsInput=el.querySelector('.stage4-edit-servings');
+    const p=numberValue(priceInput ? priceInput.value : 0);
+    const q=Math.max(0,Math.floor(numberValue(servingsInput ? servingsInput.value : 0)));
+
     if(p<=0){
-        showMessage('menuMessage','Enter a valid Selling Price.','error');
+        showMessage('menuMessage','Enter a valid Selling Price / Serving.','error');
         return;
     }
+
     item.sellingPrice=p;
+    item.servingsSold=q;
+
+    /* Updated item remains active after Edit, even if it was previously Sold Out. */
+    setStage4FoodSoldOut(record,item.id,false);
     saveAllData();
     loadMenuOfDay();
+    showMessage('menuMessage',item.recipeName+' updated successfully.','success');
 }
 
 function deleteStage4Food(btn){
