@@ -4605,6 +4605,109 @@ function deleteDailyOtherItem(btn){
    - No dependency on the old missing customOtherItemGroup element.
 ========================================================= */
 
+const KK_COMMON_OTHER_ITEMS = [
+    "Coca-Cola Mismo (295ml)",
+    "Coca-Cola Sakto (200ml)",
+    "Coca-Cola 1.5L PET",
+    "Coca-Cola Zero Sugar",
+    "Sprite Mismo (295ml)",
+    "Sprite 1.5L PET",
+    "Sprite Zero Sugar",
+    "Royal Tru-Orange Mismo (295ml)",
+    "Royal Tru-Orange 1.5L PET",
+    "Royal Tru-Lemon",
+    "Pepsi Mismo (295ml)",
+    "Pepsi 1.5L PET",
+    "Pepsi Zero Sugar",
+    "Mountain Dew Mismo (295ml)",
+    "Mountain Dew 1.5L PET",
+    "RC Cola Small (250ml)",
+    "RC Cola Big (1L)",
+    "7UP",
+    "Mug Root Beer",
+    "Sarsi Root Beer",
+    "Juicy Lemon",
+    "Fruit Soda Orange",
+    "Fruit Soda Lemon",
+    "Wilkins Pure Water (500ml)",
+    "Wilkins Pure Water (1L)",
+    "Nature's Spring Water (500ml)",
+    "C2 Green Tea (500ml)",
+    "Zesto Juice Box (200ml)",
+    "Chuckie Choco Drink (250ml)",
+    "Yakult",
+    "Cobra Energy Drink",
+    "Sting Energy Drink",
+    "Nestea Iced Tea",
+    "Minute Maid Pulpy Orange",
+    "Del Monte Pineapple Juice",
+    "Vitamilk Soya",
+    "Lucky Me! Pancit Canton Original",
+    "Lucky Me! Pancit Canton Chilimansi",
+    "Lucky Me! Pancit Canton Sweet & Spicy",
+    "Lucky Me! Beef Mami",
+    "Lucky Me! Chicken Mami",
+    "Nissin Cup Noodles",
+    "SkyFlakes",
+    "Fita",
+    "Hansel",
+    "Rebisco Crackers",
+    "Rebisco Sandwich",
+    "Chippy",
+    "Piattos",
+    "Nova",
+    "V-Cut",
+    "Cheezy",
+    "Cheese Ring",
+    "Boy Bawang",
+    "Mang Juan",
+    "Moby",
+    "Loaded",
+    "Oishi Prawn Crackers",
+    "Clover Chips",
+    "Tomi",
+    "Mr. Chips",
+    "Choc-Nut",
+    "Maxx Candy",
+    "Cloud 9",
+    "Stick-O",
+    "Mentos",
+    "Oreo",
+    "555 Sardines",
+    "Mega Sardines",
+    "Ligo Sardines",
+    "Century Tuna",
+    "Argentina Corned Beef",
+    "Purefoods Corned Beef",
+    "Maling",
+    "Spam",
+    "San Marino Corned Tuna",
+    "Hunt's Pork & Beans",
+    "Jolly Mushrooms",
+    "Del Monte Pineapple Chunks",
+    "Silver Swan Soy Sauce",
+    "Datu Puti Soy Sauce",
+    "Datu Puti Vinegar",
+    "Silver Swan Vinegar",
+    "UFC Banana Ketchup",
+    "Lady's Choice Mayonnaise",
+    "Kraft Cheese",
+    "Bear Brand Milk",
+    "Alaska Milk",
+    "Milo Sachet",
+    "Nescafe Coffee Sachet",
+    "Kopiko Coffee Sachet",
+    "Great Taste Coffee Sachet",
+    "Energen",
+    "Safeguard Soap",
+    "Palmolive Shampoo Sachet",
+    "Tide Sachet",
+    "Surf Sachet",
+    "Downy Sachet",
+    "Joy Dishwashing Liquid Sachet",
+    "LPG / Cooking Gas"
+];
+
 const KK_OTHER_ITEM_UNITS = [
     "piece",
     "bottle",
@@ -4668,14 +4771,34 @@ function populateOtherItemNameDropdown(keepName) {
     first.textContent = "-- Select Other Item --";
     select.appendChild(first);
 
+    const savedNames = new Set(items.map(function(item) {
+        return String(item.name || "").trim().toLowerCase();
+    }));
+
+    const commonGroup = document.createElement("optgroup");
+    commonGroup.label = "Common Philippine Karinderya / Store Items";
+    KK_COMMON_OTHER_ITEMS.slice().sort(function(a, b) {
+        return a.localeCompare(b);
+    }).forEach(function(name) {
+        if (savedNames.has(name.trim().toLowerCase())) return;
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        commonGroup.appendChild(option);
+    });
+    select.appendChild(commonGroup);
+
+    const savedGroup = document.createElement("optgroup");
+    savedGroup.label = "My Saved Items";
     items.sort(function(a, b) {
         return String(a.name || "").localeCompare(String(b.name || ""));
     }).forEach(function(item) {
         const option = document.createElement("option");
         option.value = String(item.name || "");
         option.textContent = String(item.name || "Unnamed Item");
-        select.appendChild(option);
+        savedGroup.appendChild(option);
     });
+    if (items.length) select.appendChild(savedGroup);
 
     const custom = document.createElement("option");
     custom.value = "__custom__";
