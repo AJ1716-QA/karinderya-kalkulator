@@ -1,37 +1,55 @@
-// Supabase commercial version const SUPABASE_URL =
-“https://msfapslfenhsshzspwua.supabase.co”;
+// Supabase commercial version
+const SUPABASE_URL = "https://msfapslfenhsshzspwua.supabase.co";
 
-const SUPABASE_KEY = “sb_publishable_ZNFssu6P5t-0DuRF6bflgw_l_t1EVBI”;
+const SUPABASE_KEY = "sb_publishable_ZNFssu6P5t-0DuRF6bflgw_l_t1EVBI";
 
-const supabaseClient = window.supabase.createClient( SUPABASE_URL,
-SUPABASE_KEY ); /*
-========================================================= KARINDERYA
-KALKULATOR MOBILE-FIRST BUSINESS CALCULATOR
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+/* =========================================================
+   KARINDERYA KALKULATOR
+   MOBILE-FIRST BUSINESS CALCULATOR
 ========================================================= */
 
-/* ========================================================= LOCAL
-STORAGE ========================================================= */
 
-let savedRecipes = []; let savedMenus = []; let ingredientPrices = [];
-let otherItems = []; let dailySalesRecords = []; let profitRecords = [];
+/* =========================================================
+   LOCAL STORAGE
+========================================================= */
+
+let savedRecipes = [];
+let savedMenus = [];
+let ingredientPrices = [];
+let otherItems = [];
+let dailySalesRecords = [];
+let profitRecords = [];
 let targetFoodCost = 40;
 
-let currentUserId = null; let userDataLoaded = false; let
-currentSalesSoldOutFoodIds = []; let editingMenuRecipeId = null; let
-ingredientRenderRequest = 0; let otherItemRenderRequest = 0;
+let currentUserId = null;
+let userDataLoaded = false;
+let currentSalesSoldOutFoodIds = [];
+let editingMenuRecipeId = null;
+let ingredientRenderRequest = 0;
+let otherItemRenderRequest = 0;
 
-/* ========================================================= USER-SCOPED
-LOCAL DATA =========================================================
-Recipes, menus, daily sales and profit records are kept locally, but
-under the authenticated user’s ID. This prevents Account 2 from seeing
-Account 1’s local data.
+/* =========================================================
+   USER-SCOPED LOCAL DATA
+   =========================================================
+   Recipes, menus, daily sales and profit records are kept
+   locally, but under the authenticated user's ID.
+   This prevents Account 2 from seeing Account 1's local data.
 ========================================================= */
 
-function userStorageKey(name) { if (!currentUserId) { return null; }
-return “kk_” + currentUserId + “_” + name; }
+function userStorageKey(name) {
+    if (!currentUserId) {
+        return null;
+    }
+    return "kk_" + currentUserId + "_" + name;
+}
 
-function readUserData(name, fallback) { const key =
-userStorageKey(name); if (!key) return fallback;
+function readUserData(name, fallback) {
+    const key = userStorageKey(name);
+    if (!key) return fallback;
 
     try {
         const value = localStorage.getItem(key);
@@ -40,18 +58,18 @@ userStorageKey(name); if (!key) return fallback;
         console.error("Unable to read user data:", name, error);
         return fallback;
     }
-
 }
 
-function saveUserData(name, value) { const key = userStorageKey(name);
-if (!key) return;
+function saveUserData(name, value) {
+    const key = userStorageKey(name);
+    if (!key) return;
 
     localStorage.setItem(key, JSON.stringify(value));
-
 }
 
-function loadUserScopedData(userId) { currentUserId = userId || null;
-userDataLoaded = false;
+function loadUserScopedData(userId) {
+    currentUserId = userId || null;
+    userDataLoaded = false;
 
     if (!currentUserId) {
         savedRecipes = [];
@@ -136,11 +154,10 @@ userDataLoaded = false;
     otherItems = [];
 
     userDataLoaded = true;
-
 }
 
-/* ========================================================= MASTER
-INGREDIENT LIST
+/* =========================================================
+   MASTER INGREDIENT LIST
 ========================================================= */
 
 const masterIngredients = [
@@ -272,16 +289,19 @@ const masterIngredients = [
     "Squid",
 
     "__custom__"
-
 ];
 
-/* ========================================================= MASTER
-OTHER ITEMS ========================================================= */
+
+/* =========================================================
+   MASTER OTHER ITEMS
+========================================================= */
 
 const masterOtherItems = [];
 
-/* ========================================================= BASIC
-UTILITIES ========================================================= */
+
+/* =========================================================
+   BASIC UTILITIES
+========================================================= */
 
 function todayString() {
 
@@ -296,8 +316,8 @@ function todayString() {
         String(d.getDate()).padStart(2, "0");
 
     return year + "-" + month + "-" + day;
-
 }
+
 
 function normalizeDate(date) {
 
@@ -306,8 +326,8 @@ function normalizeDate(date) {
     }
 
     return date;
-
 }
+
 
 function numberValue(value) {
 
@@ -318,8 +338,8 @@ function numberValue(value) {
     }
 
     return n;
-
 }
+
 
 function money(value) {
 
@@ -330,8 +350,8 @@ function money(value) {
             maximumFractionDigits: 2
         }
     );
-
 }
+
 
 function escapeHtml(value) {
 
@@ -341,22 +361,24 @@ function escapeHtml(value) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
-
 }
 
-function saveAllData() { if (!currentUserId || !userDataLoaded) {
-return; }
+
+function saveAllData() {
+    if (!currentUserId || !userDataLoaded) {
+        return;
+    }
 
     saveUserData("savedRecipes", savedRecipes);
     saveUserData("savedMenus", savedMenus);
     saveUserData("dailySalesRecords", dailySalesRecords);
     saveUserData("profitRecords", profitRecords);
     saveUserData("targetFoodCost", targetFoodCost);
-
 }
 
-/* ========================================================= SCREEN
-NAVIGATION ========================================================= */
+/* =========================================================
+   SCREEN NAVIGATION
+========================================================= */
 
 function showScreen(screenId) {
 
@@ -416,28 +438,30 @@ function showScreen(screenId) {
     }
 
     window.scrollTo(0, 0);
-
 }
 
-/* ========================================================= INGREDIENT
-MASTER DROPDOWN
+
+/* =========================================================
+   INGREDIENT MASTER DROPDOWN
 ========================================================= */
 
-function populateMasterIngredientSelect(keepName){ const
-select=document.getElementById(“ingredientName”); if(!select)return;
-const
-current=keepName!==undefined&&keepName!==null?String(keepName):String(select.value||““);
-const savedNames=new
-Set(ingredientPrices.map(x=>String(x.name||”“).trim().toLowerCase()));
-select.innerHTML=‘Select ingredient…’;
-masterIngredients.forEach(function(name){ const
-lower=String(name).toLowerCase();
-if(name!==”custom”&&savedNames.has(lower)&&lower!==current.toLowerCase())return;
-const o=document.createElement(“option”); o.value=name;
-o.textContent=name===“custom”?“➕ Add Custom Ingredient”:name;
-select.appendChild(o); }); if(current)select.value=current; } function
-populateMasterOtherItemSelect(keepName){const
-input=document.getElementById(“otherItemName”);if(!input)return;if(keepName!==undefined&&keepName!==null)input.value=keepName;}
+function populateMasterIngredientSelect(keepName){
+    const select=document.getElementById("ingredientName");
+    if(!select)return;
+    const current=keepName!==undefined&&keepName!==null?String(keepName):String(select.value||"");
+    const savedNames=new Set(ingredientPrices.map(x=>String(x.name||"").trim().toLowerCase()));
+    select.innerHTML='<option value="">Select ingredient...</option>';
+    masterIngredients.forEach(function(name){
+        const lower=String(name).toLowerCase();
+        if(name!=="__custom__"&&savedNames.has(lower)&&lower!==current.toLowerCase())return;
+        const o=document.createElement("option");
+        o.value=name;
+        o.textContent=name==="__custom__"?"➕ Add Custom Ingredient":name;
+        select.appendChild(o);
+    });
+    if(current)select.value=current;
+}
+function populateMasterOtherItemSelect(keepName){const input=document.getElementById("otherItemName");if(!input)return;if(keepName!==undefined&&keepName!==null)input.value=keepName;}
 
 function handleCustomIngredient() {
 
@@ -452,8 +476,8 @@ function handleCustomIngredient() {
     } else {
         group.style.display = "none";
     }
-
 }
+
 
 function handleCustomOtherItem() {
 
@@ -468,163 +492,118 @@ function handleCustomOtherItem() {
     } else {
         group.style.display = "none";
     }
-
 }
 
-/* ========================================================= INGREDIENTS
+
+/* =========================================================
+   INGREDIENTS
 ========================================================= */
 
-async function saveIngredient(editId) { const selected =
-document.getElementById(“ingredientName”).value; let name = selected; if
-(selected === “custom”) name =
-document.getElementById(“customIngredientName”).value.trim(); const
-purchasePrice =
-numberValue(document.getElementById(“ingredientPurchasePrice”).value);
-const quantity =
-numberValue(document.getElementById(“ingredientQuantity”).value); const
-unit = document.getElementById(“ingredientUnit”).value; if (!name ||
-purchasePrice <= 0 || quantity <= 0) { showMessage(“ingredientMessage”,
-“Please enter a valid ingredient, purchase price and quantity.”,
-“error”); return; } const unitCost = purchasePrice / quantity; const
-duplicate = ingredientPrices.find(x => x.name.toLowerCase() ===
-name.toLowerCase() && String(x.id) !== String(editId || ““)); if
-(duplicate) { showMessage(”ingredientMessage”, “This ingredient is
-already in your saved list. Edit the existing item instead.”, “error”);
-return; } const userId = await getCurrentUserId(); if (!userId) return;
-let error; if (editId) { ({error} = await
-supabaseClient.from(“ingredients”).update({name,purchase_price:purchasePrice,quantity,unit,unit_cost:unitCost}).eq(“id”,Number(editId)).eq(“user_id”,userId));
-} else { ({error} = await
-supabaseClient.from(“ingredients”).insert({user_id:userId,name,purchase_price:purchasePrice,quantity,unit,unit_cost:unitCost}));
-} if (error) { console.error(error); showMessage(“ingredientMessage”,
-“Unable to save ingredient.”, “error”); return; } await
-renderIngredientList(); clearIngredientForm();
-showMessage(“ingredientMessage”, editId ? “Ingredient updated
-successfully.” : “Ingredient saved successfully.”, “success”); }
+async function saveIngredient(editId) {
+    const selected = document.getElementById("ingredientName").value;
+    let name = selected;
+    if (selected === "__custom__") name = document.getElementById("customIngredientName").value.trim();
+    const purchasePrice = numberValue(document.getElementById("ingredientPurchasePrice").value);
+    const quantity = numberValue(document.getElementById("ingredientQuantity").value);
+    const unit = document.getElementById("ingredientUnit").value;
+    if (!name || purchasePrice <= 0 || quantity <= 0) {
+        showMessage("ingredientMessage", "Please enter a valid ingredient, purchase price and quantity.", "error"); return;
+    }
+    const unitCost = purchasePrice / quantity;
+    const duplicate = ingredientPrices.find(x => x.name.toLowerCase() === name.toLowerCase() && String(x.id) !== String(editId || ""));
+    if (duplicate) { showMessage("ingredientMessage", "This ingredient is already in your saved list. Edit the existing item instead.", "error"); return; }
+    const userId = await getCurrentUserId();
+    if (!userId) return;
+    let error;
+    if (editId) {
+        ({error} = await supabaseClient.from("ingredients").update({name,purchase_price:purchasePrice,quantity,unit,unit_cost:unitCost}).eq("id",Number(editId)).eq("user_id",userId));
+    } else {
+        ({error} = await supabaseClient.from("ingredients").insert({user_id:userId,name,purchase_price:purchasePrice,quantity,unit,unit_cost:unitCost}));
+    }
+    if (error) { console.error(error); showMessage("ingredientMessage", "Unable to save ingredient.", "error"); return; }
+    await renderIngredientList();
+    clearIngredientForm();
+    showMessage("ingredientMessage", editId ? "Ingredient updated successfully." : "Ingredient saved successfully.", "success");
+}
 
 function clearIngredientForm(){
-[“ingredientPurchasePrice”,“ingredientQuantity”,“customIngredientName”].forEach(function(id){
-const e=document.getElementById(id); if(e)e.value=““; }); const
-n=document.getElementById(”ingredientName”); if(n){ n.value=““; /*
-Rebuild AFTER clearing the current value. Otherwise the just-saved
-ingredient remains in the dropdown until the next ingredient is saved.
-*/ populateMasterIngredientSelect(““); } const
-b=document.querySelector(‘#ingredientScreen
-button[onclick^=“saveIngredient”]’); if(b){ b.textContent=”Save
-Ingredient”; b.onclick=function(){saveIngredient();}; }
-handleCustomIngredient(); }
+    ["ingredientPurchasePrice","ingredientQuantity","customIngredientName"].forEach(function(id){
+        const e=document.getElementById(id);
+        if(e)e.value="";
+    });
+    const n=document.getElementById("ingredientName");
+    if(n){
+        n.value="";
+        /* Rebuild AFTER clearing the current value.
+           Otherwise the just-saved ingredient remains in the dropdown
+           until the next ingredient is saved. */
+        populateMasterIngredientSelect("");
+    }
+    const b=document.querySelector('#ingredientScreen button[onclick^="saveIngredient"]');
+    if(b){
+        b.textContent="Save Ingredient";
+        b.onclick=function(){saveIngredient();};
+    }
+    handleCustomIngredient();
+}
 
-function editIngredient(id){ const
-item=ingredientPrices.find(x=>String(x.id)===String(id));
-if(!item)return;
-document.getElementById(“ingredientName”).value=item.name;
-document.getElementById(“ingredientPurchasePrice”).value=item.purchasePrice;
-document.getElementById(“ingredientQuantity”).value=item.quantity;
-document.getElementById(“ingredientUnit”).value=item.unit; const
-b=document.querySelector(‘#ingredientScreen
-button[onclick^=“saveIngredient”]’); if(b){b.textContent=“Update
-Ingredient”;b.onclick=()=>saveIngredient(id);}
-showScreen(“ingredientScreen”);
-populateMasterIngredientSelect(item.name); handleCustomIngredient();
-window.scrollTo(0,0); }
+function editIngredient(id){
+    const item=ingredientPrices.find(x=>String(x.id)===String(id)); if(!item)return;
+    document.getElementById("ingredientName").value=item.name;
+    document.getElementById("ingredientPurchasePrice").value=item.purchasePrice;
+    document.getElementById("ingredientQuantity").value=item.quantity;
+    document.getElementById("ingredientUnit").value=item.unit;
+    const b=document.querySelector('#ingredientScreen button[onclick^="saveIngredient"]');
+    if(b){b.textContent="Update Ingredient";b.onclick=()=>saveIngredient(id);}
+    showScreen("ingredientScreen"); populateMasterIngredientSelect(item.name); handleCustomIngredient(); window.scrollTo(0,0);
+}
 
-async function renderIngredientList() { const
-container=document.getElementById(“ingredientList”);
-if(!container)return; const requestId=++ingredientRenderRequest; const
-userId=await getCurrentUserId(); if(!userId)return; const
-{data,error}=await
-supabaseClient.from(“ingredients”).select(“*“).eq(”user_id”,userId).order(“created_at”,{ascending:false});
-if(requestId!==ingredientRenderRequest)return;
-if(error){console.error(error);container.innerHTML=’
+async function renderIngredientList() {
+    const container=document.getElementById("ingredientList");
+    if(!container)return;
+    const requestId=++ingredientRenderRequest;
+    const userId=await getCurrentUserId();
+    if(!userId)return;
+    const {data,error}=await supabaseClient.from("ingredients").select("*").eq("user_id",userId).order("created_at",{ascending:false});
+    if(requestId!==ingredientRenderRequest)return;
+    if(error){console.error(error);container.innerHTML='<div class="empty">Unable to load saved ingredients.</div>';return;}
+    ingredientPrices=(data||[]).map(function(x){return {id:String(x.id),name:x.name,purchasePrice:numberValue(x.purchase_price),quantity:numberValue(x.quantity),unit:x.unit||"",unitCost:numberValue(x.unit_cost)};});
+    container.innerHTML=ingredientPrices.length?"":'<div class="empty">No ingredients saved yet.</div>';
+    ingredientPrices.forEach(function(item){
+        const div=document.createElement("div");
+        div.className="list-item saved-row";
+        div.innerHTML='<div class="saved-row-main"><strong>'+escapeHtml(item.name)+'</strong><span>'+money(item.purchasePrice)+' / '+item.quantity+' '+escapeHtml(item.unit)+'</span></div><div class="saved-row-actions"><button class="btn btn-secondary btn-small" onclick="editIngredient(\''+item.id+'\')">Edit</button><button class="btn btn-danger btn-small" onclick="deleteIngredient(\''+item.id+'\')">Delete</button></div>';
+        container.appendChild(div);
+    });
+    populateMasterIngredientSelect();
+}
+async function deleteIngredient(id){
+    if(!confirm("Delete this ingredient?"))return;
+    const {error}=await supabaseClient.from("ingredients").delete().eq("id",Number(id)).eq("user_id",currentUserId);
+    if(error){showMessage("ingredientMessage","Unable to delete ingredient.","error");return;}
+    await renderIngredientList();
+}
 
-Unable to load saved ingredients.
+async function saveOtherItem(editId){
+    const selected=document.getElementById("otherItemName").value; let name=selected;
+    if(selected==="__custom__")name=document.getElementById("customOtherItemName").value.trim();
+    const purchasePrice=numberValue(document.getElementById("otherPurchasePrice").value), quantity=numberValue(document.getElementById("otherQuantity").value), unit=document.getElementById("otherUnit").value.trim(), sellingPrice=numberValue(document.getElementById("otherSellingPrice").value);
+    if(!name||purchasePrice<=0||quantity<=0||sellingPrice<=0){showMessage("otherItemMessage","Please enter valid other item details.","error");return;}
+    const duplicate=otherItems.find(x=>x.name.toLowerCase()===name.toLowerCase()&&String(x.id)!==String(editId||"")); if(duplicate){showMessage("otherItemMessage","This item is already saved. Edit the existing item instead.","error");return;}
+    const unitCost=purchasePrice/quantity,userId=await getCurrentUserId(); if(!userId)return;
+    let error;
+    if(editId)({error}=await supabaseClient.from("other_items").update({name,purchase_price:purchasePrice,quantity,unit,unit_cost:unitCost,selling_price:sellingPrice}).eq("id",Number(editId)).eq("user_id",userId));
+    else ({error}=await supabaseClient.from("other_items").insert({user_id:userId,name,purchase_price:purchasePrice,quantity,unit,unit_cost:unitCost,selling_price:sellingPrice}));
+    if(error){console.error(error);showMessage("otherItemMessage","Unable to save other item.","error");return;}
+    await renderOtherItemList(); clearOtherItemForm(); showMessage("otherItemMessage",editId?"Other item updated successfully.":"Other item saved successfully.","success");
+}
+function clearOtherItemForm(){["otherPurchasePrice","otherQuantity","otherUnit","otherSellingPrice","customOtherItemName"].forEach(id=>{const e=document.getElementById(id);if(e)e.value=""});const e=document.getElementById("otherItemName");if(e)e.value="";const b=document.querySelector('#otherItemScreen button[onclick^="saveOtherItem"]');if(b){b.textContent="Save Other Item";b.onclick=()=>saveOtherItem();}handleCustomOtherItem();}
+function editOtherItem(id){const item=otherItems.find(x=>String(x.id)===String(id));if(!item)return;document.getElementById("otherItemName").value=item.name;document.getElementById("otherPurchasePrice").value=item.purchasePrice;document.getElementById("otherQuantity").value=item.quantity;document.getElementById("otherUnit").value=item.unit;document.getElementById("otherSellingPrice").value=item.sellingPrice;const b=document.querySelector('#otherItemScreen button[onclick^="saveOtherItem"]');if(b){b.textContent="Update Other Item";b.onclick=()=>saveOtherItem(id);}showScreen("otherItemScreen");populateMasterOtherItemSelect(item.name);handleCustomOtherItem();window.scrollTo(0,0);}
+async function renderOtherItemList(){const c=document.getElementById("otherItemList");if(!c)return;const userId=await getCurrentUserId();if(!userId)return;const {data,error}=await supabaseClient.from("other_items").select("*").eq("user_id",userId).order("created_at",{ascending:false});if(error){c.innerHTML='<div class="empty">Unable to load saved other items.</div>';return;}otherItems=(data||[]).map(x=>({id:String(x.id),name:x.name,purchasePrice:numberValue(x.purchase_price),quantity:numberValue(x.quantity),unit:x.unit||"",unitCost:numberValue(x.unit_cost),sellingPrice:numberValue(x.selling_price)}));c.innerHTML=otherItems.length?"":'<div class="empty">No other items saved yet.</div>';otherItems.forEach(item=>{const d=document.createElement("div");d.className="list-item saved-row";d.innerHTML='<div class="saved-row-main"><strong>'+escapeHtml(item.name)+'</strong><span>Purchase '+money(item.purchasePrice)+' | Sell '+money(item.sellingPrice)+'</span></div><div class="saved-row-actions"><button class="btn btn-secondary btn-small" onclick="editOtherItem(\''+item.id+'\')">Edit</button><button class="btn btn-danger btn-small" onclick="deleteOtherItem(\''+item.id+'\')">Delete</button></div>';c.appendChild(d);});populateMasterOtherItemSelect();}
+async function deleteOtherItem(id){if(!confirm("Delete this other item?"))return;const {error}=await supabaseClient.from("other_items").delete().eq("id",Number(id)).eq("user_id",currentUserId);if(error){showMessage("otherItemMessage","Unable to delete other item.","error");return;}await renderOtherItemList();}
 
-‘;return;} ingredientPrices=(data||[]).map(function(x){return
-{id:String(x.id),name:x.name,purchasePrice:numberValue(x.purchase_price),quantity:numberValue(x.quantity),unit:x.unit||““,unitCost:numberValue(x.unit_cost)};});
-container.innerHTML=ingredientPrices.length?”“:’
-
-No ingredients saved yet.
-
-‘; ingredientPrices.forEach(function(item){ const
-div=document.createElement(“div”); div.className=“list-item saved-row”;
-div.innerHTML=’
-
-‘+escapeHtml(item.name)+’‘+money(item.purchasePrice)+’ /
-‘+item.quantity+’ ‘+escapeHtml(item.unit)+’
-
-Edit
-Delete
-
-’; container.appendChild(div); }); populateMasterIngredientSelect(); }
-async function deleteIngredient(id){ if(!confirm(“Delete this
-ingredient?”))return; const {error}=await
-supabaseClient.from(“ingredients”).delete().eq(“id”,Number(id)).eq(“user_id”,currentUserId);
-if(error){showMessage(“ingredientMessage”,“Unable to delete
-ingredient.”,“error”);return;} await renderIngredientList(); }
-
-async function saveOtherItem(editId){ const
-selected=document.getElementById(“otherItemName”).value; let
-name=selected;
-if(selected===“custom”)name=document.getElementById(“customOtherItemName”).value.trim();
-const
-purchasePrice=numberValue(document.getElementById(“otherPurchasePrice”).value),
-quantity=numberValue(document.getElementById(“otherQuantity”).value),
-unit=document.getElementById(“otherUnit”).value.trim(),
-sellingPrice=numberValue(document.getElementById(“otherSellingPrice”).value);
-if(!name||purchasePrice<=0||quantity<=0||sellingPrice<=0){showMessage(“otherItemMessage”,“Please
-enter valid other item details.”,“error”);return;} const
-duplicate=otherItems.find(x=>x.name.toLowerCase()===name.toLowerCase()&&String(x.id)!==String(editId||““));
-if(duplicate){showMessage(”otherItemMessage”,“This item is already
-saved. Edit the existing item instead.”,“error”);return;} const
-unitCost=purchasePrice/quantity,userId=await getCurrentUserId();
-if(!userId)return; let error; if(editId)({error}=await
-supabaseClient.from(“other_items”).update({name,purchase_price:purchasePrice,quantity,unit,unit_cost:unitCost,selling_price:sellingPrice}).eq(“id”,Number(editId)).eq(“user_id”,userId));
-else ({error}=await
-supabaseClient.from(“other_items”).insert({user_id:userId,name,purchase_price:purchasePrice,quantity,unit,unit_cost:unitCost,selling_price:sellingPrice}));
-if(error){console.error(error);showMessage(“otherItemMessage”,“Unable to
-save other item.”,“error”);return;} await renderOtherItemList();
-clearOtherItemForm(); showMessage(“otherItemMessage”,editId?“Other item
-updated successfully.”:“Other item saved successfully.”,“success”); }
-function
-clearOtherItemForm(){[“otherPurchasePrice”,“otherQuantity”,“otherUnit”,“otherSellingPrice”,“customOtherItemName”].forEach(id=>{const
-e=document.getElementById(id);if(e)e.value=““});const
-e=document.getElementById(”otherItemName”);if(e)e.value=““;const
-b=document.querySelector(‘#otherItemScreen
-button[onclick^=“saveOtherItem”]’);if(b){b.textContent=”Save Other
-Item”;b.onclick=()=>saveOtherItem();}handleCustomOtherItem();} function
-editOtherItem(id){const
-item=otherItems.find(x=>String(x.id)===String(id));if(!item)return;document.getElementById(“otherItemName”).value=item.name;document.getElementById(“otherPurchasePrice”).value=item.purchasePrice;document.getElementById(“otherQuantity”).value=item.quantity;document.getElementById(“otherUnit”).value=item.unit;document.getElementById(“otherSellingPrice”).value=item.sellingPrice;const
-b=document.querySelector(‘#otherItemScreen
-button[onclick^=“saveOtherItem”]’);if(b){b.textContent=“Update Other
-Item”;b.onclick=()=>saveOtherItem(id);}showScreen(“otherItemScreen”);populateMasterOtherItemSelect(item.name);handleCustomOtherItem();window.scrollTo(0,0);}
-async function renderOtherItemList(){const
-c=document.getElementById(“otherItemList”);if(!c)return;const
-userId=await getCurrentUserId();if(!userId)return;const
-{data,error}=await
-supabaseClient.from(“other_items”).select(“*“).eq(”user_id”,userId).order(“created_at”,{ascending:false});if(error){c.innerHTML=’
-
-Unable to load saved other items.
-
-‘;return;}otherItems=(data||[]).map(x=>({id:String(x.id),name:x.name,purchasePrice:numberValue(x.purchase_price),quantity:numberValue(x.quantity),unit:x.unit||““,unitCost:numberValue(x.unit_cost),sellingPrice:numberValue(x.selling_price)}));c.innerHTML=otherItems.length?”“:’
-
-No other items saved yet.
-
-‘;otherItems.forEach(item=>{const
-d=document.createElement(“div”);d.className=“list-item
-saved-row”;d.innerHTML=’
-
-‘+escapeHtml(item.name)+’Purchase ‘+money(item.purchasePrice)+’ | Sell
-‘+money(item.sellingPrice)+’
-
-Edit
-Delete
-
-’;c.appendChild(d);});populateMasterOtherItemSelect();} async function
-deleteOtherItem(id){if(!confirm(“Delete this other item?”))return;const
-{error}=await
-supabaseClient.from(“other_items”).delete().eq(“id”,Number(id)).eq(“user_id”,currentUserId);if(error){showMessage(“otherItemMessage”,“Unable
-to delete other item.”,“error”);return;}await renderOtherItemList();}
-
-/* ========================================================= RECIPE
+/* =========================================================
+   RECIPE
 ========================================================= */
 
 async function loadRecipeScreen() {
@@ -656,73 +635,75 @@ async function loadRecipeScreen() {
     }
 
     loadSavedRecipes();
-
 }
 
-function getRecipeSelectedIngredientIds(){return
-Array.from(document.querySelectorAll(“.recipe-ingredient-select”)).map(e=>String(e.value)).filter(Boolean);}
-function addRecipeIngredient(){ const
-c=document.getElementById(“recipeIngredients”); if(!c)return; const
-row=document.createElement(“div”);
-row.className=“recipe-ingredient-row”; row.innerHTML=’
 
-Select ingredient…
+function getRecipeSelectedIngredientIds(){return Array.from(document.querySelectorAll(".recipe-ingredient-select")).map(e=>String(e.value)).filter(Boolean);}
+function addRecipeIngredient(){
+    const c=document.getElementById("recipeIngredients");
+    if(!c)return;
+    const row=document.createElement("div");
+    row.className="recipe-ingredient-row";
+    row.innerHTML='<div><select class="recipe-ingredient-select" aria-label="Ingredient" onchange="calculateRecipeTotal();refreshRecipeIngredientDropdowns()"><option value="">Select ingredient...</option></select></div><div><input type="number" class="recipe-amount" aria-label="Amount" min="0" step="0.001" placeholder="Amount" oninput="calculateRecipeTotal()"></div><div><select class="recipe-unit" aria-label="Unit" onchange="calculateRecipeTotal()"><option value="kg">kg</option><option value="g">g</option><option value="mg">mg</option><option value="liter">liter</option><option value="ml">ml</option><option value="cup">cup</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option><option value="fl_oz">fl oz</option><option value="pint">pint</option><option value="quart">quart</option><option value="gallon">gallon</option><option value="piece">piece</option><option value="dozen">dozen</option><option value="pinch">pinch</option><option value="dash">dash</option><option value="handful">handful</option><option value="bunch">bunch</option><option value="clove">clove</option><option value="stalk">stalk</option><option value="leaf">leaf</option><option value="pack">pack</option><option value="can">can</option><option value="bottle">bottle</option><option value="slice">slice</option></select></div><button type="button" class="btn btn-danger btn-small" aria-label="Remove ingredient" onclick="removeRecipeIngredient(this)">×</button>';
+    c.appendChild(row);
+    populateRecipeIngredientSelect(row);
+}
+function populateRecipeIngredientSelect(row){
+    const select=row.querySelector(".recipe-ingredient-select"),current=String(select.value||""),used=getRecipeSelectedIngredientIds().filter(function(id){return id!==current;});
+    select.innerHTML='<option value="">Select ingredient...</option>';
+    ingredientPrices.forEach(function(item){
+        if(used.includes(String(item.id)))return;
+        const o=document.createElement("option");o.value=item.id;o.textContent=item.name;select.appendChild(o);
+    });
+    if(current)select.value=current;
+}
+function refreshRecipeIngredientDropdowns(){document.querySelectorAll(".recipe-ingredient-row").forEach(function(row){populateRecipeIngredientSelect(row);});}
+function removeRecipeIngredient(button){const row=button.closest(".recipe-ingredient-row");if(row)row.remove();if(!document.querySelector("#recipeIngredients .recipe-ingredient-row"))addRecipeIngredient();calculateRecipeTotal();refreshRecipeIngredientDropdowns();}
 
-kggmglitermlcuptbsptspfl
-ozpintquartgallonpiecedozenpinchdashhandfulbunchclovestalkleafpackcanbottleslice
+function getIngredientUnitCost(item){return item?numberValue(item.unitCost):0;}
 
-×
-’; c.appendChild(row); populateRecipeIngredientSelect(row); } function
-populateRecipeIngredientSelect(row){ const
-select=row.querySelector(“.recipe-ingredient-select”),current=String(select.value||““),used=getRecipeSelectedIngredientIds().filter(function(id){return
-id!==current;}); select.innerHTML=‘Select ingredient…’;
-ingredientPrices.forEach(function(item){
-if(used.includes(String(item.id)))return; const
-o=document.createElement(”option”);o.value=item.id;o.textContent=item.name;select.appendChild(o);
-}); if(current)select.value=current; } function
-refreshRecipeIngredientDropdowns(){document.querySelectorAll(“.recipe-ingredient-row”).forEach(function(row){populateRecipeIngredientSelect(row);});}
-function removeRecipeIngredient(button){const
-row=button.closest(“.recipe-ingredient-row”);if(row)row.remove();if(!document.querySelector(“#recipeIngredients
-.recipe-ingredient-row”))addRecipeIngredient();calculateRecipeTotal();refreshRecipeIngredientDropdowns();}
-
-function getIngredientUnitCost(item){return
-item?numberValue(item.unitCost):0;}
-
-/* Standard conversions use kg/g/mg for mass, liter/ml/cup/etc. for
-volume, and piece/dozen for count. Weight-to-volume is intentionally not
-guessed. / function getUnitDimension(unit){ const
-mass={kg:1,g:0.001,mg:0.000001}; const
-volume={liter:1,ml:0.001,cup:0.2365882365,tbsp:0.0147867648,tsp:0.00492892159,fl_oz:0.0295735296,pint:0.473176473,quart:0.946352946,gallon:3.785411784};
-const count={piece:1,dozen:12};
-if(Object.prototype.hasOwnProperty.call(mass,unit))return
-{type:“mass”,factor:mass[unit]};
-if(Object.prototype.hasOwnProperty.call(volume,unit))return
-{type:“volume”,factor:volume[unit]};
-if(Object.prototype.hasOwnProperty.call(count,unit))return
-{type:“count”,factor:count[unit]}; return {type:“other”,factor:1}; }
+/* Standard conversions use kg/g/mg for mass, liter/ml/cup/etc. for volume,
+   and piece/dozen for count. Weight-to-volume is intentionally not guessed. */
+function getUnitDimension(unit){
+    const mass={kg:1,g:0.001,mg:0.000001};
+    const volume={liter:1,ml:0.001,cup:0.2365882365,tbsp:0.0147867648,tsp:0.00492892159,fl_oz:0.0295735296,pint:0.473176473,quart:0.946352946,gallon:3.785411784};
+    const count={piece:1,dozen:12};
+    if(Object.prototype.hasOwnProperty.call(mass,unit))return {type:"mass",factor:mass[unit]};
+    if(Object.prototype.hasOwnProperty.call(volume,unit))return {type:"volume",factor:volume[unit]};
+    if(Object.prototype.hasOwnProperty.call(count,unit))return {type:"count",factor:count[unit]};
+    return {type:"other",factor:1};
+}
 function convertAmount(amount,fromUnit,toUnit){
-amount=numberValue(amount); if(fromUnit===toUnit)return amount; const
-from=getUnitDimension(fromUnit),to=getUnitDimension(toUnit);
-if(from.type!==to.type)return null; return amountfrom.factor/to.factor;
-} function calculateIngredientCost(ingredient,amount,recipeUnit){
-if(!ingredient||amount<=0)return 0; const
-storedUnit=String(ingredient.unit||““); const
-unitCost=getIngredientUnitCost(ingredient);
-if(storedUnit===recipeUnit)return amountunitCost; const
-converted=convertAmount(amount,recipeUnit,storedUnit);
-if(converted===null)return 0; return convertedunitCost; } function
-calculateRecipeTotal(){ const
-rows=document.querySelectorAll(”#recipeIngredients
-.recipe-ingredient-row”); let total=0; rows.forEach(function(row){ const
-ingredientId=row.querySelector(“.recipe-ingredient-select”).value; const
-amount=numberValue(row.querySelector(“.recipe-amount”).value); const
-unit=row.querySelector(“.recipe-unit”).value; const
-ingredient=ingredientPrices.find(function(item){return
-String(item.id)===String(ingredientId);});
-if(!ingredient||amount<=0)return;
-total+=calculateIngredientCost(ingredient,amount,unit); }); const
-totalEl=document.getElementById(“recipeTotalCost”);
-if(totalEl)totalEl.textContent=money(total); return total; }
+    amount=numberValue(amount);
+    if(fromUnit===toUnit)return amount;
+    const from=getUnitDimension(fromUnit),to=getUnitDimension(toUnit);
+    if(from.type!==to.type)return null;
+    return amount*from.factor/to.factor;
+}
+function calculateIngredientCost(ingredient,amount,recipeUnit){
+    if(!ingredient||amount<=0)return 0;
+    const storedUnit=String(ingredient.unit||"");
+    const unitCost=getIngredientUnitCost(ingredient);
+    if(storedUnit===recipeUnit)return amount*unitCost;
+    const converted=convertAmount(amount,recipeUnit,storedUnit);
+    if(converted===null)return 0;
+    return converted*unitCost;
+}
+function calculateRecipeTotal(){
+    const rows=document.querySelectorAll("#recipeIngredients .recipe-ingredient-row");
+    let total=0;
+    rows.forEach(function(row){
+        const ingredientId=row.querySelector(".recipe-ingredient-select").value;
+        const amount=numberValue(row.querySelector(".recipe-amount").value);
+        const unit=row.querySelector(".recipe-unit").value;
+        const ingredient=ingredientPrices.find(function(item){return String(item.id)===String(ingredientId);});
+        if(!ingredient||amount<=0)return;
+        total+=calculateIngredientCost(ingredient,amount,unit);
+    });
+    const totalEl=document.getElementById("recipeTotalCost");
+    if(totalEl)totalEl.textContent=money(total);
+    return total;
+}
 
 function saveRecipe() {
 
@@ -829,8 +810,8 @@ function saveRecipe() {
             "menuDate"
         ).value = date;
     }
-
 }
+
 
 function clearRecipeForm(showMessageFlag) {
 
@@ -860,31 +841,13 @@ function clearRecipeForm(showMessageFlag) {
             "info"
         );
     }
-
 }
 
-function loadSavedRecipes(){const
-date=document.getElementById(“savedRecipeDate”).value,container=document.getElementById(“savedRecipesList”);if(!date){container.innerHTML=’
 
-Select a date.
-
-‘;return;}const
-recipes=savedRecipes.filter(r=>r.date===date);if(!recipes.length){container.innerHTML=’
-
-No recipes saved for this date.
-
-‘;return;}container.innerHTML=““;recipes.forEach(recipe=>{const
-d=document.createElement(”div”);d.className=“saved-recipe-row”;d.innerHTML=’
-
-‘+escapeHtml(recipe.name)+’
-
-‘+money(recipe.totalCost)+’
-
-Edit
-Delete
-’;container.appendChild(d);});} async function editSavedRecipe(id){
-const r=savedRecipes.find(function(x){return
-String(x.id)===String(id);}); if(!r)return;
+function loadSavedRecipes(){const date=document.getElementById("savedRecipeDate").value,container=document.getElementById("savedRecipesList");if(!date){container.innerHTML='<div class="empty">Select a date.</div>';return;}const recipes=savedRecipes.filter(r=>r.date===date);if(!recipes.length){container.innerHTML='<div class="empty">No recipes saved for this date.</div>';return;}container.innerHTML="";recipes.forEach(recipe=>{const d=document.createElement("div");d.className="saved-recipe-row";d.innerHTML='<div class="saved-recipe-name">'+escapeHtml(recipe.name)+'</div><div class="saved-recipe-cost">'+money(recipe.totalCost)+'</div><button class="btn btn-secondary btn-small" onclick="editSavedRecipe(\''+recipe.id+'\')">Edit</button><button class="btn btn-danger btn-small" onclick="deleteSavedRecipe(\''+recipe.id+'\')">Delete</button>';container.appendChild(d);});}
+async function editSavedRecipe(id){
+    const r=savedRecipes.find(function(x){return String(x.id)===String(id);});
+    if(!r)return;
 
     /* Always refresh the cloud ingredient master before rebuilding the
        recipe. This prevents an edit from opening with empty ingredient
@@ -924,7 +887,6 @@ String(x.id)===String(id);}); if(!r)return;
     refreshRecipeIngredientDropdowns();
     calculateRecipeTotal();
     showScreen("recipeScreen");
-
 }
 
 function deleteSavedRecipe(id) {
@@ -945,40 +907,50 @@ function deleteSavedRecipe(id) {
     loadSavedRecipes();
 
     loadMenuOfDay();
-
 }
 
-/* ========================================================= MENU OF THE
-DAY TARGET FOOD COST EXISTS ONLY AT THE TOP
+
+/* =========================================================
+   MENU OF THE DAY
+   TARGET FOOD COST EXISTS ONLY AT THE TOP
 ========================================================= */
 
-function getRecipesForDate(date) { /* Menu of the Day must use ONLY
-recipes entered for the selected Recipe of the Day date. Recipes saved
-on older or future dates must not appear in this dropdown. */ const
-selectedDate = String(date || ““); return
-savedRecipes.filter(function(recipe) { return String(recipe.date ||”“)
-=== selectedDate; }); }
+function getRecipesForDate(date) {
+    /* Menu of the Day must use ONLY recipes entered for the selected
+       Recipe of the Day date. Recipes saved on older or future dates
+       must not appear in this dropdown. */
+    const selectedDate = String(date || "");
+    return savedRecipes.filter(function(recipe) {
+        return String(recipe.date || "") === selectedDate;
+    });
+}
 
-function getSavedMenuForDate(date) { return
-savedMenus.find(function(menu){return
-String(menu.date)===String(date);}); }
+function getSavedMenuForDate(date) {
+    return savedMenus.find(function(menu){return String(menu.date)===String(date);});
+}
 
-function saveTargetFoodCost(){ const
-input=document.getElementById(“targetFoodCost”); const
-value=numberValue(input.value);
-if(value<=0||value>=100){input.value=targetFoodCost;return;}
-targetFoodCost=value; saveAllData(); refreshMenuCalculations(); }
+function saveTargetFoodCost(){
+    const input=document.getElementById("targetFoodCost");
+    const value=numberValue(input.value);
+    if(value<=0||value>=100){input.value=targetFoodCost;return;}
+    targetFoodCost=value;
+    saveAllData();
+    refreshMenuCalculations();
+}
 
-function loadMenuOfDay(){ const
-date=document.getElementById(“menuDate”);
-if(!date.value)date.value=todayString(); const
-target=document.getElementById(“targetFoodCost”);
-if(target)target.value=targetFoodCost;
-populateMenuRecipeSelect(date.value); renderMenuItems(date.value);
-resetMenuEntry(false); }
+function loadMenuOfDay(){
+    const date=document.getElementById("menuDate");
+    if(!date.value)date.value=todayString();
+    const target=document.getElementById("targetFoodCost");
+    if(target)target.value=targetFoodCost;
+    populateMenuRecipeSelect(date.value);
+    renderMenuItems(date.value);
+    resetMenuEntry(false);
+}
 
-function populateMenuRecipeSelect(date){ const
-select=document.getElementById(“menuRecipeSelect”); if(!select)return;
+function populateMenuRecipeSelect(date){
+    const select=document.getElementById("menuRecipeSelect");
+    if(!select)return;
 
     const saved=getSavedMenuForDate(date);
     const used=new Set((saved&&Array.isArray(saved.items)?saved.items:[]).map(function(x){return String(x.recipeId);}));
@@ -1006,13 +978,12 @@ select=document.getElementById(“menuRecipeSelect”); if(!select)return;
         const exists=Array.from(select.options).some(function(o){return String(o.value)===previous;});
         if(exists)select.value=previous;
     }
-
 }
 
-function selectMenuRecipe(){ const
-select=document.getElementById(“menuRecipeSelect”); const
-entry=document.getElementById(“menuRecipeEntry”);
-if(!select||!entry)return;
+function selectMenuRecipe(){
+    const select=document.getElementById("menuRecipeSelect");
+    const entry=document.getElementById("menuRecipeEntry");
+    if(!select||!entry)return;
 
     const id=String(select.value||"");
     if(!id){
@@ -1032,14 +1003,14 @@ if(!select||!entry)return;
     document.getElementById("menuSellingPrice").value=roundNumber(calculateSuggestedSellingPrice(r.totalCost,1));
     document.getElementById("menuTargetProfit").value=30;
     calculateMenuEntryForm();
-
 }
 
-function calculateMenuEntryForm(){ const
-select=document.getElementById(“menuRecipeSelect”); if(!select)return;
-const id=String(select.value||““); const
-r=savedRecipes.find(function(x){return String(x.id)===id;});
-if(!r)return;
+function calculateMenuEntryForm(){
+    const select=document.getElementById("menuRecipeSelect");
+    if(!select)return;
+    const id=String(select.value||"");
+    const r=savedRecipes.find(function(x){return String(x.id)===id;});
+    if(!r)return;
 
     const servings=Math.max(1,numberValue(document.getElementById("menuServings").value));
     let selling=numberValue(document.getElementById("menuSellingPrice").value);
@@ -1061,13 +1032,13 @@ if(!r)return;
     document.getElementById("menuEntryStatus").textContent=
         "Suggested price / serving: "+money(calculateSuggestedSellingPrice(r.totalCost,servings))+
         " | Actual food cost: "+foodCost.toFixed(2)+"% | Profit margin: "+margin.toFixed(2)+"%";
-
 }
 
-function resetMenuEntry(hide){ const
-entry=document.getElementById(“menuRecipeEntry”); const
-select=document.getElementById(“menuRecipeSelect”);
-if(entry)entry.style.display=“none”; if(select)select.value=““;
+function resetMenuEntry(hide){
+    const entry=document.getElementById("menuRecipeEntry");
+    const select=document.getElementById("menuRecipeSelect");
+    if(entry)entry.style.display="none";
+    if(select)select.value="";
 
     editingMenuRecipeId=null;
 
@@ -1093,14 +1064,14 @@ if(entry)entry.style.display=“none”; if(select)select.value=““;
         if(e.tagName==="INPUT")e.value=values[id];
         else e.textContent=values[id];
     });
-
 }
 
-function saveNewMenuItem(){ try { const
-dateElement=document.getElementById(“menuDate”); const
-recipeSelect=document.getElementById(“menuRecipeSelect”); const
-servingsElement=document.getElementById(“menuServings”); const
-sellingElement=document.getElementById(“menuSellingPrice”);
+function saveNewMenuItem(){
+    try {
+        const dateElement=document.getElementById("menuDate");
+        const recipeSelect=document.getElementById("menuRecipeSelect");
+        const servingsElement=document.getElementById("menuServings");
+        const sellingElement=document.getElementById("menuSellingPrice");
 
         if(!dateElement||!recipeSelect||!servingsElement||!sellingElement){
             showMessage("menuMessage","Menu form is incomplete. Please refresh the page.","error");
@@ -1171,10 +1142,12 @@ sellingElement=document.getElementById(“menuSellingPrice”);
         showMessage("menuMessage","Unable to save the menu item. Please check the browser console for the error.","error");
         return false;
     }
-
 }
 
-function calculateSuggestedSellingPrice( recipeCost, quantity ) {
+function calculateSuggestedSellingPrice(
+    recipeCost,
+    quantity
+) {
 
     recipeCost =
         numberValue(recipeCost);
@@ -1195,12 +1168,15 @@ function calculateSuggestedSellingPrice( recipeCost, quantity ) {
 
     return costPerServing /
         (targetFoodCost / 100);
-
 }
 
-function renderMenuItems(date){ const
-c=document.getElementById(“menuItems”); if(!c){ console.error(“Menu
-container #menuItems was not found.”); return; }
+
+function renderMenuItems(date){
+    const c=document.getElementById("menuItems");
+    if(!c){
+        console.error("Menu container #menuItems was not found.");
+        return;
+    }
 
     const menu=getSavedMenuForDate(date);
     if(!menu||!Array.isArray(menu.items)||!menu.items.length){
@@ -1250,15 +1226,17 @@ container #menuItems was not found.”); return; }
     });
 
     updateMenuSummary(totalCost,totalSales,totalProfit);
-
 }
 
-/* ——————————————————— INLINE MENU EDITING Edit opens INSIDE the
-selected saved menu row. No need to scroll back to the top.
-——————————————————— */ function editMenuItem(button){ const
-itemElement=button.closest(“.menu-item”); const
-date=document.getElementById(“menuDate”)?.value||todayString();
-if(!itemElement)return;
+/* ---------------------------------------------------------
+   INLINE MENU EDITING
+   Edit opens INSIDE the selected saved menu row.
+   No need to scroll back to the top.
+--------------------------------------------------------- */
+function editMenuItem(button){
+    const itemElement=button.closest(".menu-item");
+    const date=document.getElementById("menuDate")?.value||todayString();
+    if(!itemElement)return;
 
     /* If another row is already being edited, cancel it first. */
     const openEdit=document.querySelector(".menu-item.menu-editing");
@@ -1278,16 +1256,17 @@ if(!itemElement)return;
     itemElement.dataset.originalSelling=String(numberValue(savedItem.sellingPrice));
 
     renderInlineMenuEdit(itemElement,savedItem);
-
 }
 
-function renderInlineMenuEdit(itemElement,item){ const
-servings=Math.max(1,numberValue(item.servings)); const
-selling=numberValue(item.sellingPrice); const
-recipeCost=numberValue(item.recipeCost); const
-suggested=calculateSuggestedSellingPrice(recipeCost,servings); const
-sales=sellingservings; const foodCost=sales?(recipeCost/sales100):0;
-const profit=sales-recipeCost; const margin=sales?(profit/sales*100):0;
+function renderInlineMenuEdit(itemElement,item){
+    const servings=Math.max(1,numberValue(item.servings));
+    const selling=numberValue(item.sellingPrice);
+    const recipeCost=numberValue(item.recipeCost);
+    const suggested=calculateSuggestedSellingPrice(recipeCost,servings);
+    const sales=selling*servings;
+    const foodCost=sales?(recipeCost/sales*100):0;
+    const profit=sales-recipeCost;
+    const margin=sales?(profit/sales*100):0;
 
     itemElement.innerHTML=
         '<div class="menu-top">'+
@@ -1316,11 +1295,11 @@ const profit=sales-recipeCost; const margin=sales?(profit/sales*100):0;
             '<button type="button" class="btn btn-secondary btn-small" data-menu-cancel onclick="cancelInlineMenuEdit(this)">Cancel</button>'+ 
             '<button type="button" class="btn btn-danger btn-small" onclick="deleteMenuItem(this)">Delete</button>'+ 
         '</div>';
-
 }
 
-function updateInlineMenuEdit(input){ const
-itemElement=input.closest(“.menu-item”); if(!itemElement)return;
+function updateInlineMenuEdit(input){
+    const itemElement=input.closest(".menu-item");
+    if(!itemElement)return;
 
     const date=document.getElementById("menuDate")?.value||todayString();
     const recipeId=String(itemElement.dataset.recipeId||"");
@@ -1348,13 +1327,12 @@ itemElement=input.closest(“.menu-item”); if(!itemElement)return;
     set("[data-edit-food-cost]",foodCost.toFixed(2)+"%");
     set("[data-edit-profit]",money(profit));
     set("[data-edit-margin]",margin.toFixed(2)+"%");
-
 }
 
-function updateInlineMenuItem(button){ const
-itemElement=button.closest(“.menu-item”); const
-date=document.getElementById(“menuDate”)?.value||todayString();
-if(!itemElement)return;
+function updateInlineMenuItem(button){
+    const itemElement=button.closest(".menu-item");
+    const date=document.getElementById("menuDate")?.value||todayString();
+    if(!itemElement)return;
 
     const recipeId=String(itemElement.dataset.recipeId||"");
     const menu=getSavedMenuForDate(date);
@@ -1379,27 +1357,25 @@ if(!itemElement)return;
     renderMenuItems(date);
     populateMenuRecipeSelect(date);
     showMessage("menuMessage",item.recipeName+" updated in Today's Menu.","success");
-
 }
 
-function cancelInlineMenuEdit(button){ const
-itemElement=button.closest(“.menu-item”); const
-date=document.getElementById(“menuDate”)?.value||todayString();
-if(!itemElement)return;
+function cancelInlineMenuEdit(button){
+    const itemElement=button.closest(".menu-item");
+    const date=document.getElementById("menuDate")?.value||todayString();
+    if(!itemElement)return;
 
     /* Re-render from saved data, so any uncommitted typing disappears. */
     renderMenuItems(date);
-
 }
 
-function updateMenuSummary(totalCost,totalSales,totalProfit){ const
-a=document.getElementById(“menuTotalCost”),b=document.getElementById(“menuTotalSales”),c=document.getElementById(“menuTotalProfit”),d=document.getElementById(“menuTotalMargin”);
-if(a)a.textContent=money(totalCost);
-if(b)b.textContent=money(totalSales);
-if(c)c.textContent=money(totalProfit);
-if(d)d.textContent=(totalSales?(totalProfit/totalSales*100):0).toFixed(2)+“%”;
-} function refreshMenuCalculations(){const
-date=document.getElementById(“menuDate”)?.value;if(date)renderMenuItems(date);calculateMenuEntryForm();}
+function updateMenuSummary(totalCost,totalSales,totalProfit){
+    const a=document.getElementById("menuTotalCost"),b=document.getElementById("menuTotalSales"),c=document.getElementById("menuTotalProfit"),d=document.getElementById("menuTotalMargin");
+    if(a)a.textContent=money(totalCost);
+    if(b)b.textContent=money(totalSales);
+    if(c)c.textContent=money(totalProfit);
+    if(d)d.textContent=(totalSales?(totalProfit/totalSales*100):0).toFixed(2)+"%";
+}
+function refreshMenuCalculations(){const date=document.getElementById("menuDate")?.value;if(date)renderMenuItems(date);calculateMenuEntryForm();}
 function calculateMenuEntry(input) {
 
     const item =
@@ -1480,22 +1456,29 @@ function calculateMenuEntry(input) {
     const profitMoneyEl=item.querySelector(".menu-profit-money");
     if(salesEl)salesEl.textContent=money(sales);
     if(profitMoneyEl)profitMoneyEl.textContent=money(sales-recipe.totalCost);
-
 }
 
-function saveMenuItem(button){ /* Backward compatibility: old pages can
-still call this function. */ editMenuItem(button); }
+function saveMenuItem(button){
+    /* Backward compatibility: old pages can still call this function. */
+    editMenuItem(button);
+}
 
-function deleteMenuItem(button){ const
-item=button.closest(“.menu-item”),date=document.getElementById(“menuDate”).value;
-if(!item)return; const menu=getSavedMenuForDate(date); if(!menu)return;
-menu.items=menu.items.filter(x=>String(x.recipeId)!==String(item.dataset.recipeId));
-if(!menu.items.length)savedMenus=savedMenus.filter(x=>x!==menu);
-saveAllData(); populateMenuRecipeSelect(date); renderMenuItems(date);
-showMessage(“menuMessage”,“Menu item deleted.”,“success”); }
+function deleteMenuItem(button){
+    const item=button.closest(".menu-item"),date=document.getElementById("menuDate").value;
+    if(!item)return;
+    const menu=getSavedMenuForDate(date);
+    if(!menu)return;
+    menu.items=menu.items.filter(x=>String(x.recipeId)!==String(item.dataset.recipeId));
+    if(!menu.items.length)savedMenus=savedMenus.filter(x=>x!==menu);
+    saveAllData();
+    populateMenuRecipeSelect(date);
+    renderMenuItems(date);
+    showMessage("menuMessage","Menu item deleted.","success");
+}
 
-/* ========================================================= DAILY SALES
-SOLD OUT EXISTS ONLY HERE
+/* =========================================================
+   DAILY SALES
+   SOLD OUT EXISTS ONLY HERE
 ========================================================= */
 
 function getSavedDailySales(date) {
@@ -1505,11 +1488,12 @@ function getSavedDailySales(date) {
             return record.date === date;
         }
     );
-
 }
 
-/* ——————————————————— CREATE A RELIABLE UNIQUE ROW ID
-——————————————————— */
+
+/* ---------------------------------------------------------
+   CREATE A RELIABLE UNIQUE ROW ID
+--------------------------------------------------------- */
 
 function createSalesRowId() {
 
@@ -1518,10 +1502,12 @@ function createSalesRowId() {
         Math.random()
             .toString(36)
             .substring(2, 8);
-
 }
 
-/* ——————————————————— GET COOKED FOOD ID ——————————————————— */
+
+/* ---------------------------------------------------------
+   GET COOKED FOOD ID
+--------------------------------------------------------- */
 
 function getCookedFoodKey(item) {
 
@@ -1547,11 +1533,12 @@ function getCookedFoodKey(item) {
     }
 
     return "";
-
 }
 
-/* ——————————————————— MAKE SURE OLD RECORDS HAVE ROW IDS
-——————————————————— */
+
+/* ---------------------------------------------------------
+   MAKE SURE OLD RECORDS HAVE ROW IDS
+--------------------------------------------------------- */
 
 function normalizeDailySalesRecords() {
 
@@ -1633,10 +1620,12 @@ function normalizeDailySalesRecords() {
     if (changed) {
         saveAllData();
     }
-
 }
 
-/* ——————————————————— AVAILABLE COOKED FOOD ——————————————————— */
+
+/* ---------------------------------------------------------
+   AVAILABLE COOKED FOOD
+--------------------------------------------------------- */
 
 function getAvailableSalesMenuItems(date) {
 
@@ -1716,12 +1705,16 @@ function getAvailableSalesMenuItems(date) {
             return true;
         }
     );
-
 }
 
-/* ——————————————————— LOAD DAILY SALES ——————————————————— */
 
-function loadSalesScreen(){ loadDailySales(); }
+/* ---------------------------------------------------------
+   LOAD DAILY SALES
+--------------------------------------------------------- */
+
+function loadSalesScreen(){
+    loadDailySales();
+}
 
 function loadDailySales() {
 
@@ -1765,10 +1758,12 @@ function loadDailySales() {
     renderSalesOtherItems(record);
 
     calculateSalesTotals();
-
 }
 
-/* ——————————————————— COOKED FOOD DROPDOWN ——————————————————— */
+
+/* ---------------------------------------------------------
+   COOKED FOOD DROPDOWN
+--------------------------------------------------------- */
 
 function renderSalesFoodDropdown(date) {
 
@@ -1802,10 +1797,12 @@ function renderSalesFoodDropdown(date) {
             select.appendChild(option);
         }
     );
-
 }
 
-/* ——————————————————— OTHER ITEM DROPDOWN ——————————————————— */
+
+/* ---------------------------------------------------------
+   OTHER ITEM DROPDOWN
+--------------------------------------------------------- */
 
 function renderSalesOtherDropdown(date) {
 
@@ -1836,10 +1833,12 @@ function renderSalesOtherDropdown(date) {
             select.appendChild(option);
         }
     );
-
 }
 
-/* ——————————————————— ADD COOKED FOOD ——————————————————— */
+
+/* ---------------------------------------------------------
+   ADD COOKED FOOD
+--------------------------------------------------------- */
 
 function addSalesFoodItem() {
 
@@ -1986,10 +1985,12 @@ function addSalesFoodItem() {
     select.value = "";
 
     loadDailySales();
-
 }
 
-/* ——————————————————— RENDER COOKED FOOD ROWS ——————————————————— */
+
+/* ---------------------------------------------------------
+   RENDER COOKED FOOD ROWS
+--------------------------------------------------------- */
 
 function renderSalesFoodItems(record) {
 
@@ -2155,11 +2156,12 @@ function renderSalesFoodItems(record) {
             container.appendChild(div);
         }
     );
-
 }
 
-/* ——————————————————— UPDATE COOKED FOOD QUANTITY ———————————————————
-*/
+
+/* ---------------------------------------------------------
+   UPDATE COOKED FOOD QUANTITY
+--------------------------------------------------------- */
 
 function updateSalesFoodQuantity(input) {
 
@@ -2232,10 +2234,12 @@ function updateSalesFoodQuantity(input) {
     saveAllData();
 
     calculateSalesTotals();
-
 }
 
-/* ——————————————————— MARK COOKED FOOD SOLD OUT ——————————————————— */
+
+/* ---------------------------------------------------------
+   MARK COOKED FOOD SOLD OUT
+--------------------------------------------------------- */
 
 function markCookedFoodSoldOut(id) {
 
@@ -2315,11 +2319,13 @@ function markCookedFoodSoldOut(id) {
     );
 
     loadDailySales();
-
 }
 
-/* ——————————————————— DELETE COOKED FOOD DELETE BY UNIQUE ROW ID
-——————————————————— */
+
+/* ---------------------------------------------------------
+   DELETE COOKED FOOD
+   DELETE BY UNIQUE ROW ID
+--------------------------------------------------------- */
 
 function deleteSalesFoodItem(rowId) {
 
@@ -2349,10 +2355,12 @@ function deleteSalesFoodItem(rowId) {
     saveAllData();
 
     loadDailySales();
-
 }
 
-/* ——————————————————— ADD OTHER ITEM ——————————————————— */
+
+/* ---------------------------------------------------------
+   ADD OTHER ITEM
+--------------------------------------------------------- */
 
 function addSalesOtherItem() {
 
@@ -2471,10 +2479,12 @@ function addSalesOtherItem() {
     select.value = "";
 
     loadDailySales();
-
 }
 
-/* ——————————————————— RENDER OTHER ITEMS ——————————————————— */
+
+/* ---------------------------------------------------------
+   RENDER OTHER ITEMS
+--------------------------------------------------------- */
 
 function renderSalesOtherItems(record) {
 
@@ -2600,10 +2610,12 @@ function renderSalesOtherItems(record) {
             container.appendChild(div);
         }
     );
-
 }
 
-/* ——————————————————— UPDATE OTHER ITEM QUANTITY ——————————————————— */
+
+/* ---------------------------------------------------------
+   UPDATE OTHER ITEM QUANTITY
+--------------------------------------------------------- */
 
 function updateSalesOtherQuantity(input) {
 
@@ -2676,11 +2688,13 @@ function updateSalesOtherQuantity(input) {
     saveAllData();
 
     calculateSalesTotals();
-
 }
 
-/* ——————————————————— DELETE OTHER ITEM DELETE BY UNIQUE ROW ID
-——————————————————— */
+
+/* ---------------------------------------------------------
+   DELETE OTHER ITEM
+   DELETE BY UNIQUE ROW ID
+--------------------------------------------------------- */
 
 function deleteSalesOtherItem(rowId) {
 
@@ -2710,11 +2724,12 @@ function deleteSalesOtherItem(rowId) {
     saveAllData();
 
     loadDailySales();
-
 }
 
-/* ——————————————————— CALCULATE DAILY SALES TOTALS ———————————————————
-*/
+
+/* ---------------------------------------------------------
+   CALCULATE DAILY SALES TOTALS
+--------------------------------------------------------- */
 
 function calculateSalesTotals() {
 
@@ -2869,10 +2884,12 @@ function calculateSalesTotals() {
     }
 
     saveAllData();
-
 }
 
-/* ——————————————————— SAVE DAILY SALES ——————————————————— */
+
+/* ---------------------------------------------------------
+   SAVE DAILY SALES
+--------------------------------------------------------- */
 
 function saveDailySales() {
 
@@ -2943,11 +2960,12 @@ function saveDailySales() {
     );
 
     updateDashboard();
-
 }
 
-/* ========================================================= PROFIT
-CALCULATOR ========================================================= */
+
+/* =========================================================
+   PROFIT CALCULATOR
+========================================================= */
 
 function getPreviousProfitRecord(date) {
 
@@ -2963,8 +2981,8 @@ function getPreviousProfitRecord(date) {
     return sorted.length > 0
         ? sorted[0]
         : null;
-
 }
+
 
 function loadProfitCalculator() {
 
@@ -3113,8 +3131,8 @@ function loadProfitCalculator() {
     ).value = expenses.other;
 
     calculateProfit();
-
 }
+
 
 function calculateProfit() {
 
@@ -3218,8 +3236,8 @@ function calculateProfit() {
         expenses: expenses,
         netProfit: netProfit
     };
-
 }
+
 
 function saveProfitRecord() {
 
@@ -3356,10 +3374,11 @@ function saveProfitRecord() {
     );
 
     updateDashboard();
-
 }
 
-/* ========================================================= DASHBOARD
+
+/* =========================================================
+   DASHBOARD
 ========================================================= */
 
 function updateDashboard() {
@@ -3412,8 +3431,8 @@ function updateDashboard() {
         money(netProfit);
 
     updateMonthlySummary();
-
 }
+
 
 function updateMonthlySummary() {
 
@@ -3531,11 +3550,11 @@ function updateMonthlySummary() {
         "monthlyProfit"
     ).textContent =
         money(profit);
-
 }
 
-/* ========================================================= RECORDS -
-MONTHLY ARCHIVE
+
+/* =========================================================
+   RECORDS - MONTHLY ARCHIVE
 ========================================================= */
 
 function getMonthName(dateString) {
@@ -3561,8 +3580,8 @@ function getMonthName(dateString) {
             year: "numeric"
         }
     );
-
 }
+
 
 function renderMonthlyRecords() {
 
@@ -3748,13 +3767,18 @@ function renderMonthlyRecords() {
             container.appendChild(folder);
         }
     );
-
 }
 
-/* ========================================================= MESSAGES
+
+/* =========================================================
+   MESSAGES
 ========================================================= */
 
-function showMessage( elementId, message, type ) {
+function showMessage(
+    elementId,
+    message,
+    type
+) {
 
     const element =
         document.getElementById(
@@ -3777,15 +3801,16 @@ function showMessage( elementId, message, type ) {
         },
         3000
     );
-
 }
 
-/* =========================================================
-INITIALIZATION =========================================================
-*/
 
-async function initializeUserData() { const { data, error } = await
-supabaseClient.auth.getUser();
+/* =========================================================
+   INITIALIZATION
+========================================================= */
+
+async function initializeUserData() {
+    const { data, error } =
+        await supabaseClient.auth.getUser();
 
     if (error || !data.user) {
         currentUserId = null;
@@ -3799,10 +3824,12 @@ supabaseClient.auth.getUser();
     await renderOtherItemList();
 
     updateDashboard();
-
 }
 
-document.addEventListener( “DOMContentLoaded”, async function() {
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async function() {
 
         populateMasterIngredientSelect();
         populateMasterOtherItemSelect();
@@ -3858,19 +3885,25 @@ document.addEventListener( “DOMContentLoaded”, async function() {
 
         await updateAppAccess();
     }
-
 );
 
-/* ========================================================= MENU ADD
-BUTTON SAFETY HANDLER Uses the existing saveNewMenuItem() function.
-Authentication code below remains unchanged.
+
+/* =========================================================
+   MENU ADD BUTTON SAFETY HANDLER
+   Uses the existing saveNewMenuItem() function.
+   Authentication code below remains unchanged.
 ========================================================= */
 
-window.addEventListener(“load”, function() { const addMenuButton =
-document.getElementById(“addMenuItemBtn”); if (addMenuButton) {
-addMenuButton.type = “button”; addMenuButton.addEventListener(“click”,
-function(event) { event.preventDefault(); event.stopPropagation();
-saveNewMenuItem(); }); }
+window.addEventListener("load", function() {
+    const addMenuButton = document.getElementById("addMenuItemBtn");
+    if (addMenuButton) {
+        addMenuButton.type = "button";
+        addMenuButton.addEventListener("click", function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            saveNewMenuItem();
+        });
+    }
 
     const addSalesFoodButton = document.getElementById("addSalesFoodBtn");
     if (addSalesFoodButton) {
@@ -3881,14 +3914,14 @@ saveNewMenuItem(); }); }
             addSalesFoodItem();
         });
     }
-
 });
 
-/* ========================================================= MOBILE APP
-/ SERVICE WORKER
+
+/* =========================================================
+   MOBILE APP / SERVICE WORKER
 ========================================================= */
 
-if (“serviceWorker” in navigator) {
+if ("serviceWorker" in navigator) {
 
     window.addEventListener("load", function() {
 
@@ -3908,14 +3941,14 @@ if (“serviceWorker” in navigator) {
 
 }
 
-/* =========================================================
-AUTHENTICATION =========================================================
-*/
 
-document.getElementById(“signupBtn”).addEventListener(“click”, async
-function () { const email =
-document.getElementById(“authEmail”).value.trim(); const password =
-document.getElementById(“authPassword”).value;
+/* =========================================================
+   AUTHENTICATION
+========================================================= */
+
+document.getElementById("signupBtn").addEventListener("click", async function () {
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
 
     const { data, error } =
         await supabaseClient.auth.signUp({
@@ -3931,13 +3964,12 @@ document.getElementById(“authPassword”).value;
 
     document.getElementById("authMessage").textContent =
         "Account created. Please check your email if confirmation is required.";
-
 });
 
-document.getElementById(“loginBtn”).addEventListener(“click”, async
-function () { const email =
-document.getElementById(“authEmail”).value.trim(); const password =
-document.getElementById(“authPassword”).value;
+
+document.getElementById("loginBtn").addEventListener("click", async function () {
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
 
     const { data, error } =
         await supabaseClient.auth.signInWithPassword({
@@ -3955,11 +3987,10 @@ document.getElementById(“authPassword”).value;
 
     document.getElementById("authMessage").textContent =
         "Login successful.";
-
 });
 
-document.getElementById(“forgotPasswordBtn”).addEventListener(“click”,
-async function () {
+
+document.getElementById("forgotPasswordBtn").addEventListener("click", async function () {
 
     const email =
         document.getElementById("authEmail").value.trim();
@@ -3987,11 +4018,10 @@ async function () {
 
     document.getElementById("authMessage").textContent =
         "Password reset email sent. Please check your email.";
-
 });
 
-document.getElementById(“logoutBtn”).addEventListener(“click”, async
-function () {
+
+document.getElementById("logoutBtn").addEventListener("click", async function () {
 
     const { error } =
         await supabaseClient.auth.signOut();
@@ -4015,8 +4045,8 @@ function () {
 
     document.getElementById("authMessage").textContent =
         "You have been logged out.";
-
 });
+
 
 async function updateAppAccess() {
 
@@ -4039,10 +4069,11 @@ async function updateAppAccess() {
         authScreen.style.display = "block";
         appContainer.style.display = "none";
     }
-
 }
 
-supabaseClient.auth.onAuthStateChange( async function(event, session) {
+
+supabaseClient.auth.onAuthStateChange(
+    async function(event, session) {
 
         if (session) {
             loadUserScopedData(session.user.id);
@@ -4073,8 +4104,8 @@ supabaseClient.auth.onAuthStateChange( async function(event, session) {
 
         await updateAppAccess();
     }
-
 );
+
 
 async function getCurrentUserId() {
 
@@ -4092,44 +4123,54 @@ async function getCurrentUserId() {
     currentUserId = data.user.id;
 
     return currentUserId;
-
 }
 
-/* ========================================================= STAGE 4 —
-TODAY’S MENU & SALES Combined food sales + other item sales.
-========================================================= */ function
-stage4TodayRecord(date){ let
-record=dailySalesRecords.find(function(x){return
-String(x.date)===String(date);});
-if(!record){record={id:createSalesRowId(),date:date,foodItems:[],otherItems:[],foodSales:0,otherSales:0,totalSales:0,foodCost:0,otherCost:0,totalCost:0,grossProfit:0,expenses:0,profit:0,soldOutFoodIds:[]};dailySalesRecords.push(record);}
-if(!Array.isArray(record.foodItems))record.foodItems=[];
-if(!Array.isArray(record.otherItems))record.otherItems=[]; return
-record; } function loadMenuOfDay(){ const
-d=document.getElementById(‘menuDate’); if(!d)return;
-if(!d.value)d.value=todayString(); populateMenuRecipeSelect(d.value);
-renderMenuItems(d.value); renderDailyOtherItemDropdown(d.value);
-renderDailyOtherItems(d.value); calculateCombinedSales(d.value);
-resetMenuEntry(false); } function populateMenuRecipeSelect(date){ const
-select=document.getElementById(‘menuRecipeSelect’); if(!select)return;
-const record=stage4TodayRecord(date); const used=new
-Set(record.foodItems.map(function(x){return String(x.recipeId);}));
-select.innerHTML=‘– Select Recipe –’;
-getRecipesForDate(date).slice().sort(function(a,b){return
-String(a.name||’‘).localeCompare(String(b.name||’‘));}).forEach(function(r){
-if(used.has(String(r.id)))return; const
-o=document.createElement(’option’);o.value=String(r.id);o.textContent=String(r.name||‘Unnamed
-Recipe’);select.appendChild(o); }); } function selectMenuRecipe(){ const
-select=document.getElementById(‘menuRecipeSelect’),entry=document.getElementById(‘menuRecipeEntry’);if(!select||!entry)return;
-const r=savedRecipes.find(function(x){return
-String(x.id)===String(select.value||’‘);});
-if(!r){entry.style.display=’none’;return;} entry.style.display=‘block’;
-document.getElementById(‘selectedMenuRecipeCost’).textContent=money(r.totalCost);
-document.getElementById(‘menuEntryRecipeCost’).textContent=money(r.totalCost);
-document.getElementById(‘menuSellingPrice’).value=’‘;
-calculateMenuEntryForm(); } function calculateMenuEntryForm(){ const
-id=String(document.getElementById(’menuRecipeSelect’)?.value||’’); const
-r=savedRecipes.find(function(x){return String(x.id)===id;});
-if(!r)return;
+
+/* =========================================================
+   STAGE 4 — TODAY'S MENU & SALES
+   Combined food sales + other item sales.
+========================================================= */
+function stage4TodayRecord(date){
+    let record=dailySalesRecords.find(function(x){return String(x.date)===String(date);});
+    if(!record){record={id:createSalesRowId(),date:date,foodItems:[],otherItems:[],foodSales:0,otherSales:0,totalSales:0,foodCost:0,otherCost:0,totalCost:0,grossProfit:0,expenses:0,profit:0,soldOutFoodIds:[]};dailySalesRecords.push(record);}
+    if(!Array.isArray(record.foodItems))record.foodItems=[];
+    if(!Array.isArray(record.otherItems))record.otherItems=[];
+    return record;
+}
+function loadMenuOfDay(){
+    const d=document.getElementById('menuDate'); if(!d)return;
+    if(!d.value)d.value=todayString();
+    populateMenuRecipeSelect(d.value);
+    renderMenuItems(d.value);
+    renderDailyOtherItemDropdown(d.value);
+    renderDailyOtherItems(d.value);
+    calculateCombinedSales(d.value);
+    resetMenuEntry(false);
+}
+function populateMenuRecipeSelect(date){
+    const select=document.getElementById('menuRecipeSelect'); if(!select)return;
+    const record=stage4TodayRecord(date);
+    const used=new Set(record.foodItems.map(function(x){return String(x.recipeId);}));
+    select.innerHTML='<option value="">-- Select Recipe --</option>';
+    getRecipesForDate(date).slice().sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''));}).forEach(function(r){
+        if(used.has(String(r.id)))return;
+        const o=document.createElement('option');o.value=String(r.id);o.textContent=String(r.name||'Unnamed Recipe');select.appendChild(o);
+    });
+}
+function selectMenuRecipe(){
+    const select=document.getElementById('menuRecipeSelect'),entry=document.getElementById('menuRecipeEntry');if(!select||!entry)return;
+    const r=savedRecipes.find(function(x){return String(x.id)===String(select.value||'');});
+    if(!r){entry.style.display='none';return;}
+    entry.style.display='block';
+    document.getElementById('selectedMenuRecipeCost').textContent=money(r.totalCost);
+    document.getElementById('menuEntryRecipeCost').textContent=money(r.totalCost);
+    document.getElementById('menuSellingPrice').value='';
+    calculateMenuEntryForm();
+}
+function calculateMenuEntryForm(){
+    const id=String(document.getElementById('menuRecipeSelect')?.value||'');
+    const r=savedRecipes.find(function(x){return String(x.id)===id;});
+    if(!r)return;
 
     const selling=numberValue(document.getElementById('menuSellingPrice').value);
     const servings=0;
@@ -4144,14 +4185,13 @@ if(!r)return;
     set('menuEntrySales',money(sales));
     set('menuEntryProfit',money(profit),profit>0?'profit-positive':profit<0?'profit-negative':'');
     set('menuEntryProfitPercent',pct.toFixed(2)+'%',pct>0?'profit-positive':pct<0?'profit-negative':'');
-
 }
 
-function addFoodMenuSale(){ const
-date=document.getElementById(‘menuDate’).value||todayString(); const
-id=String(document.getElementById(‘menuRecipeSelect’).value||’‘); const
-r=savedRecipes.find(function(x){return String(x.id)===id;}); const
-selling=numberValue(document.getElementById(’menuSellingPrice’).value);
+function addFoodMenuSale(){
+    const date=document.getElementById('menuDate').value||todayString();
+    const id=String(document.getElementById('menuRecipeSelect').value||'');
+    const r=savedRecipes.find(function(x){return String(x.id)===id;});
+    const selling=numberValue(document.getElementById('menuSellingPrice').value);
 
     if(!r||selling<=0){
         showMessage('menuMessage','Please select a recipe and enter Selling Price / Serving.','error');
@@ -4176,128 +4216,46 @@ selling=numberValue(document.getElementById(’menuSellingPrice’).value);
     saveAllData();
     loadMenuOfDay();
     showMessage('menuMessage',r.name+' added to today\'s menu. Enter servings sold on the saved card.','success');
-
 }
 
-function renderMenuItems(date){ const
-c=document.getElementById(‘menuItems’);if(!c)return;const
-record=stage4TodayRecord(date);c.innerHTML=’‘;
-if(!record.foodItems.length){c.innerHTML=’
+function renderMenuItems(date){
+    const c=document.getElementById('menuItems');if(!c)return;const record=stage4TodayRecord(date);c.innerHTML='';
+    if(!record.foodItems.length){c.innerHTML='<div class="menu-empty">No food sales added yet.</div>';return;}
+    record.foodItems.forEach(function(item){
+        const sales=numberValue(item.sellingPrice)*numberValue(item.servingsSold),profit=sales-numberValue(item.recipeCost),pct=sales?profit/sales*100:0;
+        const d=document.createElement('div');d.className='menu-item';d.dataset.foodId=item.id;
+        d.innerHTML='<div class="menu-top"><div class="menu-name">'+escapeHtml(item.recipeName)+'</div><div class="menu-actions"><button type="button" class="btn btn-secondary btn-small" onclick="editStage4Food(this)">Edit</button><button type="button" class="btn btn-danger btn-small" onclick="deleteStage4Food(this)">Delete</button></div></div>'+
+        '<div class="menu-summary-grid-6">'+stage4Box('Recipe Cost',money(item.recipeCost)) + stage4Box('Selling / Serving',money(item.sellingPrice)) + stage4Box('Servings Sold',item.servingsSold) + stage4Box('Total Sales',money(sales)) + stage4Box('Profit',money(profit),profit) + stage4Box('Profit %',pct.toFixed(2)+'%',profit)+'</div>';
+        c.appendChild(d);
+    });
+}
+function stage4Box(label,value,profit){const cls=profit>0?'profit-positive':profit<0?'profit-negative':'';return '<div class="menu-summary-box"><span>'+label+'</span><strong class="'+cls+'">'+value+'</strong></div>';}
+function editStage4Food(btn){const el=btn.closest('.menu-item'),date=document.getElementById('menuDate').value,record=stage4TodayRecord(date),item=record.foodItems.find(function(x){return String(x.id)===String(el.dataset.foodId);});if(!item)return;
+    el.innerHTML='<div class="menu-name">'+escapeHtml(item.recipeName)+'</div><div class="form-grid"><div class="form-group"><label>Selling Price / Serving</label><input class="stage4-edit-price" type="number" min="0" step="0.01" value="'+item.sellingPrice+'"></div><div class="form-group"><label>Servings Sold</label><input class="stage4-edit-servings" type="number" min="0" step="1" value="'+item.servingsSold+'"></div></div><div class="button-row"><button type="button" class="btn btn-primary btn-small" onclick="updateStage4Food(this)">Update</button><button type="button" class="btn btn-secondary btn-small" onclick="loadMenuOfDay()">Cancel</button></div>';
+}
+function updateStage4Food(btn){const el=btn.closest('.menu-item'),date=document.getElementById('menuDate').value,record=stage4TodayRecord(date),item=record.foodItems.find(function(x){return String(x.id)===String(el.dataset.foodId);});if(!item)return;const p=numberValue(el.querySelector('.stage4-edit-price').value),q=numberValue(el.querySelector('.stage4-edit-servings').value);if(p<=0||q<=0){showMessage('menuMessage','Enter valid Selling Price and Servings Sold.','error');return;}item.sellingPrice=p;item.servingsSold=q;saveAllData();loadMenuOfDay();}
+function deleteStage4Food(btn){const el=btn.closest('.menu-item'),date=document.getElementById('menuDate').value,record=stage4TodayRecord(date);if(!confirm('Delete this food sale?'))return;record.foodItems=record.foodItems.filter(function(x){return String(x.id)!==String(el.dataset.foodId);});saveAllData();loadMenuOfDay();}
+function renderDailyOtherItemDropdown(date){const s=document.getElementById('dailyOtherItemSelect');if(!s)return;const record=stage4TodayRecord(date),used=new Set(record.otherItems.map(function(x){return String(x.otherItemId);}));s.innerHTML='<option value="">-- Select Other Item --</option>';otherItems.slice().sort(function(a,b){return String(a.name).localeCompare(String(b.name));}).forEach(function(item){if(used.has(String(item.id)))return;const o=document.createElement('option');o.value=String(item.id);o.textContent=item.name;s.appendChild(o);});}
+function addDailyOtherItemFromSelect(){const s=document.getElementById('dailyOtherItemSelect'),id=String(s.value||'');if(!id)return;const date=document.getElementById('menuDate').value||todayString(),item=otherItems.find(function(x){return String(x.id)===id;}),record=stage4TodayRecord(date);if(!item)return;if(record.otherItems.some(function(x){return String(x.otherItemId)===id;}))return;record.otherItems.push({id:createSalesRowId(),otherItemId:id,name:item.name,unitCost:numberValue(item.unitCost),sellingPrice:numberValue(item.sellingPrice),quantitySold:0});saveAllData();loadMenuOfDay();}
+function renderDailyOtherItems(date){const c=document.getElementById('dailyOtherItemsList');if(!c)return;const record=stage4TodayRecord(date);c.innerHTML='';if(!record.otherItems.length){c.innerHTML='<div class="menu-empty">No other items sold.</div>';return;}record.otherItems.forEach(function(item){const sales=numberValue(item.sellingPrice)*numberValue(item.quantitySold),cost=numberValue(item.unitCost)*numberValue(item.quantitySold),profit=sales-cost,pct=sales?profit/sales*100:0;const d=document.createElement('div');d.className='menu-item';d.dataset.otherId=item.id;d.innerHTML='<div class="menu-top"><div class="menu-name">'+escapeHtml(item.name)+'</div><div class="menu-actions"><button type="button" class="btn btn-danger btn-small" onclick="deleteDailyOtherItem(this)">Delete</button></div></div><div class="daily-other-grid"><div class="form-group"><label>Unit Cost</label><input type="number" value="'+item.unitCost+'" readonly></div><div class="form-group"><label>Selling Price</label><input class="other-sale-price" type="number" min="0" step="0.01" value="'+item.sellingPrice+'" oninput="updateDailyOtherItem(this)"></div><div class="form-group"><label>Qty Sold</label><input class="other-sale-qty" type="number" min="0" step="1" value="'+item.quantitySold+'" oninput="updateDailyOtherItem(this)"></div><div class="menu-summary-box"><span>Profit</span><strong class="'+(profit>0?'profit-positive':profit<0?'profit-negative':'')+'">'+money(profit)+' ('+pct.toFixed(2)+'%)</strong></div></div><div class="small-text">Total Sales: <strong>'+money(sales)+'</strong></div>';c.appendChild(d);});}
+function updateDailyOtherItem(input){const el=input.closest('.menu-item'),date=document.getElementById('menuDate').value,record=stage4TodayRecord(date),item=record.otherItems.find(function(x){return String(x.id)===String(el.dataset.otherId);});if(!item)return;item.sellingPrice=numberValue(el.querySelector('.other-sale-price').value);item.quantitySold=numberValue(el.querySelector('.other-sale-qty').value);saveAllData();renderDailyOtherItems(date);calculateCombinedSales(date);}
+function deleteDailyOtherItem(btn){const el=btn.closest('.menu-item'),date=document.getElementById('menuDate').value,record=stage4TodayRecord(date);record.otherItems=record.otherItems.filter(function(x){return String(x.id)!==String(el.dataset.otherId);});saveAllData();loadMenuOfDay();}
+function calculateCombinedSales(date){const record=stage4TodayRecord(date);let foodSales=0,foodCost=0,otherSales=0,otherCost=0;record.foodItems.forEach(function(x){foodSales+=numberValue(x.sellingPrice)*numberValue(x.servingsSold);foodCost+=numberValue(x.recipeCost);});record.otherItems.forEach(function(x){otherSales+=numberValue(x.sellingPrice)*numberValue(x.quantitySold);otherCost+=numberValue(x.unitCost)*numberValue(x.quantitySold);});record.foodSales=foodSales;record.otherSales=otherSales;record.totalSales=foodSales+otherSales;record.foodCost=foodCost;record.otherCost=otherCost;record.totalCost=foodCost+otherCost;record.grossProfit=record.totalSales-record.totalCost;record.profit=record.grossProfit;const set=function(id,v){const e=document.getElementById(id);if(e)e.textContent=v;};set('combinedFoodSales',money(foodSales));set('combinedOtherSales',money(otherSales));set('combinedTotalSales',money(record.totalSales));set('combinedTotalCost',money(record.totalCost));set('combinedGrossProfit',money(record.grossProfit));set('combinedProfitPercent',(record.totalSales?record.grossProfit/record.totalSales*100:0).toFixed(2)+'%');saveAllData();updateDashboard();}
+function saveCombinedMenuSales(){const date=document.getElementById('menuDate').value||todayString();calculateCombinedSales(date);showMessage('menuMessage','Today\'s Menu & Sales saved successfully.','success');}
 
-No food sales added yet.
-
-‘;return;} record.foodItems.forEach(function(item){ const
-sales=numberValue(item.sellingPrice)numberValue(item.servingsSold),profit=sales-numberValue(item.recipeCost),pct=sales?profit/sales100:0;
-const
-d=document.createElement(’div’);d.className=‘menu-item’;d.dataset.foodId=item.id;
-d.innerHTML=’
-
-‘+escapeHtml(item.recipeName)+’
-
-Edit
-Delete
-
-‘+’
-
-‘+stage4Box(’Recipe Cost’,money(item.recipeCost)) + stage4Box(‘Selling /
-Serving’,money(item.sellingPrice)) + stage4Box(‘Servings
-Sold’,item.servingsSold) + stage4Box(‘Total Sales’,money(sales)) +
-stage4Box(‘Profit’,money(profit),profit) + stage4Box(‘Profit
-%’,pct.toFixed(2)+‘%’,profit)+’
-
-‘; c.appendChild(d); }); } function stage4Box(label,value,profit){const
-cls=profit>0?’profit-positive’:profit<0?‘profit-negative’:’‘;return’
-
-‘+label+’‘+value+’
-
-‘;} function editStage4Food(btn){const
-el=btn.closest(’.menu-item’),date=document.getElementById(‘menuDate’).value,record=stage4TodayRecord(date),item=record.foodItems.find(function(x){return
-String(x.id)===String(el.dataset.foodId);});if(!item)return;
-el.innerHTML=’
-
-‘+escapeHtml(item.recipeName)+’
-
-Selling Price / Serving
-
-Servings Sold
-
-Update
-Cancel
-
-‘; } function updateStage4Food(btn){const
-el=btn.closest(’.menu-item’),date=document.getElementById(‘menuDate’).value,record=stage4TodayRecord(date),item=record.foodItems.find(function(x){return
-String(x.id)===String(el.dataset.foodId);});if(!item)return;const
-p=numberValue(el.querySelector(‘.stage4-edit-price’).value),q=numberValue(el.querySelector(‘.stage4-edit-servings’).value);if(p<=0||q<=0){showMessage(‘menuMessage’,‘Enter
-valid Selling Price and Servings
-Sold.’,‘error’);return;}item.sellingPrice=p;item.servingsSold=q;saveAllData();loadMenuOfDay();}
-function deleteStage4Food(btn){const
-el=btn.closest(‘.menu-item’),date=document.getElementById(‘menuDate’).value,record=stage4TodayRecord(date);if(!confirm(‘Delete
-this food
-sale?’))return;record.foodItems=record.foodItems.filter(function(x){return
-String(x.id)!==String(el.dataset.foodId);});saveAllData();loadMenuOfDay();}
-function renderDailyOtherItemDropdown(date){const
-s=document.getElementById(‘dailyOtherItemSelect’);if(!s)return;const
-record=stage4TodayRecord(date),used=new
-Set(record.otherItems.map(function(x){return
-String(x.otherItemId);}));s.innerHTML=‘– Select Other Item
-–’;otherItems.slice().sort(function(a,b){return
-String(a.name).localeCompare(String(b.name));}).forEach(function(item){if(used.has(String(item.id)))return;const
-o=document.createElement(‘option’);o.value=String(item.id);o.textContent=item.name;s.appendChild(o);});}
-function addDailyOtherItemFromSelect(){const
-s=document.getElementById(‘dailyOtherItemSelect’),id=String(s.value||’‘);if(!id)return;const
-date=document.getElementById(’menuDate’).value||todayString(),item=otherItems.find(function(x){return
-String(x.id)===id;}),record=stage4TodayRecord(date);if(!item)return;if(record.otherItems.some(function(x){return
-String(x.otherItemId)===id;}))return;record.otherItems.push({id:createSalesRowId(),otherItemId:id,name:item.name,unitCost:numberValue(item.unitCost),sellingPrice:numberValue(item.sellingPrice),quantitySold:0});saveAllData();loadMenuOfDay();}
-function renderDailyOtherItems(date){const
-c=document.getElementById(‘dailyOtherItemsList’);if(!c)return;const
-record=stage4TodayRecord(date);c.innerHTML=’‘;if(!record.otherItems.length){c.innerHTML=’
-
-No other items sold.
-
-’;return;}record.otherItems.forEach(function(item){const
-sales=numberValue(item.sellingPrice)numberValue(item.quantitySold),cost=numberValue(item.unitCost)numberValue(item.quantitySold),profit=sales-cost,pct=sales?profit/sales*100:0;const
-d=document.createElement(‘div’);d.className=‘menu-item’;d.dataset.otherId=item.id;d.innerHTML=’
-
-‘+escapeHtml(item.name)+’
-
-Delete
-
-Unit Cost
-
-Selling Price
-
-Qty Sold
-
-Profit‘+money(profit)+’ (‘+pct.toFixed(2)+’%)
-
-Total Sales: ‘+money(sales)+’
-
-‘;c.appendChild(d);});} function updateDailyOtherItem(input){const
-el=input.closest(’.menu-item’),date=document.getElementById(‘menuDate’).value,record=stage4TodayRecord(date),item=record.otherItems.find(function(x){return
-String(x.id)===String(el.dataset.otherId);});if(!item)return;item.sellingPrice=numberValue(el.querySelector(‘.other-sale-price’).value);item.quantitySold=numberValue(el.querySelector(‘.other-sale-qty’).value);saveAllData();renderDailyOtherItems(date);calculateCombinedSales(date);}
-function deleteDailyOtherItem(btn){const
-el=btn.closest(‘.menu-item’),date=document.getElementById(‘menuDate’).value,record=stage4TodayRecord(date);record.otherItems=record.otherItems.filter(function(x){return
-String(x.id)!==String(el.dataset.otherId);});saveAllData();loadMenuOfDay();}
-function calculateCombinedSales(date){const
-record=stage4TodayRecord(date);let
-foodSales=0,foodCost=0,otherSales=0,otherCost=0;record.foodItems.forEach(function(x){foodSales+=numberValue(x.sellingPrice)numberValue(x.servingsSold);foodCost+=numberValue(x.recipeCost);});record.otherItems.forEach(function(x){otherSales+=numberValue(x.sellingPrice)numberValue(x.quantitySold);otherCost+=numberValue(x.unitCost)numberValue(x.quantitySold);});record.foodSales=foodSales;record.otherSales=otherSales;record.totalSales=foodSales+otherSales;record.foodCost=foodCost;record.otherCost=otherCost;record.totalCost=foodCost+otherCost;record.grossProfit=record.totalSales-record.totalCost;record.profit=record.grossProfit;const
-set=function(id,v){const
-e=document.getElementById(id);if(e)e.textContent=v;};set(‘combinedFoodSales’,money(foodSales));set(‘combinedOtherSales’,money(otherSales));set(‘combinedTotalSales’,money(record.totalSales));set(‘combinedTotalCost’,money(record.totalCost));set(‘combinedGrossProfit’,money(record.grossProfit));set(‘combinedProfitPercent’,(record.totalSales?record.grossProfit/record.totalSales100:0).toFixed(2)+‘%’);saveAllData();updateDashboard();}
-function saveCombinedMenuSales(){const
-date=document.getElementById(‘menuDate’).value||todayString();calculateCombinedSales(date);showMessage(‘menuMessage’,‘Today's
-Menu & Sales saved successfully.’,‘success’);}
-
-/* ========================================================= STAGE 4
-FINAL FIXES - Refresh Other Items from Supabase before daily sales
-loads. - Preserve input focus/cursor while editing Other Items Sold. -
-Show the master Unit on daily Other Items Sold cards. - Add Sold Out
-lock state to Food Sales cards. - Sold Out cards expose Edit only; Edit
-temporarily unlocks the card.
+/* =========================================================
+   STAGE 4 FINAL FIXES
+   - Refresh Other Items from Supabase before daily sales loads.
+   - Preserve input focus/cursor while editing Other Items Sold.
+   - Show the master Unit on daily Other Items Sold cards.
+   - Add Sold Out lock state to Food Sales cards.
+   - Sold Out cards expose Edit only; Edit temporarily unlocks the card.
 ========================================================= */
 
-async function loadMenuOfDay(){ const
-d=document.getElementById(‘menuDate’); if(!d)return;
-if(!d.value)d.value=todayString();
+async function loadMenuOfDay(){
+    const d=document.getElementById('menuDate');
+    if(!d)return;
+    if(!d.value)d.value=todayString();
 
     /* Other Items are stored in Supabase. Refresh the master list directly
        before rendering the daily selector. */
@@ -4332,22 +4290,25 @@ if(!d.value)d.value=todayString();
     renderDailyOtherItems(d.value);
     calculateCombinedSales(d.value);
     resetMenuEntry(false);
-
 }
 
-function stage4IsFoodSoldOut(record,itemId){ return !!(record &&
-Array.isArray(record.soldOutFoodIds) &&
-record.soldOutFoodIds.map(String).indexOf(String(itemId))!==-1); }
+function stage4IsFoodSoldOut(record,itemId){
+    return !!(record && Array.isArray(record.soldOutFoodIds) &&
+        record.soldOutFoodIds.map(String).indexOf(String(itemId))!==-1);
+}
 
 function setStage4FoodSoldOut(record,itemId,value){
-if(!Array.isArray(record.soldOutFoodIds))record.soldOutFoodIds=[]; const
-id=String(itemId);
-record.soldOutFoodIds=record.soldOutFoodIds.map(String).filter(function(x){return
-x!==id;}); if(value)record.soldOutFoodIds.push(id); }
+    if(!Array.isArray(record.soldOutFoodIds))record.soldOutFoodIds=[];
+    const id=String(itemId);
+    record.soldOutFoodIds=record.soldOutFoodIds.map(String).filter(function(x){return x!==id;});
+    if(value)record.soldOutFoodIds.push(id);
+}
 
-function renderMenuItems(date){ const
-c=document.getElementById(‘menuItems’); if(!c)return; const
-record=stage4TodayRecord(date); c.innerHTML=’’;
+function renderMenuItems(date){
+    const c=document.getElementById('menuItems');
+    if(!c)return;
+    const record=stage4TodayRecord(date);
+    c.innerHTML='';
 
     if(!record.foodItems.length){
         c.innerHTML='<div class="menu-empty">No food menus added yet.</div>';
@@ -4396,33 +4357,37 @@ record=stage4TodayRecord(date); c.innerHTML=’’;
 
         c.appendChild(d);
     });
-
 }
 
-function soldOutStage4Food(btn){ const el=btn.closest(‘.menu-item’);
-const date=document.getElementById(‘menuDate’).value||todayString();
-const record=stage4TodayRecord(date); if(!el)return; const
-item=record.foodItems.find(function(x){return
-String(x.id)===String(el.dataset.foodId);}); if(!item)return;
+function soldOutStage4Food(btn){
+    const el=btn.closest('.menu-item');
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    if(!el)return;
+    const item=record.foodItems.find(function(x){return String(x.id)===String(el.dataset.foodId);});
+    if(!item)return;
 
     setStage4FoodSoldOut(record,item.id,true);
     saveAllData();
     loadMenuOfDay();
-
 }
 
-function changeStage4AddSold(btn,delta){ const
-el=btn.closest(‘.menu-item’); if(!el)return; const
-input=el.querySelector(‘.stage4-add-sales-qty’); if(!input)return; const
-current=Math.max(1,Math.floor(numberValue(input.value)||1));
-input.value=Math.max(1,current+delta); }
+function changeStage4AddSold(btn,delta){
+    const el=btn.closest('.menu-item');
+    if(!el)return;
+    const input=el.querySelector('.stage4-add-sales-qty');
+    if(!input)return;
+    const current=Math.max(1,Math.floor(numberValue(input.value)||1));
+    input.value=Math.max(1,current+delta);
+}
 
-function addStage4Sold(btn){ const el=btn.closest(‘.menu-item’);
-if(!el)return; const
-date=document.getElementById(‘menuDate’).value||todayString(); const
-record=stage4TodayRecord(date); const
-item=record.foodItems.find(function(x){return
-String(x.id)===String(el.dataset.foodId);}); if(!item)return;
+function addStage4Sold(btn){
+    const el=btn.closest('.menu-item');
+    if(!el)return;
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    const item=record.foodItems.find(function(x){return String(x.id)===String(el.dataset.foodId);});
+    if(!item)return;
 
     if(stage4IsFoodSoldOut(record,item.id)){
         showMessage('menuMessage','This food is marked Sold Out. Press Edit first to reactivate it.','error');
@@ -4436,14 +4401,15 @@ String(x.id)===String(el.dataset.foodId);}); if(!item)return;
     saveAllData();
     loadMenuOfDay();
     showMessage('menuMessage',item.recipeName+' updated: '+item.servingsSold+' servings sold.','success');
-
 }
 
-function editStage4Food(btn){ const el=btn.closest(‘.menu-item’); const
-date=document.getElementById(‘menuDate’).value||todayString(); const
-record=stage4TodayRecord(date); if(!el)return; const
-item=record.foodItems.find(function(x){return
-String(x.id)===String(el.dataset.foodId);}); if(!item)return;
+function editStage4Food(btn){
+    const el=btn.closest('.menu-item');
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    if(!el)return;
+    const item=record.foodItems.find(function(x){return String(x.id)===String(el.dataset.foodId);});
+    if(!item)return;
 
     /* Editing a Sold Out item immediately makes the whole card active again. */
     setStage4FoodSoldOut(record,item.id,false);
@@ -4460,14 +4426,15 @@ String(x.id)===String(el.dataset.foodId);}); if(!item)return;
             '<button type="button" class="btn btn-primary btn-small" onclick="updateStage4Food(this)">Update</button>'+ 
             '<button type="button" class="btn btn-secondary btn-small" onclick="loadMenuOfDay()">Cancel</button>'+ 
         '</div>';
-
 }
 
-function updateStage4Food(btn){ const el=btn.closest(‘.menu-item’);
-const date=document.getElementById(‘menuDate’).value||todayString();
-const record=stage4TodayRecord(date); if(!el)return; const
-item=record.foodItems.find(function(x){return
-String(x.id)===String(el.dataset.foodId);}); if(!item)return;
+function updateStage4Food(btn){
+    const el=btn.closest('.menu-item');
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    if(!el)return;
+    const item=record.foodItems.find(function(x){return String(x.id)===String(el.dataset.foodId);});
+    if(!item)return;
 
     const priceInput=el.querySelector('.stage4-edit-price');
     const servingsInput=el.querySelector('.stage4-edit-servings');
@@ -4487,13 +4454,14 @@ String(x.id)===String(el.dataset.foodId);}); if(!item)return;
     saveAllData();
     loadMenuOfDay();
     showMessage('menuMessage',item.recipeName+' updated successfully.','success');
-
 }
 
-function deleteStage4Food(btn){ const el=btn.closest(‘.menu-item’);
-const date=document.getElementById(‘menuDate’).value||todayString();
-const record=stage4TodayRecord(date); if(!el)return; if(!confirm(‘Delete
-this food sale?’))return;
+function deleteStage4Food(btn){
+    const el=btn.closest('.menu-item');
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    if(!el)return;
+    if(!confirm('Delete this food sale?'))return;
 
     record.foodItems=record.foodItems.filter(function(x){
         return String(x.id)!==String(el.dataset.foodId);
@@ -4501,13 +4469,13 @@ this food sale?’))return;
     setStage4FoodSoldOut(record,el.dataset.foodId,false);
     saveAllData();
     loadMenuOfDay();
-
 }
 
-function renderDailyOtherItemDropdown(date){ const
-s=document.getElementById(‘dailyOtherItemSelect’); if(!s)return; const
-record=stage4TodayRecord(date); const used=new
-Set(record.otherItems.map(function(x){return String(x.otherItemId);}));
+function renderDailyOtherItemDropdown(date){
+    const s=document.getElementById('dailyOtherItemSelect');
+    if(!s)return;
+    const record=stage4TodayRecord(date);
+    const used=new Set(record.otherItems.map(function(x){return String(x.otherItemId);}));
 
     s.innerHTML='<option value="">-- Select Other Item --</option>';
 
@@ -4520,12 +4488,12 @@ Set(record.otherItems.map(function(x){return String(x.otherItemId);}));
         o.textContent=String(item.name||'Unnamed Item');
         s.appendChild(o);
     });
-
 }
 
-function addDailyOtherItemFromSelect(){ const
-s=document.getElementById(‘dailyOtherItemSelect’); const
-id=String(s?s.value||’‘:’’); if(!id)return;
+function addDailyOtherItemFromSelect(){
+    const s=document.getElementById('dailyOtherItemSelect');
+    const id=String(s?s.value||'':'');
+    if(!id)return;
 
     const date=document.getElementById('menuDate').value||todayString();
     const item=otherItems.find(function(x){return String(x.id)===id;});
@@ -4550,12 +4518,13 @@ id=String(s?s.value||’‘:’’); if(!id)return;
 
     saveAllData();
     loadMenuOfDay();
-
 }
 
-function renderDailyOtherItems(date){ const
-c=document.getElementById(‘dailyOtherItemsList’); if(!c)return; const
-record=stage4TodayRecord(date); c.innerHTML=’’;
+function renderDailyOtherItems(date){
+    const c=document.getElementById('dailyOtherItemsList');
+    if(!c)return;
+    const record=stage4TodayRecord(date);
+    c.innerHTML='';
 
     if(!record.otherItems.length){
         c.innerHTML='<div class="menu-empty">No other items sold.</div>';
@@ -4589,15 +4558,15 @@ record=stage4TodayRecord(date); c.innerHTML=’’;
             '</div>';
         c.appendChild(d);
     });
-
 }
 
-function updateDailyOtherItem(input){ const
-el=input.closest(‘.menu-item’); if(!el)return; const
-date=document.getElementById(‘menuDate’).value||todayString(); const
-record=stage4TodayRecord(date); const
-item=record.otherItems.find(function(x){return
-String(x.id)===String(el.dataset.otherId);}); if(!item)return;
+function updateDailyOtherItem(input){
+    const el=input.closest('.menu-item');
+    if(!el)return;
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    const item=record.otherItems.find(function(x){return String(x.id)===String(el.dataset.otherId);});
+    if(!item)return;
 
     /* IMPORTANT: do not rebuild the card on every keystroke. Rebuilding it
        was forcing the user to drag/select the whole number before typing.
@@ -4631,70 +4600,158 @@ String(x.id)===String(el.dataset.otherId);}); if(!item)return;
     }
 
     calculateCombinedSales(date);
-
 }
 
-function deleteDailyOtherItem(btn){ const el=btn.closest(‘.menu-item’);
-const date=document.getElementById(‘menuDate’).value||todayString();
-const record=stage4TodayRecord(date); if(!el)return; if(!confirm(‘Delete
-this other item sale?’))return;
+function deleteDailyOtherItem(btn){
+    const el=btn.closest('.menu-item');
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    if(!el)return;
+    if(!confirm('Delete this other item sale?'))return;
 
     record.otherItems=record.otherItems.filter(function(x){
         return String(x.id)!==String(el.dataset.otherId);
     });
     saveAllData();
     loadMenuOfDay();
-
 }
 
-/* ========================================================= OTHER ITEMS
-MASTER — FINAL FIX Separate Dashboard > Other Items screen.
+/* =========================================================
+   OTHER ITEMS MASTER — FINAL FIX
+   Separate Dashboard > Other Items screen.
 
-Fixes: - Item Name is a working dropdown with saved items + Add New. -
-Custom item name appears when Add New is selected. - Unit is a working
-dropdown. - Opening Other Items refreshes the user’s Supabase data. -
-Save/Edit/Delete use the current Supabase master list. - Duplicate item
-names are blocked. - No dependency on the old missing
-customOtherItemGroup element.
+   Fixes:
+   - Item Name is a working dropdown with saved items + Add New.
+   - Custom item name appears when Add New is selected.
+   - Unit is a working dropdown.
+   - Opening Other Items refreshes the user's Supabase data.
+   - Save/Edit/Delete use the current Supabase master list.
+   - Duplicate item names are blocked.
+   - No dependency on the old missing customOtherItemGroup element.
 ========================================================= */
 
-const KK_COMMON_OTHER_ITEMS = [ “Coca-Cola Mismo (295ml)”, “Coca-Cola
-Sakto (200ml)”, “Coca-Cola 1.5L PET”, “Coca-Cola Zero Sugar”, “Sprite
-Mismo (295ml)”, “Sprite 1.5L PET”, “Sprite Zero Sugar”, “Royal
-Tru-Orange Mismo (295ml)”, “Royal Tru-Orange 1.5L PET”, “Royal
-Tru-Lemon”, “Pepsi Mismo (295ml)”, “Pepsi 1.5L PET”, “Pepsi Zero Sugar”,
-“Mountain Dew Mismo (295ml)”, “Mountain Dew 1.5L PET”, “RC Cola Small
-(250ml)”, “RC Cola Big (1L)”, “7UP”, “Mug Root Beer”, “Sarsi Root Beer”,
-“Juicy Lemon”, “Fruit Soda Orange”, “Fruit Soda Lemon”, “Wilkins Pure
-Water (500ml)”, “Wilkins Pure Water (1L)”, “Nature’s Spring Water
-(500ml)”, “C2 Green Tea (500ml)”, “Zesto Juice Box (200ml)”, “Chuckie
-Choco Drink (250ml)”, “Yakult”, “Cobra Energy Drink”, “Sting Energy
-Drink”, “Nestea Iced Tea”, “Minute Maid Pulpy Orange”, “Del Monte
-Pineapple Juice”, “Vitamilk Soya”, “Lucky Me! Pancit Canton Original”,
-“Lucky Me! Pancit Canton Chilimansi”, “Lucky Me! Pancit Canton Sweet &
-Spicy”, “Lucky Me! Beef Mami”, “Lucky Me! Chicken Mami”, “Nissin Cup
-Noodles”, “SkyFlakes”, “Fita”, “Hansel”, “Rebisco Crackers”, “Rebisco
-Sandwich”, “Chippy”, “Piattos”, “Nova”, “V-Cut”, “Cheezy”, “Cheese
-Ring”, “Boy Bawang”, “Mang Juan”, “Moby”, “Loaded”, “Oishi Prawn
-Crackers”, “Clover Chips”, “Tomi”, “Mr. Chips”, “Choc-Nut”, “Maxx
-Candy”, “Cloud 9”, “Stick-O”, “Mentos”, “Oreo”, “555 Sardines”, “Mega
-Sardines”, “Ligo Sardines”, “Century Tuna”, “Argentina Corned Beef”,
-“Purefoods Corned Beef”, “Maling”, “Spam”, “San Marino Corned Tuna”,
-“Hunt’s Pork & Beans”, “Jolly Mushrooms”, “Del Monte Pineapple Chunks”,
-“Silver Swan Soy Sauce”, “Datu Puti Soy Sauce”, “Datu Puti Vinegar”,
-“Silver Swan Vinegar”, “UFC Banana Ketchup”, “Lady’s Choice Mayonnaise”,
-“Kraft Cheese”, “Bear Brand Milk”, “Alaska Milk”, “Milo Sachet”,
-“Nescafe Coffee Sachet”, “Kopiko Coffee Sachet”, “Great Taste Coffee
-Sachet”, “Energen”, “Safeguard Soap”, “Palmolive Shampoo Sachet”, “Tide
-Sachet”, “Surf Sachet”, “Downy Sachet”, “Joy Dishwashing Liquid Sachet”,
-“LPG / Cooking Gas”];
+const KK_COMMON_OTHER_ITEMS = [
+    "Coca-Cola Mismo (295ml)",
+    "Coca-Cola Sakto (200ml)",
+    "Coca-Cola 1.5L PET",
+    "Coca-Cola Zero Sugar",
+    "Sprite Mismo (295ml)",
+    "Sprite 1.5L PET",
+    "Sprite Zero Sugar",
+    "Royal Tru-Orange Mismo (295ml)",
+    "Royal Tru-Orange 1.5L PET",
+    "Royal Tru-Lemon",
+    "Pepsi Mismo (295ml)",
+    "Pepsi 1.5L PET",
+    "Pepsi Zero Sugar",
+    "Mountain Dew Mismo (295ml)",
+    "Mountain Dew 1.5L PET",
+    "RC Cola Small (250ml)",
+    "RC Cola Big (1L)",
+    "7UP",
+    "Mug Root Beer",
+    "Sarsi Root Beer",
+    "Juicy Lemon",
+    "Fruit Soda Orange",
+    "Fruit Soda Lemon",
+    "Wilkins Pure Water (500ml)",
+    "Wilkins Pure Water (1L)",
+    "Nature's Spring Water (500ml)",
+    "C2 Green Tea (500ml)",
+    "Zesto Juice Box (200ml)",
+    "Chuckie Choco Drink (250ml)",
+    "Yakult",
+    "Cobra Energy Drink",
+    "Sting Energy Drink",
+    "Nestea Iced Tea",
+    "Minute Maid Pulpy Orange",
+    "Del Monte Pineapple Juice",
+    "Vitamilk Soya",
+    "Lucky Me! Pancit Canton Original",
+    "Lucky Me! Pancit Canton Chilimansi",
+    "Lucky Me! Pancit Canton Sweet & Spicy",
+    "Lucky Me! Beef Mami",
+    "Lucky Me! Chicken Mami",
+    "Nissin Cup Noodles",
+    "SkyFlakes",
+    "Fita",
+    "Hansel",
+    "Rebisco Crackers",
+    "Rebisco Sandwich",
+    "Chippy",
+    "Piattos",
+    "Nova",
+    "V-Cut",
+    "Cheezy",
+    "Cheese Ring",
+    "Boy Bawang",
+    "Mang Juan",
+    "Moby",
+    "Loaded",
+    "Oishi Prawn Crackers",
+    "Clover Chips",
+    "Tomi",
+    "Mr. Chips",
+    "Choc-Nut",
+    "Maxx Candy",
+    "Cloud 9",
+    "Stick-O",
+    "Mentos",
+    "Oreo",
+    "555 Sardines",
+    "Mega Sardines",
+    "Ligo Sardines",
+    "Century Tuna",
+    "Argentina Corned Beef",
+    "Purefoods Corned Beef",
+    "Maling",
+    "Spam",
+    "San Marino Corned Tuna",
+    "Hunt's Pork & Beans",
+    "Jolly Mushrooms",
+    "Del Monte Pineapple Chunks",
+    "Silver Swan Soy Sauce",
+    "Datu Puti Soy Sauce",
+    "Datu Puti Vinegar",
+    "Silver Swan Vinegar",
+    "UFC Banana Ketchup",
+    "Lady's Choice Mayonnaise",
+    "Kraft Cheese",
+    "Bear Brand Milk",
+    "Alaska Milk",
+    "Milo Sachet",
+    "Nescafe Coffee Sachet",
+    "Kopiko Coffee Sachet",
+    "Great Taste Coffee Sachet",
+    "Energen",
+    "Safeguard Soap",
+    "Palmolive Shampoo Sachet",
+    "Tide Sachet",
+    "Surf Sachet",
+    "Downy Sachet",
+    "Joy Dishwashing Liquid Sachet",
+    "LPG / Cooking Gas"
+];
 
-const KK_OTHER_ITEM_UNITS = [ “piece”, “bottle”, “can”, “pack”, “box”,
-“sachet”, “tray”, “cup”, “dozen”, “kg”, “g”, “liter”, “ml”];
+const KK_OTHER_ITEM_UNITS = [
+    "piece",
+    "bottle",
+    "can",
+    "pack",
+    "box",
+    "sachet",
+    "tray",
+    "cup",
+    "dozen",
+    "kg",
+    "g",
+    "liter",
+    "ml"
+];
 
-function setupOtherItemForm(keepName) { const nameField =
-document.getElementById(“otherItemName”); const unitField =
-document.getElementById(“otherUnit”);
+function setupOtherItemForm(keepName) {
+    const nameField = document.getElementById("otherItemName");
+    const unitField = document.getElementById("otherUnit");
 
     if (!nameField || !unitField) return;
 
@@ -4720,12 +4777,11 @@ document.getElementById(“otherUnit”);
     populateOtherItemUnitDropdown(currentUnit);
     ensureCustomOtherItemField();
     handleCustomOtherItem();
-
 }
 
-function populateOtherItemNameDropdown(keepName) { const select =
-document.getElementById(“otherItemName”); if (!select || select.tagName
-!== “SELECT”) return;
+function populateOtherItemNameDropdown(keepName) {
+    const select = document.getElementById("otherItemName");
+    if (!select || select.tagName !== "SELECT") return;
 
     const wanted = keepName !== undefined && keepName !== null
         ? String(keepName)
@@ -4781,12 +4837,11 @@ document.getElementById(“otherItemName”); if (!select || select.tagName
     if (select.value !== wanted && wanted === "__custom__") {
         select.value = "__custom__";
     }
-
 }
 
-function populateOtherItemUnitDropdown(keepUnit) { const select =
-document.getElementById(“otherUnit”); if (!select || select.tagName !==
-“SELECT”) return;
+function populateOtherItemUnitDropdown(keepUnit) {
+    const select = document.getElementById("otherUnit");
+    if (!select || select.tagName !== "SELECT") return;
 
     const wanted = keepUnit !== undefined && keepUnit !== null
         ? String(keepUnit)
@@ -4826,11 +4881,11 @@ document.getElementById(“otherUnit”); if (!select || select.tagName !==
             select.value = wanted;
         }
     }
-
 }
 
-function ensureCustomOtherItemField() { const nameSelect =
-document.getElementById(“otherItemName”); if (!nameSelect) return;
+function ensureCustomOtherItemField() {
+    const nameSelect = document.getElementById("otherItemName");
+    if (!nameSelect) return;
 
     let group = document.getElementById("customOtherItemGroup");
 
@@ -4845,12 +4900,11 @@ document.getElementById(“otherItemName”); if (!nameSelect) return;
             '</div>';
         nameSelect.closest(".form-group").insertAdjacentElement("afterend", group);
     }
-
 }
 
-function handleCustomOtherItem() { const select =
-document.getElementById(“otherItemName”); const group =
-document.getElementById(“customOtherItemGroup”);
+function handleCustomOtherItem() {
+    const select = document.getElementById("otherItemName");
+    const group = document.getElementById("customOtherItemGroup");
 
     if (!select || !group) return;
 
@@ -4861,11 +4915,11 @@ document.getElementById(“customOtherItemGroup”);
     } else {
         group.style.display = "none";
     }
-
 }
 
-async function refreshOtherItemsFromSupabase() { const userId = await
-getCurrentUserId(); if (!userId) return false;
+async function refreshOtherItemsFromSupabase() {
+    const userId = await getCurrentUserId();
+    if (!userId) return false;
 
     const { data, error } = await supabaseClient
         .from("other_items")
@@ -4895,11 +4949,11 @@ getCurrentUserId(); if (!userId) return false;
     });
 
     return true;
-
 }
 
-async function renderOtherItemList() { const container =
-document.getElementById(“otherItemList”); if (!container) return;
+async function renderOtherItemList() {
+    const container = document.getElementById("otherItemList");
+    if (!container) return;
 
     const requestId = ++otherItemRenderRequest;
     const loaded = await refreshOtherItemsFromSupabase();
@@ -4930,10 +4984,10 @@ document.getElementById(“otherItemList”); if (!container) return;
     }
 
     setupOtherItemForm();
-
 }
 
-async function saveOtherItem(editId) { setupOtherItemForm();
+async function saveOtherItem(editId) {
+    setupOtherItemForm();
 
     const nameSelect = document.getElementById("otherItemName");
     const customName = document.getElementById("customOtherItemName");
@@ -5032,14 +5086,13 @@ async function saveOtherItem(editId) { setupOtherItemForm();
         editId ? "Other item updated successfully." : "Other item saved successfully.",
         "success"
     );
-
 }
 
-function clearOtherItemForm() { const purchase =
-document.getElementById(“otherPurchasePrice”); const quantity =
-document.getElementById(“otherQuantity”); const selling =
-document.getElementById(“otherSellingPrice”); const customName =
-document.getElementById(“customOtherItemName”);
+function clearOtherItemForm() {
+    const purchase = document.getElementById("otherPurchasePrice");
+    const quantity = document.getElementById("otherQuantity");
+    const selling = document.getElementById("otherSellingPrice");
+    const customName = document.getElementById("customOtherItemName");
 
     if (purchase) purchase.value = "";
     if (quantity) quantity.value = "";
@@ -5058,11 +5111,13 @@ document.getElementById(“customOtherItemName”);
     }
 
     handleCustomOtherItem();
-
 }
 
-function editOtherItem(id) { const item = otherItems.find(function(x) {
-return String(x.id) === String(id); }); if (!item) return;
+function editOtherItem(id) {
+    const item = otherItems.find(function(x) {
+        return String(x.id) === String(id);
+    });
+    if (!item) return;
 
     showScreen("otherItemScreen");
 
@@ -5092,11 +5147,10 @@ return String(x.id) === String(id); }); if (!item) return;
 
     handleCustomOtherItem();
     window.scrollTo(0, 0);
-
 }
 
-async function deleteOtherItem(id) { if (!confirm(“Delete this other
-item?”)) return;
+async function deleteOtherItem(id) {
+    if (!confirm("Delete this other item?")) return;
 
     const userId = await getCurrentUserId();
     if (!userId) return;
@@ -5115,45 +5169,47 @@ item?”)) return;
 
     await renderOtherItemList();
     clearOtherItemForm();
-
 }
 
-/* Override screen navigation only to refresh the separate Other Items
-master screen. */ const kkOriginalShowScreen = showScreen; showScreen =
-function(screenId) { kkOriginalShowScreen(screenId);
+/* Override screen navigation only to refresh the separate Other Items master screen. */
+const kkOriginalShowScreen = showScreen;
+showScreen = function(screenId) {
+    kkOriginalShowScreen(screenId);
 
     if (screenId === "otherItemScreen") {
         setupOtherItemForm();
         renderOtherItemList();
     }
-
 };
 
-/* Make sure the replacement controls are ready when the page is loaded.
-*/ document.addEventListener(“DOMContentLoaded”, function() { if
-(document.getElementById(“otherItemScreen”)) { setupOtherItemForm(); }
+/* Make sure the replacement controls are ready when the page is loaded. */
+document.addEventListener("DOMContentLoaded", function() {
+    if (document.getElementById("otherItemScreen")) {
+        setupOtherItemForm();
+    }
 });
 
-/* ========================================================= CUMULATIVE
-ADD-SOLD UI REFINEMENT - Remove +/- controls. - Put Add Sold input +
-button on one row. - Apply the same cumulative counter behavior to Other
-Items Sold. ========================================================= */
-(function(){ const style=document.createElement(‘style’);
-style.id=‘kk-cumulative-add-sold-style’; style.textContent=’’
-+‘.kk-add-sold-inline{display:flex;align-items:end;gap:8px;flex-wrap:nowrap;margin-top:10px;}’
-+‘.kk-sold-total-box{flex:1;min-width:0;border:1px solid
-rgba(255,255,255,.16);border-radius:10px;padding:10px
-12px;background:rgba(255,255,255,.04);}’ +‘.kk-sold-total-box
-span{display:block;font-size:13px;margin-bottom:4px;opacity:.85;}’
-+‘.kk-sold-total-box strong{font-size:22px;}’
-+‘.kk-add-sold-control{flex:1;min-width:0;}’ +‘.kk-add-sold-control
-label{display:block;font-size:13px;margin-bottom:5px;}’
-+‘.kk-add-sold-control-row{display:flex;gap:6px;align-items:center;}’
-+‘.kk-add-sold-control-row input{flex:1;min-width:0;}’
-+‘.kk-add-sold-control-row button{white-space:nowrap;}’
-+‘@media(max-width:520px){.kk-add-sold-inline{gap:6px}.kk-sold-total-box,.kk-add-sold-control{padding:8px}.kk-add-sold-control-row
-button{padding-left:10px;padding-right:10px}.kk-sold-total-box
-strong{font-size:20px;}}’; document.head.appendChild(style);
+/* =========================================================
+   CUMULATIVE ADD-SOLD UI REFINEMENT
+   - Remove +/- controls.
+   - Put Add Sold input + button on one row.
+   - Apply the same cumulative counter behavior to Other Items Sold.
+========================================================= */
+(function(){
+    const style=document.createElement('style');
+    style.id='kk-cumulative-add-sold-style';
+    style.textContent=''
+      +'.kk-add-sold-inline{display:flex;align-items:end;gap:8px;flex-wrap:nowrap;margin-top:10px;} '
+      +'.kk-sold-total-box{flex:1;min-width:0;border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:10px 12px;background:rgba(255,255,255,.04);} '
+      +'.kk-sold-total-box span{display:block;font-size:13px;margin-bottom:4px;opacity:.85;} '
+      +'.kk-sold-total-box strong{font-size:22px;} '
+      +'.kk-add-sold-control{flex:1;min-width:0;} '
+      +'.kk-add-sold-control label{display:block;font-size:13px;margin-bottom:5px;} '
+      +'.kk-add-sold-control-row{display:flex;gap:6px;align-items:center;} '
+      +'.kk-add-sold-control-row input{flex:1;min-width:0;} '
+      +'.kk-add-sold-control-row button{white-space:nowrap;} '
+      +'@media(max-width:520px){.kk-add-sold-inline{gap:6px}.kk-sold-total-box,.kk-add-sold-control{padding:8px}.kk-add-sold-control-row button{padding-left:10px;padding-right:10px}.kk-sold-total-box strong{font-size:20px;}}';
+    document.head.appendChild(style);
 
     window.renderMenuItems=function(date){
         const c=document.getElementById('menuItems');
@@ -5265,53 +5321,33 @@ strong{font-size:20px;}}’; document.head.appendChild(style);
         calculateCombinedSales(date);
         showMessage('menuMessage',item.name+' updated: '+item.quantitySold+' sold.','success');
     };
-
 })();
 
-/* ========================================================= CUMULATIVE
-ADD-SOLD MOBILE REFINEMENT V3 - Compact 3-digit quantity box (000-999) -
-No browser + / - spinner controls - Total Sold, Add Sold box, and ADD
-SOLD stay on one row - Applies to Food Sales and Other Items Sold
+
+/* =========================================================
+   CUMULATIVE ADD-SOLD MOBILE REFINEMENT V3
+   - Compact 3-digit quantity box (000-999)
+   - No browser + / - spinner controls
+   - Total Sold, Add Sold box, and ADD SOLD stay on one row
+   - Applies to Food Sales and Other Items Sold
 ========================================================= */
-(function(){ const style=document.createElement(‘style’);
-style.id=‘kk-cumulative-add-sold-style-v3’; style.textContent=’’
-+‘.kk-add-sold-inline{display:grid
-!important;grid-template-columns:minmax(78px,0.9fr) minmax(76px,0.8fr)
-auto;align-items:end;gap:7px;width:100%;margin-top:10px;}’
-+‘.kk-sold-total-box{box-sizing:border-box;min-width:0
-!important;width:100%;padding:8px 9px !important;border-radius:8px;}’
-+‘.kk-sold-total-box span,.kk-add-sold-control label{font-size:12px
-!important;line-height:1.1;}’ +‘.kk-sold-total-box strong{font-size:20px
-!important;line-height:1.1;}’ +‘.kk-add-sold-control{min-width:0
-!important;width:100%;}’ +‘.kk-add-sold-control-row{display:flex
-!important;gap:5px !important;align-items:center !important;}’
-+‘.kk-add-sold-control-row
-input.stage4-add-sales-qty,.kk-add-sold-control-row
-input.other-add-sold-qty{width:72px !important;min-width:72px
-!important;max-width:72px
-!important;box-sizing:border-box;text-align:center;padding-left:6px
-!important;padding-right:6px !important;}’ +‘.kk-add-sold-control-row
-input[type=number]::-webkit-inner-spin-button,.kk-add-sold-control-row
-input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}’
-+‘.kk-add-sold-control-row
-input[type=number]{-moz-appearance:textfield;appearance:textfield;}’
-+‘.kk-add-sold-control-row button{white-space:nowrap
-!important;padding-left:9px !important;padding-right:9px !important;}’
-+‘.kk-add-sold-inline[style*=“flex:1 1 100%”]{display:block
-!important;}’
-+‘@media(max-width:520px){.kk-add-sold-inline{grid-template-columns:minmax(72px,0.9fr)
-72px auto;gap:5px;}.kk-sold-total-box{padding:7px 8px
-!important;}.kk-sold-total-box strong{font-size:19px
-!important;}.kk-add-sold-control label{font-size:11px
-!important;margin-bottom:3px !important;}.kk-add-sold-control-row
-input.stage4-add-sales-qty,.kk-add-sold-control-row
-input.other-add-sold-qty{width:68px !important;min-width:68px
-!important;max-width:68px
-!important;height:42px;}.kk-add-sold-control-row
-button{height:42px;font-size:12px;padding-left:8px
-!important;padding-right:8px
-!important;}.kk-add-sold-inline{margin-top:8px;}}’;
-document.head.appendChild(style);
+(function(){
+    const style=document.createElement('style');
+    style.id='kk-cumulative-add-sold-style-v3';
+    style.textContent=''
+      +'.kk-add-sold-inline{display:grid !important;grid-template-columns:minmax(78px,0.9fr) minmax(76px,0.8fr) auto;align-items:end;gap:7px;width:100%;margin-top:10px;} '
+      +'.kk-sold-total-box{box-sizing:border-box;min-width:0 !important;width:100%;padding:8px 9px !important;border-radius:8px;} '
+      +'.kk-sold-total-box span,.kk-add-sold-control label{font-size:12px !important;line-height:1.1;} '
+      +'.kk-sold-total-box strong{font-size:20px !important;line-height:1.1;} '
+      +'.kk-add-sold-control{min-width:0 !important;width:100%;} '
+      +'.kk-add-sold-control-row{display:flex !important;gap:5px !important;align-items:center !important;} '
+      +'.kk-add-sold-control-row input.stage4-add-sales-qty,.kk-add-sold-control-row input.other-add-sold-qty{width:72px !important;min-width:72px !important;max-width:72px !important;box-sizing:border-box;text-align:center;padding-left:6px !important;padding-right:6px !important;} '
+      +'.kk-add-sold-control-row input[type=number]::-webkit-inner-spin-button,.kk-add-sold-control-row input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;} '
+      +'.kk-add-sold-control-row input[type=number]{-moz-appearance:textfield;appearance:textfield;} '
+      +'.kk-add-sold-control-row button{white-space:nowrap !important;padding-left:9px !important;padding-right:9px !important;} '
+      +'.kk-add-sold-inline[style*="flex:1 1 100%"]{display:block !important;} '
+      +'@media(max-width:520px){.kk-add-sold-inline{grid-template-columns:minmax(72px,0.9fr) 72px auto;gap:5px;}.kk-sold-total-box{padding:7px 8px !important;}.kk-sold-total-box strong{font-size:19px !important;}.kk-add-sold-control label{font-size:11px !important;margin-bottom:3px !important;}.kk-add-sold-control-row input.stage4-add-sales-qty,.kk-add-sold-control-row input.other-add-sold-qty{width:68px !important;min-width:68px !important;max-width:68px !important;height:42px;}.kk-add-sold-control-row button{height:42px;font-size:12px;padding-left:8px !important;padding-right:8px !important;}.kk-add-sold-inline{margin-top:8px;}}';
+    document.head.appendChild(style);
 
     function clampAddSoldInput(input){
         if(!input)return;
@@ -5328,76 +5364,49 @@ document.head.appendChild(style);
             clampAddSoldInput(e.target);
         }
     });
-
 })();
 
-/* ========================================================= CUMULATIVE
-ADD-SOLD PROFESSIONAL MOBILE CARD V4 - Professional, mobile-safe card
-layout - Action buttons are BELOW the values - Delete / Sold Out / Edit
-share one row - Sold Out card shows Edit only - Prevent horizontal
-overflow ========================================================= /
-(function(){ const style=document.createElement(‘style’);
-style.id=‘kk-professional-mobile-card-v4’; style.textContent=’’
-+‘.menu-item{box-sizing:border-box;width:100%;max-width:100%;overflow:hidden;border-radius:14px;padding:14px;margin:0
-0 14px;}’ +’.menu-item {box-sizing:border-box;max-width:100%;} ’
-+‘.menu-top{display:block !important;width:100%;}’
-+‘.menu-top>.menu-actions{display:none !important;}’
-+‘.kk-prof-card-title{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;width:100%;margin-bottom:10px;}’
-+‘.kk-prof-card-title
-.menu-name{min-width:0;overflow-wrap:anywhere;font-size:18px;font-weight:700;line-height:1.25;}’
-+‘.kk-prof-values{display:grid
-!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;width:100%;}’
-+‘.kk-prof-values .menu-summary-box{min-width:0
-!important;width:100%;padding:9px 8px
-!important;border-radius:9px;overflow:hidden;}’ +‘.kk-prof-values
-.menu-summary-box span{font-size:11px
-!important;line-height:1.2;white-space:normal;}’ +‘.kk-prof-values
-.menu-summary-box strong{display:block;font-size:16px
-!important;line-height:1.25;overflow-wrap:anywhere;}’
-+‘.kk-prof-sales-row{display:grid;grid-template-columns:minmax(0,1fr)
-minmax(0,1fr);gap:7px;width:100%;margin-top:8px;}’ +‘.kk-prof-sales-row
-.kk-sold-total-box,.kk-prof-sales-row
-.kk-add-sold-control{min-width:0;width:100%;}’ +‘.kk-prof-sales-row
-.kk-sold-total-box{padding:9px 10px !important;border-radius:9px;}’
-+‘.kk-prof-sales-row .kk-sold-total-box span,.kk-prof-sales-row
-.kk-add-sold-control label{font-size:11px !important;}’
-+‘.kk-prof-sales-row .kk-sold-total-box strong{font-size:20px
-!important;}’ +‘.kk-prof-sales-row .kk-add-sold-control-row{display:grid
-!important;grid-template-columns:70px minmax(0,1fr);gap:5px
-!important;width:100%;}’ +‘.kk-prof-sales-row
-input.stage4-add-sales-qty,.kk-prof-sales-row
-input.other-add-sold-qty{width:100% !important;min-width:0
-!important;max-width:none !important;height:40px;text-align:center;}’
-+‘.kk-prof-sales-row
-button{width:100%;height:40px;white-space:nowrap;font-size:11px;padding-left:5px
-!important;padding-right:5px !important;}’
-+‘.kk-prof-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%;margin-top:10px;padding-top:10px;border-top:1px
-solid rgba(255,255,255,.10);}’ +‘.kk-prof-actions
-button{width:100%;min-width:0 !important;height:40px;padding:6px 4px
-!important;font-size:12px !important;white-space:nowrap;}’
-+‘.kk-prof-actions.kk-one-action{grid-template-columns:1fr;}’
-+‘.kk-prof-sold-label{display:inline-block;margin-top:4px;font-size:11px;font-weight:700;letter-spacing:.04em;}’
-+‘.kk-prof-other-fields{display:grid
-!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;width:100%;}’
-+‘.kk-prof-other-fields .form-group{min-width:0 !important;width:100%;}’
-+‘.kk-prof-other-fields input{width:100% !important;min-width:0
-!important;}’
-+‘.kk-prof-other-actions{display:grid;grid-template-columns:1fr;width:100%;margin-top:10px;padding-top:10px;border-top:1px
-solid rgba(255,255,255,.10);}’ +‘.kk-prof-other-actions
-button{width:100%;height:40px;}’
-+‘@media(max-width:520px){.menu-item{padding:12px;margin-bottom:12px;}.kk-prof-card-title
-.menu-name{font-size:17px;}.kk-prof-values{gap:6px
-!important;}.kk-prof-values .menu-summary-box{padding:8px 7px
-!important;}.kk-prof-values .menu-summary-box strong{font-size:15px
-!important;}.kk-prof-sales-row{gap:6px;margin-top:7px;}.kk-prof-sales-row
-.kk-sold-total-box{padding:8px !important;}.kk-prof-sales-row
-.kk-sold-total-box strong{font-size:19px !important;}.kk-prof-sales-row
-.kk-add-sold-control-row{grid-template-columns:64px
-minmax(0,1fr);}.kk-prof-sales-row button{font-size:10px
-!important;}.kk-prof-actions{gap:6px;margin-top:9px;padding-top:9px;}.kk-prof-actions
-button{height:38px;font-size:11px
-!important;}.kk-prof-other-fields{gap:6px !important;}}’;
-document.head.appendChild(style);
+/* =========================================================
+   CUMULATIVE ADD-SOLD PROFESSIONAL MOBILE CARD V4
+   - Professional, mobile-safe card layout
+   - Action buttons are BELOW the values
+   - Delete / Sold Out / Edit share one row
+   - Sold Out card shows Edit only
+   - Prevent horizontal overflow
+========================================================= */
+(function(){
+    const style=document.createElement('style');
+    style.id='kk-professional-mobile-card-v4';
+    style.textContent=''
+      +'.menu-item{box-sizing:border-box;width:100%;max-width:100%;overflow:hidden;border-radius:14px;padding:14px;margin:0 0 14px;} '
+      +'.menu-item *{box-sizing:border-box;max-width:100%;} '
+      +'.menu-top{display:block !important;width:100%;} '
+      +'.menu-top>.menu-actions{display:none !important;} '
+      +'.kk-prof-card-title{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;width:100%;margin-bottom:10px;} '
+      +'.kk-prof-card-title .menu-name{min-width:0;overflow-wrap:anywhere;font-size:18px;font-weight:700;line-height:1.25;} '
+      +'.kk-prof-values{display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;width:100%;} '
+      +'.kk-prof-values .menu-summary-box{min-width:0 !important;width:100%;padding:9px 8px !important;border-radius:9px;overflow:hidden;} '
+      +'.kk-prof-values .menu-summary-box span{font-size:11px !important;line-height:1.2;white-space:normal;} '
+      +'.kk-prof-values .menu-summary-box strong{display:block;font-size:16px !important;line-height:1.25;overflow-wrap:anywhere;} '
+      +'.kk-prof-sales-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:7px;width:100%;margin-top:8px;} '
+      +'.kk-prof-sales-row .kk-sold-total-box,.kk-prof-sales-row .kk-add-sold-control{min-width:0;width:100%;} '
+      +'.kk-prof-sales-row .kk-sold-total-box{padding:9px 10px !important;border-radius:9px;} '
+      +'.kk-prof-sales-row .kk-sold-total-box span,.kk-prof-sales-row .kk-add-sold-control label{font-size:11px !important;} '
+      +'.kk-prof-sales-row .kk-sold-total-box strong{font-size:20px !important;} '
+      +'.kk-prof-sales-row .kk-add-sold-control-row{display:grid !important;grid-template-columns:70px minmax(0,1fr);gap:5px !important;width:100%;} '
+      +'.kk-prof-sales-row input.stage4-add-sales-qty,.kk-prof-sales-row input.other-add-sold-qty{width:100% !important;min-width:0 !important;max-width:none !important;height:40px;text-align:center;} '
+      +'.kk-prof-sales-row button{width:100%;height:40px;white-space:nowrap;font-size:11px;padding-left:5px !important;padding-right:5px !important;} '
+      +'.kk-prof-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.10);} '
+      +'.kk-prof-actions button{width:100%;min-width:0 !important;height:40px;padding:6px 4px !important;font-size:12px !important;white-space:nowrap;} '
+      +'.kk-prof-actions.kk-one-action{grid-template-columns:1fr;} '
+      +'.kk-prof-sold-label{display:inline-block;margin-top:4px;font-size:11px;font-weight:700;letter-spacing:.04em;} '
+      +'.kk-prof-other-fields{display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;width:100%;} '
+      +'.kk-prof-other-fields .form-group{min-width:0 !important;width:100%;} '
+      +'.kk-prof-other-fields input{width:100% !important;min-width:0 !important;} '
+      +'.kk-prof-other-actions{display:grid;grid-template-columns:1fr;width:100%;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.10);} '
+      +'.kk-prof-other-actions button{width:100%;height:40px;} '
+      +'@media(max-width:520px){.menu-item{padding:12px;margin-bottom:12px;}.kk-prof-card-title .menu-name{font-size:17px;}.kk-prof-values{gap:6px !important;}.kk-prof-values .menu-summary-box{padding:8px 7px !important;}.kk-prof-values .menu-summary-box strong{font-size:15px !important;}.kk-prof-sales-row{gap:6px;margin-top:7px;}.kk-prof-sales-row .kk-sold-total-box{padding:8px !important;}.kk-prof-sales-row .kk-sold-total-box strong{font-size:19px !important;}.kk-prof-sales-row .kk-add-sold-control-row{grid-template-columns:64px minmax(0,1fr);}.kk-prof-sales-row button{font-size:10px !important;}.kk-prof-actions{gap:6px;margin-top:9px;padding-top:9px;}.kk-prof-actions button{height:38px;font-size:11px !important;}.kk-prof-other-fields{gap:6px !important;}}';
+    document.head.appendChild(style);
 
     window.renderMenuItems=function(date){
         const c=document.getElementById('menuItems');
@@ -5482,15 +5491,24 @@ document.head.appendChild(style);
             c.appendChild(d);
         });
     };
-
 })();
+
+
 
 /* V5 MOBILE ADD SOLD OVERFLOW FIX */
 
-(function(){ const style=document.createElement(‘style’);
-style.id=‘kk-v5-add-sold-mobile-fix’; style.textContent=` .menu-item,
-.kk-prof-sales-row, .kk-add-sold-control, .kk-add-sold-control-row,
-.kk-sold-total-box { box-sizing:border-box; max-width:100%; }
+(function(){
+    const style=document.createElement('style');
+    style.id='kk-v5-add-sold-mobile-fix';
+    style.textContent=`
+        .menu-item,
+        .kk-prof-sales-row,
+        .kk-add-sold-control,
+        .kk-add-sold-control-row,
+        .kk-sold-total-box {
+            box-sizing:border-box;
+            max-width:100%;
+        }
 
         .kk-prof-sales-row {
             width:100%;
@@ -5595,255 +5613,438 @@ style.id=‘kk-v5-add-sold-mobile-fix’; style.textContent=` .menu-item,
         }
     `;
     document.head.appendChild(style);
-
 })();
 
-/* ========================================================= V6 SOLD
-QUANTITY CONTROL - Replaces Add Sold input with: - SOLD + - +/- directly
-changes cumulative quantity sold - Quantity can be reduced back to
-zero - No manual quantity input required - Applies to Food Sales and
-Other Items Sold
-========================================================= */
-(function(){ function changeFoodSoldQuantity(btn, delta){ const el =
-btn.closest(‘.menu-item’); if(!el) return;
 
-        const date = document.getElementById('menuDate').value || todayString();
+
+/* =========================================================
+   V6 CORRECTED — CUMULATIVE SOLD +/- CONTROL
+   IMPORTANT:
+   This block changes ONLY the sold-quantity control.
+   Existing V5 authentication, recipes, menu, sales, edit,
+   delete, sold-out, Supabase and calculations are preserved.
+========================================================= */
+(function(){
+
+    const style = document.createElement("style");
+    style.id = "kk-v6-sold-plus-minus";
+    style.textContent = `
+        .kk-v6-sold-control{
+            display:grid;
+            grid-template-columns:40px minmax(0,1fr) 40px;
+            gap:5px;
+            width:100%;
+            align-items:stretch;
+        }
+
+        .kk-v6-sold-control button{
+            width:100%;
+            min-width:0;
+            height:40px;
+            padding:0;
+            font-size:20px;
+            line-height:1;
+            font-weight:700;
+        }
+
+        .kk-v6-sold-value{
+            min-width:0;
+            width:100%;
+            height:40px;
+            border-radius:8px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:5px;
+            padding:0 5px;
+            overflow:hidden;
+            text-align:center;
+            font-size:12px;
+            font-weight:700;
+            white-space:nowrap;
+        }
+
+        .kk-v6-sold-value strong{
+            font-size:17px;
+            line-height:1;
+        }
+
+        @media(max-width:380px){
+            .kk-v6-sold-control{
+                grid-template-columns:36px minmax(0,1fr) 36px;
+                gap:4px;
+            }
+
+            .kk-v6-sold-control button{
+                height:38px;
+                font-size:18px;
+            }
+
+            .kk-v6-sold-value{
+                height:38px;
+                font-size:10px;
+            }
+
+            .kk-v6-sold-value strong{
+                font-size:16px;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    window.changeStage4SoldQuantity = function(btn, delta){
+        const el = btn.closest(".menu-item");
+        if(!el) return;
+
+        const date =
+            document.getElementById("menuDate").value ||
+            todayString();
+
         const record = stage4TodayRecord(date);
+
         const item = record.foodItems.find(function(x){
             return String(x.id) === String(el.dataset.foodId);
         });
+
         if(!item) return;
 
-        if(stage4IsFoodSoldOut(record, item.id)) return;
+        if(stage4IsFoodSoldOut(record, item.id)){
+            showMessage(
+                "menuMessage",
+                "This food is marked Sold Out. Press Edit first to reactivate it.",
+                "error"
+            );
+            return;
+        }
 
-        const current = Math.max(0, Math.floor(numberValue(item.servingsSold)));
-        const next = Math.max(0, current + delta);
-        item.servingsSold = next;
+        const current = Math.max(
+            0,
+            Math.floor(numberValue(item.servingsSold))
+        );
+
+        item.servingsSold = Math.max(0, current + delta);
 
         saveAllData();
         loadMenuOfDay();
-    }
+        updateDashboard();
+    };
 
-    function changeOtherSoldQuantity(btn, delta){
-        const el = btn.closest('.menu-item');
+    window.changeDailyOtherSoldQuantity = function(btn, delta){
+        const el = btn.closest(".menu-item");
         if(!el) return;
 
-        const date = document.getElementById('menuDate').value || todayString();
+        const date =
+            document.getElementById("menuDate").value ||
+            todayString();
+
         const record = stage4TodayRecord(date);
+
         const item = record.otherItems.find(function(x){
             return String(x.id) === String(el.dataset.otherId);
         });
+
         if(!item) return;
 
-        const current = Math.max(0, Math.floor(numberValue(item.quantitySold)));
-        const next = Math.max(0, current + delta);
-        item.quantitySold = next;
+        const current = Math.max(
+            0,
+            Math.floor(numberValue(item.quantitySold))
+        );
+
+        item.quantitySold = Math.max(0, current + delta);
 
         saveAllData();
-        loadMenuOfDay();
-    }
-
-    window.changeFoodSoldQuantity = changeFoodSoldQuantity;
-    window.changeOtherSoldQuantity = changeOtherSoldQuantity;
+        renderDailyOtherItems(date);
+        calculateCombinedSales(date);
+        updateDashboard();
+    };
 
     window.renderMenuItems = function(date){
-        const c = document.getElementById('menuItems');
+        const c = document.getElementById("menuItems");
         if(!c) return;
 
         const record = stage4TodayRecord(date);
-        c.innerHTML = '';
+
+        c.innerHTML = "";
 
         if(!record.foodItems.length){
-            c.innerHTML = '<div class="menu-empty">No food menus added yet.</div>';
+            c.innerHTML =
+                '<div class="menu-empty">No food menus added yet.</div>';
             return;
         }
 
         record.foodItems.forEach(function(item){
-            const sales = numberValue(item.sellingPrice) * numberValue(item.servingsSold);
-            const profit = sales - numberValue(item.recipeCost);
-            const pct = sales ? profit / sales * 100 : 0;
-            const soldOut = stage4IsFoodSoldOut(record, item.id);
 
-            const d = document.createElement('div');
-            d.className = 'menu-item' + (soldOut ? ' stage4-food-sold-out' : '');
+            const sales =
+                numberValue(item.sellingPrice) *
+                numberValue(item.servingsSold);
+
+            const profit =
+                sales -
+                numberValue(item.recipeCost);
+
+            const pct =
+                sales ? profit / sales * 100 : 0;
+
+            const soldOut =
+                stage4IsFoodSoldOut(record, item.id);
+
+            const d = document.createElement("div");
+
+            d.className =
+                "menu-item" +
+                (soldOut ? " stage4-food-sold-out" : "");
+
             d.dataset.foodId = item.id;
 
             const soldControl = soldOut
-                ? '<div class="kk-sold-control kk-sold-control-locked">'
-                    + '<span class="kk-sold-control-label">SOLD</span>'
-                    + '<strong>' + numberValue(item.servingsSold) + '</strong>'
-                  + '</div>'
-                : '<div class="kk-sold-control">'
-                    + '<button type="button" class="kk-sold-btn" onclick="changeFoodSoldQuantity(this,-1)" aria-label="Decrease sold quantity">−</button>'
-                    + '<div class="kk-sold-display"><span>SOLD</span><strong>' + numberValue(item.servingsSold) + '</strong></div>'
-                    + '<button type="button" class="kk-sold-btn" onclick="changeFoodSoldQuantity(this,1)" aria-label="Increase sold quantity">+</button>'
-                  + '</div>';
+                ? '<div class="kk-prof-sales-row">' +
+                    '<div class="kk-sold-total-box" style="grid-column:1 / -1">' +
+                        '<span>Servings Sold</span>' +
+                        '<strong>' +
+                            numberValue(item.servingsSold) +
+                        '</strong>' +
+                    '</div>' +
+                  '</div>'
+                : '<div class="kk-prof-sales-row">' +
+                    '<div class="kk-sold-total-box">' +
+                        '<span>Servings Sold</span>' +
+                        '<strong>' +
+                            numberValue(item.servingsSold) +
+                        '</strong>' +
+                    '</div>' +
+
+                    '<div class="kk-add-sold-control">' +
+                        '<label>Sales</label>' +
+                        '<div class="kk-v6-sold-control">' +
+
+                            '<button type="button" ' +
+                                'class="btn btn-secondary btn-small" ' +
+                                'onclick="changeStage4SoldQuantity(this,-1)" ' +
+                                'aria-label="Decrease sold quantity">−</button>' +
+
+                            '<div class="kk-v6-sold-value">' +
+                                '<span>SOLD</span>' +
+                                '<strong>' +
+                                    numberValue(item.servingsSold) +
+                                '</strong>' +
+                            '</div>' +
+
+                            '<button type="button" ' +
+                                'class="btn btn-secondary btn-small" ' +
+                                'onclick="changeStage4SoldQuantity(this,1)" ' +
+                                'aria-label="Increase sold quantity">+</button>' +
+
+                        '</div>' +
+                    '</div>' +
+                  '</div>';
 
             const actions = soldOut
-                ? '<div class="kk-prof-actions kk-one-action"><button type="button" class="btn btn-secondary btn-small" onclick="editStage4Food(this)">Edit</button></div>'
-                : '<div class="kk-prof-actions">'
-                    + '<button type="button" class="btn btn-danger btn-small" onclick="deleteStage4Food(this)">Delete</button>'
-                    + '<button type="button" class="btn btn-secondary btn-small" onclick="soldOutStage4Food(this)">Sold Out</button>'
-                    + '<button type="button" class="btn btn-secondary btn-small" onclick="editStage4Food(this)">Edit</button>'
-                  + '</div>';
+                ? '<div class="kk-prof-actions kk-one-action">' +
+                    '<button type="button" class="btn btn-secondary btn-small" ' +
+                        'onclick="editStage4Food(this)">Edit</button>' +
+                  '</div>'
+                : '<div class="kk-prof-actions">' +
+                    '<button type="button" class="btn btn-danger btn-small" ' +
+                        'onclick="deleteStage4Food(this)">Delete</button>' +
+                    '<button type="button" class="btn btn-secondary btn-small" ' +
+                        'onclick="soldOutStage4Food(this)">Sold Out</button>' +
+                    '<button type="button" class="btn btn-secondary btn-small" ' +
+                        'onclick="editStage4Food(this)">Edit</button>' +
+                  '</div>';
 
             d.innerHTML =
-                '<div class="kk-prof-card-title">'
-                    + '<div><div class="menu-name">' + escapeHtml(item.recipeName) + '</div>'
-                    + (soldOut ? '<div class="stage4-sold-out-label kk-prof-sold-label">SOLD OUT</div>' : '')
-                    + '</div>'
-                + '</div>'
-                + '<div class="kk-prof-values">'
-                    + stage4Box('Recipe Cost', money(item.recipeCost))
-                    + stage4Box('Selling / Serving', money(item.sellingPrice))
-                    + stage4Box('Total Sales', money(sales))
-                    + stage4Box('Profit', money(profit), profit)
-                    + stage4Box('Profit %', pct.toFixed(2) + '%', profit)
-                + '</div>'
-                + soldControl
-                + actions;
+                '<div class="kk-prof-card-title">' +
+                    '<div>' +
+                        '<div class="menu-name">' +
+                            escapeHtml(item.recipeName) +
+                        '</div>' +
+                        (soldOut
+                            ? '<div class="stage4-sold-out-label kk-prof-sold-label">SOLD OUT</div>'
+                            : '') +
+                    '</div>' +
+                '</div>' +
+
+                '<div class="kk-prof-values">' +
+                    stage4Box(
+                        "Recipe Cost",
+                        money(item.recipeCost)
+                    ) +
+                    stage4Box(
+                        "Selling / Serving",
+                        money(item.sellingPrice)
+                    ) +
+                    stage4Box(
+                        "Total Sales",
+                        money(sales)
+                    ) +
+                    stage4Box(
+                        "Profit",
+                        money(profit),
+                        profit
+                    ) +
+                    stage4Box(
+                        "Profit %",
+                        pct.toFixed(2) + "%",
+                        profit
+                    ) +
+                '</div>' +
+
+                soldControl +
+                actions;
 
             c.appendChild(d);
         });
     };
 
     window.renderDailyOtherItems = function(date){
-        const c = document.getElementById('dailyOtherItemsList');
+        const c =
+            document.getElementById("dailyOtherItemsList");
+
         if(!c) return;
 
         const record = stage4TodayRecord(date);
-        c.innerHTML = '';
+
+        c.innerHTML = "";
 
         if(!record.otherItems.length){
-            c.innerHTML = '<div class="menu-empty">No other items sold.</div>';
+            c.innerHTML =
+                '<div class="menu-empty">No other items sold.</div>';
             return;
         }
 
         record.otherItems.forEach(function(item){
-            const sales = numberValue(item.sellingPrice) * numberValue(item.quantitySold);
-            const cost = numberValue(item.unitCost) * numberValue(item.quantitySold);
-            const profit = sales - cost;
-            const pct = sales ? profit / sales * 100 : 0;
 
-            const d = document.createElement('div');
-            d.className = 'menu-item';
+            const sales =
+                numberValue(item.sellingPrice) *
+                numberValue(item.quantitySold);
+
+            const cost =
+                numberValue(item.unitCost) *
+                numberValue(item.quantitySold);
+
+            const profit = sales - cost;
+
+            const pct =
+                sales ? profit / sales * 100 : 0;
+
+            const d = document.createElement("div");
+
+            d.className = "menu-item";
             d.dataset.otherId = item.id;
 
             d.innerHTML =
-                '<div class="kk-prof-card-title">'
-                    + '<div class="menu-name">' + escapeHtml(item.name) + '</div>'
-                + '</div>'
-                + '<div class="kk-prof-other-fields">'
-                    + '<div class="form-group"><label>Unit</label><input class="other-unit" type="text" value="' + escapeHtml(item.unit || '') + '" readonly></div>'
-                    + '<div class="form-group"><label>Unit Cost</label><input class="other-unit-cost" type="number" value="' + numberValue(item.unitCost) + '" readonly></div>'
-                    + '<div class="form-group"><label>Selling Price</label><input class="other-sale-price" type="number" min="0" step="0.01" value="' + numberValue(item.sellingPrice) + '" inputmode="decimal" autocomplete="off" oninput="updateDailyOtherItem(this)"></div>'
-                + '</div>'
-                + '<div class="kk-sold-control">'
-                    + '<button type="button" class="kk-sold-btn" onclick="changeOtherSoldQuantity(this,-1)" aria-label="Decrease sold quantity">−</button>'
-                    + '<div class="kk-sold-display"><span>SOLD</span><strong>' + numberValue(item.quantitySold) + '</strong></div>'
-                    + '<button type="button" class="kk-sold-btn" onclick="changeOtherSoldQuantity(this,1)" aria-label="Increase sold quantity">+</button>'
-                + '</div>'
-                + '<div class="kk-prof-values">'
-                    + stage4Box('Total Sales', money(sales))
-                    + stage4Box('Profit', money(profit), profit)
-                    + stage4Box('Profit %', pct.toFixed(2) + '%', profit)
-                + '</div>'
-                + '<div class="kk-prof-other-actions"><button type="button" class="btn btn-danger btn-small" onclick="deleteDailyOtherItem(this)">Delete</button></div>';
+                '<div class="kk-prof-card-title">' +
+                    '<div class="menu-name">' +
+                        escapeHtml(item.name) +
+                    '</div>' +
+                '</div>' +
+
+                '<div class="kk-prof-other-fields">' +
+                    '<div class="form-group">' +
+                        '<label>Unit</label>' +
+                        '<input class="other-unit" type="text" ' +
+                            'value="' + escapeHtml(item.unit || "") + '" readonly>' +
+                    '</div>' +
+
+                    '<div class="form-group">' +
+                        '<label>Unit Cost</label>' +
+                        '<input class="other-unit-cost" type="number" ' +
+                            'value="' + numberValue(item.unitCost) + '" readonly>' +
+                    '</div>' +
+
+                    '<div class="form-group">' +
+                        '<label>Selling Price</label>' +
+                        '<input class="other-sale-price" type="number" ' +
+                            'min="0" step="0.01" ' +
+                            'value="' + numberValue(item.sellingPrice) + '" ' +
+                            'inputmode="decimal" autocomplete="off" ' +
+                            'oninput="updateDailyOtherItem(this)">' +
+                    '</div>' +
+                '</div>' +
+
+                '<div class="kk-prof-sales-row">' +
+
+                    '<div class="kk-sold-total-box">' +
+                        '<span>Qty Sold</span>' +
+                        '<strong>' +
+                            numberValue(item.quantitySold) +
+                        '</strong>' +
+                    '</div>' +
+
+                    '<div class="kk-add-sold-control">' +
+                        '<label>Sales</label>' +
+                        '<div class="kk-v6-sold-control">' +
+
+                            '<button type="button" ' +
+                                'class="btn btn-secondary btn-small" ' +
+                                'onclick="changeDailyOtherSoldQuantity(this,-1)" ' +
+                                'aria-label="Decrease sold quantity">−</button>' +
+
+                            '<div class="kk-v6-sold-value">' +
+                                '<span>SOLD</span>' +
+                                '<strong>' +
+                                    numberValue(item.quantitySold) +
+                                '</strong>' +
+                            '</div>' +
+
+                            '<button type="button" ' +
+                                'class="btn btn-secondary btn-small" ' +
+                                'onclick="changeDailyOtherSoldQuantity(this,1)" ' +
+                                'aria-label="Increase sold quantity">+</button>' +
+
+                        '</div>' +
+                    '</div>' +
+
+                '</div>' +
+
+                '<div class="kk-prof-values">' +
+                    stage4Box(
+                        "Total Sales",
+                        money(sales)
+                    ) +
+                    stage4Box(
+                        "Profit",
+                        money(profit),
+                        profit
+                    ) +
+                    stage4Box(
+                        "Profit %",
+                        pct.toFixed(2) + "%",
+                        profit
+                    ) +
+                '</div>' +
+
+                '<div class="kk-prof-other-actions">' +
+                    '<button type="button" class="btn btn-danger btn-small" ' +
+                        'onclick="deleteDailyOtherItem(this)">Delete</button>' +
+                '</div>';
 
             c.appendChild(d);
         });
     };
 
-    const style = document.createElement('style');
-    style.id = 'kk-v6-sold-quantity-control';
-    style.textContent = `
-        .kk-sold-control {
-            width:100%;
-            max-width:100%;
-            min-width:0;
-            box-sizing:border-box;
-            display:grid;
-            grid-template-columns:52px minmax(0,1fr) 52px;
-            align-items:stretch;
-            gap:6px;
-            margin-top:8px;
-        }
-
-        .kk-sold-btn {
-            width:52px;
-            min-width:52px;
-            height:46px;
-            border:1px solid rgba(255,255,255,.16);
-            border-radius:10px;
-            background:#18324d;
-            color:#fff;
-            font-size:25px;
-            font-weight:700;
-            line-height:1;
-            cursor:pointer;
-            box-sizing:border-box;
-        }
-
-        .kk-sold-btn:active {
-            transform:scale(.97);
-        }
-
-        .kk-sold-display {
-            min-width:0;
-            width:100%;
-            height:46px;
-            box-sizing:border-box;
-            border-radius:10px;
-            background:rgba(255,255,255,.06);
-            border:1px solid rgba(255,255,255,.12);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:8px;
-            overflow:hidden;
-        }
-
-        .kk-sold-display span,
-        .kk-sold-control-label {
-            font-size:11px;
-            font-weight:700;
-            letter-spacing:.04em;
-            opacity:.8;
-        }
-
-        .kk-sold-display strong,
-        .kk-sold-control-locked strong {
-            font-size:20px;
-            line-height:1;
-        }
-
-        .kk-sold-control-locked {
-            grid-template-columns:minmax(0,1fr);
-            padding:9px 12px;
-            min-height:46px;
-            border-radius:10px;
-            background:rgba(255,255,255,.06);
-            border:1px solid rgba(255,255,255,.12);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:8px;
-        }
-
-        @media(max-width:380px){
-            .kk-sold-control {
-                grid-template-columns:44px minmax(0,1fr) 44px;
-                gap:5px;
+    /*
+       Re-render the currently displayed sales screen once the V6
+       functions are installed. This is intentionally guarded so
+       nothing runs before the app has initialized.
+    */
+    if(typeof document !== "undefined"){
+        const refresh = function(){
+            try{
+                const dateEl = document.getElementById("menuDate");
+                if(dateEl && dateEl.value && typeof loadMenuOfDay === "function"){
+                    loadMenuOfDay();
+                }
+            }catch(error){
+                console.error("V6 sales control refresh error:", error);
             }
-            .kk-sold-btn {
-                width:44px;
-                min-width:44px;
-            }
-            .kk-sold-display {
-                gap:5px;
-            }
+        };
+
+        if(document.readyState === "loading"){
+            document.addEventListener("DOMContentLoaded", refresh, {once:true});
+        }else{
+            setTimeout(refresh, 0);
         }
-    `;
-    document.head.appendChild(style);
+    }
 
 })();
