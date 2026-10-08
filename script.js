@@ -7846,3 +7846,144 @@ document.addEventListener("DOMContentLoaded", function() {
   function init(){if(document.getElementById('profitScreen'))setTimeout(function(){window.loadProfitCalculator();},0);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
+
+
+/* =========================================================
+   DAILY PROFIT FINAL V4 — SALES LINK + CAPITAL COST + LPG
+   - Reads the same dailySalesRecords used by Today's Menu & Sales
+   - Supports both current and legacy food quantity field names
+   - Food Capital Cost = recipe cost ONCE for each food item sold
+   - Other Item Capital Cost = unit cost x units sold
+   - Shows complete sales count and capital-cost breakdown
+   - LPG/Gas: Amount + Consumption Days -> Daily Consumption
+   - LPG has Edit / Update just like monthly OPEX cards
+========================================================= */
+(function(){
+  'use strict';
+  function N(v){return typeof numberValue==='function'?numberValue(v):(parseFloat(v)||0);}
+  function M(v){return typeof money==='function'?money(v):'₱'+N(v).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function D(){return typeof todayString==='function'?todayString():new Date().toISOString().slice(0,10);}
+  function T(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+  function date(){return (document.getElementById('kkdpProfitDate')||{}).value||D();}
+  function qtyFood(x){return N(x.servingsSold!==undefined?x.servingsSold:(x.quantitySold!==undefined?x.quantitySold:x.servings));}
+  function qtyOther(x){return N(x.quantitySold!==undefined?x.quantitySold:(x.servingsSold!==undefined?x.servingsSold:x.quantity));}
+  function salesRecord(d){
+    if(Array.isArray(dailySalesRecords)){
+      var r=dailySalesRecords.find(function(x){return x&&String(x.date)===String(d);});
+      if(r)return r;
+    }
+    return null;
+  }
+  function getSales(d){
+    var r=salesRecord(d), out={foodSales:0,otherSales:0,foodCost:0,otherCost:0,foodCount:0,otherCount:0};
+    if(!r)return out;
+    var foods=Array.isArray(r.foodItems)?r.foodItems:[];
+    foods.forEach(function(x){
+      var q=qtyFood(x), price=N(x.sellingPrice!==undefined?x.sellingPrice:x.selling_price);
+      out.foodSales += price*q;
+      out.foodCount += q;
+      if(q>0){
+        var recipe=null;
+        if(Array.isArray(savedRecipes)) recipe=savedRecipes.find(function(z){return String(z.id)===String(x.recipeId);});
+        /* Use the recipe cost stored on the sale first. This is a snapshot
+           and remains correct even if the recipe is later edited/deleted. */
+        var rc=N(x.recipeCost!==undefined?x.recipeCost:(x.foodCost!==undefined?x.foodCost:x.costPerServing));
+        if(!rc && recipe)rc=N(recipe.totalCost);
+        out.foodCost += rc;
+      }
+    });
+    var others=Array.isArray(r.otherItems)?r.otherItems:[];
+    others.forEach(function(x){
+      var q=qtyOther(x), price=N(x.sellingPrice!==undefined?x.sellingPrice:x.selling_price), unit=N(x.unitCost!==undefined?x.unitCost:x.unit_cost);
+      out.otherSales += price*q;
+      out.otherCost += unit*q;
+      out.otherCount += q;
+    });
+    return out;
+  }
+  function normalize(list){
+    return Array.isArray(list)?list.map(function(e,i){return {id:String(e.id||('emp_'+Date.now()+'_'+i)),name:String(e.name||('Employee '+(i+1))),dailyRate:N(e.dailyRate),present:e.present!==false};}):[];
+  }
+  function employeesFromUI(){
+    return Array.from(document.querySelectorAll('#kkdpEmployeeBody tr[data-id]')).map(function(r,i){
+      return {id:String(r.dataset.id),name:(r.querySelector('.kkdp-emp-name')?.value||('Employee '+(i+1))).trim(),dailyRate:N(r.querySelector('.kkdp-emp-rate')?.value),present:!!r.querySelector('.kkdp-emp-present')?.checked};
+    });
+  }
+  function labor(es){return normalize(es).reduce(function(a,e){return a+(e.present?N(e.dailyRate):0);},0);}
+  function prev(d){return (Array.isArray(profitRecords)?profitRecords:[]).filter(function(r){return r&&r.date&&String(r.date)<String(d);}).sort(function(a,b){return String(b.date).localeCompare(String(a.date));})[0]||null;}
+  function snap(d){
+    var exact=(Array.isArray(profitRecords)?profitRecords:[]).find(function(r){return String(r.date)===String(d);});
+    if(exact&&exact.opex)return exact.opex;
+    var p=prev(d);if(p&&p.opex)return p.opex;
+    return {monthlyRent:0,electricityMonthly:0,waterMonthly:0,wifiMonthly:0,gas:0,gasAmount:0,gasDays:1,other:0,employees:[]};
+  }
+  function readOpex(){
+    var gasAmount=N(document.getElementById('kkdpGasAmount')?.value), gasDays=N(document.getElementById('kkdpGasDays')?.value)||1;
+    return {
+      monthlyRent:N(document.getElementById('kkdpRent')?.value),
+      electricityMonthly:N(document.getElementById('kkdpElectricity')?.value),
+      waterMonthly:N(document.getElementById('kkdpWater')?.value),
+      wifiMonthly:N(document.getElementById('kkdpWifi')?.value),
+      gas:gasAmount/gasDays, gasAmount:gasAmount, gasDays:gasDays,
+      other:N(document.getElementById('kkdpOther')?.value), employees:employeesFromUI()
+    };
+  }
+  function calculate(showMsg){
+    var s=getSales(date()),o=readOpex(),l=labor(o.employees);
+    var daily={rent:o.monthlyRent/30,electricity:o.electricityMonthly/30,water:o.waterMonthly/30,wifi:o.wifiMonthly/30,gas:o.gas,labor:l,other:o.other};
+    daily.total=daily.rent+daily.electricity+daily.water+daily.wifi+daily.gas+daily.labor+daily.other;
+    var totalSales=s.foodSales+s.otherSales,totalCapital=s.foodCost+s.otherCost,totalCount=s.foodCount+s.otherCount,profit=totalSales-totalCapital-daily.total;
+    T('kkdpFoodSales',M(s.foodSales));T('kkdpOtherSales',M(s.otherSales));T('kkdpOpex',M(daily.total));
+    T('kkdpFoodCapital',M(s.foodCost));T('kkdpOtherCapital',M(s.otherCost));T('kkdpTotalCapital',M(totalCapital));
+    T('kkdpFoodCount',String(s.foodCount));T('kkdpOtherCount',String(s.otherCount));T('kkdpSalesCount',String(totalCount));T('kkdpSalesCount2',String(totalCount));
+    T('kkdpProfit',M(profit));T('kkdpRentDaily','Daily: '+M(daily.rent));T('kkdpElectricityDaily','Daily: '+M(daily.electricity));T('kkdpWaterDaily','Daily: '+M(daily.water));T('kkdpWifiDaily','Daily: '+M(daily.wifi));
+    T('kkdpGasDaily','Daily Consumption: '+M(daily.gas));T('kkdpLaborDaily','Daily: '+M(daily.labor));T('kkdpOtherDaily','Daily: '+M(daily.other));T('kkdpOpexTotal',M(daily.total));T('kkdpLaborTotal',M(l));
+    var pc=document.getElementById('kkdpProfitCard');if(pc){pc.classList.toggle('kkdp-profit-positive',profit>0);pc.classList.toggle('kkdp-profit-negative',profit<0);}
+    if(showMsg){var b=document.getElementById('kkdpMessage');if(b)b.innerHTML='<div class="message success">✓ Calculation updated successfully.</div>';}
+    return {foodSales:s.foodSales,otherSales:s.otherSales,totalSales:totalSales,foodCost:s.foodCost,otherCost:s.otherCost,totalCapitalCost:totalCapital,foodCount:s.foodCount,otherCount:s.otherCount,netProfit:profit,dailyOpex:daily,opex:o};
+  }
+  function saveRecord(msg){
+    var d=date(),r=calculate(false),o=readOpex();
+    var rec={id:Date.now().toString(),date:d,foodSales:r.foodSales,otherSales:r.otherSales,totalSales:r.totalSales,foodCost:r.foodCost,otherCost:r.otherCost,totalCost:r.totalCapitalCost,grossProfit:r.totalSales-r.totalCapitalCost,expenses:{rent:r.dailyOpex.rent,gas:r.dailyOpex.gas,electricity:r.dailyOpex.electricity,water:r.dailyOpex.water,wifi:r.dailyOpex.wifi,labor:r.dailyOpex.labor,other:r.dailyOpex.other},totalExpenses:r.dailyOpex.total,netProfit:r.netProfit,opex:{monthlyRent:o.monthlyRent,electricityMonthly:o.electricityMonthly,waterMonthly:o.waterMonthly,wifiMonthly:o.wifiMonthly,gas:o.gas,gasAmount:o.gasAmount,gasDays:o.gasDays,other:o.other,employees:normalize(o.employees)}};
+    var idx=Array.isArray(profitRecords)?profitRecords.findIndex(function(x){return String(x.date)===String(d);}):-1;
+    if(idx>=0){rec.id=profitRecords[idx].id;profitRecords[idx]=rec;}else{if(!Array.isArray(profitRecords))profitRecords=[];profitRecords.push(rec);}
+    if(typeof saveAllData==='function')saveAllData();
+    var b=document.getElementById('kkdpMessage');if(b)b.innerHTML='<div class="message success">'+msg+'</div>';
+    if(typeof updateDashboard==='function')updateDashboard();
+    return rec;
+  }
+  function renderEmployees(list){
+    var body=document.getElementById('kkdpEmployeeBody');if(!body)return;body.innerHTML='';
+    normalize(list).forEach(function(e,i){
+      var tr=document.createElement('tr');tr.dataset.id=e.id;
+      tr.innerHTML='<td><input class="kkdp-emp-name" type="text" value="'+String(e.name).replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'"></td><td><input class="kkdp-emp-rate" type="number" min="0" step="0.01" inputmode="decimal" value="'+N(e.dailyRate)+'"></td><td><input class="kkdp-emp-present" type="checkbox" '+(e.present?'checked':'')+'></td><td><button type="button" class="btn btn-danger btn-small kkdp-delete-employee">×</button></td>';
+      body.appendChild(tr);tr.querySelectorAll('input').forEach(function(inp){inp.addEventListener('input',function(){calculate(false);});inp.addEventListener('change',function(){calculate(false);});});
+      tr.querySelector('.kkdp-delete-employee').onclick=function(){tr.remove();calculate(false);};
+    });
+  }
+  function build(d){
+    var p=document.getElementById('profitScreen');if(!p)return;
+    var o=snap(d),ga=N(o.gasAmount||o.gas),gd=N(o.gasDays)||1;
+    p.innerHTML='<div class="kkdp-wrap"><div class="kkdp-final-back"><button type="button" class="btn btn-secondary" id="kkdpBackDashboard">← Back to Dashboard</button></div><div class="kkdp-date-row"><label>Date</label><input id="kkdpProfitDate" type="date" value="'+d+'"></div><div class="kkdp-section-title">Sales & Operating Expenses</div><div class="kkdp-grid3"><div class="kkdp-card"><span class="kkdp-label">Cooked Food Sales</span><strong class="kkdp-value" id="kkdpFoodSales">₱0.00</strong></div><div class="kkdp-card"><span class="kkdp-label">Other Items Sold</span><strong class="kkdp-value" id="kkdpOtherSales">₱0.00</strong></div><div class="kkdp-card"><span class="kkdp-label">OPEX</span><strong class="kkdp-value" id="kkdpOpex">₱0.00</strong></div></div><div class="kkdp-section-title">Daily Cost & Profit</div><div class="kkdp-grid3"><div class="kkdp-card"><span class="kkdp-label">Capital Cost</span><strong class="kkdp-value" id="kkdpTotalCapital">₱0.00</strong><span class="kkdp-sub">Food + Other Item</span><div class="kkdp-breakdown">Food: <strong id="kkdpFoodCapital">₱0.00</strong><br>Other Item: <strong id="kkdpOtherCapital">₱0.00</strong></div></div><div class="kkdp-card"><span class="kkdp-label">Number of Sales</span><strong class="kkdp-value" id="kkdpSalesCount">0</strong><span class="kkdp-sub">Food: <span id="kkdpFoodCount">0</span> · Other Item: <span id="kkdpOtherCount">0</span></span><div class="kkdp-breakdown">Sales Count: <strong id="kkdpSalesCount2">0</strong></div></div><div class="kkdp-card" id="kkdpProfitCard"><span class="kkdp-label">Profit</span><strong class="kkdp-value" id="kkdpProfit">₱0.00</strong><span class="kkdp-sub">Sales − Capital Cost − OPEX</span></div></div><div class="kkdp-section-title">OPEX</div><div class="kkdp-opex-grid"><div class="kkdp-opex-card"><div class="kkdp-opex-name">Rent</div><div class="kkdp-opex-type">Monthly</div><input id="kkdpRent" type="number" min="0" step="0.01" value="'+N(o.monthlyRent)+'" readonly><div class="kkdp-opex-daily" id="kkdpRentDaily">Daily: ₱0.00</div><div class="kkdp-opex-actions"><button type="button" data-edit="kkdpRent">Edit</button><button type="button" data-update="kkdpRent">Update</button></div></div><div class="kkdp-opex-card"><div class="kkdp-opex-name">Electricity</div><div class="kkdp-opex-type">Monthly Bill</div><input id="kkdpElectricity" type="number" min="0" step="0.01" value="'+N(o.electricityMonthly)+'" readonly><div class="kkdp-opex-daily" id="kkdpElectricityDaily">Daily: ₱0.00</div><div class="kkdp-opex-actions"><button type="button" data-edit="kkdpElectricity">Edit</button><button type="button" data-update="kkdpElectricity">Update</button></div></div><div class="kkdp-opex-card"><div class="kkdp-opex-name">Water</div><div class="kkdp-opex-type">Monthly Bill</div><input id="kkdpWater" type="number" min="0" step="0.01" value="'+N(o.waterMonthly)+'" readonly><div class="kkdp-opex-daily" id="kkdpWaterDaily">Daily: ₱0.00</div><div class="kkdp-opex-actions"><button type="button" data-edit="kkdpWater">Edit</button><button type="button" data-update="kkdpWater">Update</button></div></div><div class="kkdp-opex-card"><div class="kkdp-opex-name">WiFi</div><div class="kkdp-opex-type">Monthly Bill</div><input id="kkdpWifi" type="number" min="0" step="0.01" value="'+N(o.wifiMonthly)+'" readonly><div class="kkdp-opex-daily" id="kkdpWifiDaily">Daily: ₱0.00</div><div class="kkdp-opex-actions"><button type="button" data-edit="kkdpWifi">Edit</button><button type="button" data-update="kkdpWifi">Update</button></div></div><div class="kkdp-opex-card kkdp-gas-card"><div class="kkdp-opex-name">Gas / LPG</div><div class="kkdp-opex-type">Variable</div><input id="kkdpGasAmount" class="kkdp-editable-input" type="number" min="0" step="0.01" inputmode="decimal" value="'+ga+'" placeholder="LPG amount"><label class="kkdp-mini-label">Consumption Days</label><input id="kkdpGasDays" class="kkdp-editable-input" type="number" min="1" step="1" inputmode="numeric" value="'+gd+'"><div class="kkdp-opex-daily" id="kkdpGasDaily">Daily Consumption: ₱0.00</div><div class="kkdp-opex-actions"><button type="button" id="kkdpGasEdit">Edit</button><button type="button" id="kkdpGasUpdate">Update</button></div></div><div class="kkdp-opex-card"><div class="kkdp-opex-name">Labor</div><div class="kkdp-opex-type">Automatic</div><div class="kkdp-labor-value" id="kkdpLaborDaily">Daily: ₱0.00</div><div class="kkdp-opex-daily">Based on Present employees</div></div><div class="kkdp-opex-card"><div class="kkdp-opex-name">Other</div><div class="kkdp-opex-type">Daily</div><input id="kkdpOther" class="kkdp-editable-input" type="number" min="0" step="0.01" inputmode="decimal" value="'+N(o.other)+'"><div class="kkdp-opex-daily" id="kkdpOtherDaily">Daily: ₱0.00</div></div><div class="kkdp-opex-card kkdp-total-card"><div class="kkdp-opex-name">Total OPEX</div><div class="kkdp-opex-type">Daily</div><div class="kkdp-total-value" id="kkdpOpexTotal">₱0.00</div></div></div><div class="kkdp-employees"><div class="kkdp-employee-header"><div class="kkdp-employee-title">Employees / Labor</div><button type="button" class="btn btn-primary btn-small" id="kkdpAddEmployee">＋ Add Employee</button></div><table class="kkdp-employee-table"><thead><tr><th>Employee</th><th>Daily Rate</th><th>Present</th><th></th></tr></thead><tbody id="kkdpEmployeeBody"></tbody></table><div class="kkdp-labor-total"><span>Total Labor Cost</span><strong id="kkdpLaborTotal">₱0.00</strong></div></div><div class="kkdp-buttons"><button type="button" class="btn btn-primary" id="kkdpCalculate">Calculate</button><button type="button" class="btn btn-success" id="kkdpSave">Save Profit Record</button></div><div id="kkdpMessage" class="kkdp-message"></div></div>';
+    renderEmployees(o.employees);
+    var back=document.getElementById('kkdpBackDashboard');if(back)back.onclick=function(){showScreen('homeScreen');};
+    document.getElementById('kkdpProfitDate').onchange=function(){build(this.value||D());};
+    ['kkdpGasAmount','kkdpGasDays','kkdpOther'].forEach(function(id){var e=document.getElementById(id);if(e)e.addEventListener('input',function(){calculate(false);});});
+    document.querySelectorAll('[data-edit]').forEach(function(b){b.onclick=function(){var e=document.getElementById(b.dataset.edit);if(e){e.readOnly=false;e.classList.add('kkdp-editable-input');e.focus();}};});
+    document.querySelectorAll('[data-update]').forEach(function(b){b.onclick=function(){var e=document.getElementById(b.dataset.update);if(e){e.readOnly=true;e.classList.remove('kkdp-editable-input');}var r=calculate(false);saveRecord('✓ OPEX updated successfully.');};});
+    var ge=document.getElementById('kkdpGasEdit'),gu=document.getElementById('kkdpGasUpdate');
+    function gasInputs(on){['kkdpGasAmount','kkdpGasDays'].forEach(function(id){var e=document.getElementById(id);if(e)e.readOnly=!on;});}
+    if(ge)ge.onclick=function(){gasInputs(true);document.getElementById('kkdpGasAmount')?.focus();};
+    if(gu)gu.onclick=function(){gasInputs(false);calculate(false);saveRecord('✓ Gas / LPG updated successfully.');};
+    document.getElementById('kkdpAddEmployee').onclick=function(){var list=employeesFromUI();list.push({id:'emp_'+Date.now()+'_'+list.length,name:'Employee '+(list.length+1),dailyRate:0,present:true});renderEmployees(list);calculate(false);};
+    document.getElementById('kkdpCalculate').onclick=function(){calculate(true);};
+    document.getElementById('kkdpSave').onclick=function(){saveRecord('✓ Profit record saved successfully.');};
+    calculate(false);
+  }
+  window.calculateProfit=function(){return calculate(true);};
+  window.saveProfitRecord=function(){return saveRecord('✓ Profit record saved successfully.');};
+  window.loadProfitCalculator=function(){var old=document.getElementById('profitDate');build((old&&old.value)||D());};
+  window.loadProfitForDate=window.loadProfitCalculator;
+  function init(){if(document.getElementById('profitScreen'))setTimeout(function(){window.loadProfitCalculator();},0);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
