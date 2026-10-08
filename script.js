@@ -5188,3 +5188,137 @@ document.addEventListener("DOMContentLoaded", function() {
         setupOtherItemForm();
     }
 });
+
+/* =========================================================
+   CUMULATIVE ADD-SOLD UI REFINEMENT
+   - Remove +/- controls.
+   - Put Add Sold input + button on one row.
+   - Apply the same cumulative counter behavior to Other Items Sold.
+========================================================= */
+(function(){
+    const style=document.createElement('style');
+    style.id='kk-cumulative-add-sold-style';
+    style.textContent=''
+      +'.kk-add-sold-inline{display:flex;align-items:end;gap:8px;flex-wrap:nowrap;margin-top:10px;} '
+      +'.kk-sold-total-box{flex:1;min-width:0;border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:10px 12px;background:rgba(255,255,255,.04);} '
+      +'.kk-sold-total-box span{display:block;font-size:13px;margin-bottom:4px;opacity:.85;} '
+      +'.kk-sold-total-box strong{font-size:22px;} '
+      +'.kk-add-sold-control{flex:1;min-width:0;} '
+      +'.kk-add-sold-control label{display:block;font-size:13px;margin-bottom:5px;} '
+      +'.kk-add-sold-control-row{display:flex;gap:6px;align-items:center;} '
+      +'.kk-add-sold-control-row input{flex:1;min-width:0;} '
+      +'.kk-add-sold-control-row button{white-space:nowrap;} '
+      +'@media(max-width:520px){.kk-add-sold-inline{gap:6px}.kk-sold-total-box,.kk-add-sold-control{padding:8px}.kk-add-sold-control-row button{padding-left:10px;padding-right:10px}.kk-sold-total-box strong{font-size:20px;}}';
+    document.head.appendChild(style);
+
+    window.renderMenuItems=function(date){
+        const c=document.getElementById('menuItems');
+        if(!c)return;
+        const record=stage4TodayRecord(date);
+        c.innerHTML='';
+        if(!record.foodItems.length){
+            c.innerHTML='<div class="menu-empty">No food menus added yet.</div>';
+            return;
+        }
+        record.foodItems.forEach(function(item){
+            const sales=numberValue(item.sellingPrice)*numberValue(item.servingsSold);
+            const profit=sales-numberValue(item.recipeCost);
+            const pct=sales?profit/sales*100:0;
+            const soldOut=stage4IsFoodSoldOut(record,item.id);
+            const d=document.createElement('div');
+            d.className='menu-item'+(soldOut?' stage4-food-sold-out':'');
+            d.dataset.foodId=item.id;
+
+            const actions=soldOut
+                ? '<button type="button" class="btn btn-secondary btn-small" onclick="editStage4Food(this)">Edit</button>'
+                : '<button type="button" class="btn btn-danger btn-small" onclick="deleteStage4Food(this)">Delete</button>'
+                 +'<button type="button" class="btn btn-secondary btn-small" onclick="soldOutStage4Food(this)">Sold Out</button>'
+                 +'<button type="button" class="btn btn-secondary btn-small" onclick="editStage4Food(this)">Edit</button>';
+
+            let addSold='';
+            if(!soldOut){
+                addSold='<div class="kk-add-sold-inline">'
+                    +'<div class="kk-sold-total-box"><span>Servings Sold</span><strong>'+numberValue(item.servingsSold)+'</strong></div>'
+                    +'<div class="kk-add-sold-control"><label>Add Sold</label><div class="kk-add-sold-control-row">'
+                    +'<input class="stage4-add-sales-qty mobile-large-input" type="number" min="1" step="1" value="1" inputmode="numeric" autocomplete="off" aria-label="Number of servings to add">'
+                    +'<button type="button" class="btn btn-primary btn-small" onclick="addStage4Sold(this)">ADD SOLD</button>'
+                    +'</div></div>'
+                    +'</div>';
+            }else{
+                addSold='<div class="kk-add-sold-inline">'
+                    +'<div class="kk-sold-total-box" style="flex:1 1 100%"><span>Servings Sold</span><strong>'+numberValue(item.servingsSold)+'</strong></div>'
+                    +'</div>';
+            }
+
+            d.innerHTML='<div class="menu-top"><div><div class="menu-name">'+escapeHtml(item.recipeName)+'</div>'+(soldOut?'<div class="stage4-sold-out-label">SOLD OUT</div>':'')+'</div>'
+                +'<div class="menu-actions">'+actions+'</div></div>'
+                +'<div class="menu-summary-grid-6">'
+                +stage4Box('Recipe Cost',money(item.recipeCost))
+                +stage4Box('Selling / Serving',money(item.sellingPrice))
+                +stage4Box('Total Sales',money(sales))
+                +stage4Box('Profit',money(profit),profit)
+                +stage4Box('Profit %',pct.toFixed(2)+'%',profit)
+                +'</div>'
+                +addSold;
+            c.appendChild(d);
+        });
+    };
+
+    window.renderDailyOtherItems=function(date){
+        const c=document.getElementById('dailyOtherItemsList');
+        if(!c)return;
+        const record=stage4TodayRecord(date);
+        c.innerHTML='';
+        if(!record.otherItems.length){
+            c.innerHTML='<div class="menu-empty">No other items sold.</div>';
+            return;
+        }
+        record.otherItems.forEach(function(item){
+            const sales=numberValue(item.sellingPrice)*numberValue(item.quantitySold);
+            const cost=numberValue(item.unitCost)*numberValue(item.quantitySold);
+            const profit=sales-cost;
+            const pct=sales?profit/sales*100:0;
+            const d=document.createElement('div');
+            d.className='menu-item';
+            d.dataset.otherId=item.id;
+            d.innerHTML='<div class="menu-top">'
+                +'<div class="menu-name">'+escapeHtml(item.name)+'</div>'
+                +'<div class="menu-actions"><button type="button" class="btn btn-danger btn-small" onclick="deleteDailyOtherItem(this)">Delete</button></div>'
+                +'</div>'
+                +'<div class="daily-other-grid">'
+                +'<div class="form-group"><label>Unit</label><input class="other-unit" type="text" value="'+escapeHtml(item.unit||'')+'" readonly></div>'
+                +'<div class="form-group"><label>Unit Cost</label><input class="other-unit-cost" type="number" value="'+numberValue(item.unitCost)+'" readonly></div>'
+                +'<div class="form-group"><label>Selling Price</label><input class="other-sale-price" type="number" min="0" step="0.01" value="'+numberValue(item.sellingPrice)+'" inputmode="decimal" autocomplete="off" oninput="updateDailyOtherItem(this)"></div>'
+                +'</div>'
+                +'<div class="kk-add-sold-inline">'
+                +'<div class="kk-sold-total-box"><span>Qty Sold</span><strong>'+numberValue(item.quantitySold)+'</strong></div>'
+                +'<div class="kk-add-sold-control"><label>Add Sold</label><div class="kk-add-sold-control-row">'
+                +'<input class="other-add-sold-qty mobile-large-input" type="number" min="1" step="1" value="1" inputmode="numeric" autocomplete="off" aria-label="Number of other items sold to add">'
+                +'<button type="button" class="btn btn-primary btn-small" onclick="addDailyOtherSold(this)">ADD SOLD</button>'
+                +'</div></div>'
+                +'</div>'
+                +'<div class="menu-summary-grid-6">'
+                +stage4Box('Total Sales',money(sales))
+                +stage4Box('Profit',money(profit),profit)
+                +stage4Box('Profit %',pct.toFixed(2)+'%',profit)
+                +'</div>';
+            c.appendChild(d);
+        });
+    };
+
+    window.addDailyOtherSold=function(btn){
+        const el=btn.closest('.menu-item');
+        if(!el)return;
+        const date=document.getElementById('menuDate').value||todayString();
+        const record=stage4TodayRecord(date);
+        const item=record.otherItems.find(function(x){return String(x.id)===String(el.dataset.otherId);});
+        if(!item)return;
+        const input=el.querySelector('.other-add-sold-qty');
+        const addQty=Math.max(1,Math.floor(numberValue(input?input.value:1)));
+        item.quantitySold=Math.max(0,Math.floor(numberValue(item.quantitySold)))+addQty;
+        saveAllData();
+        renderDailyOtherItems(date);
+        calculateCombinedSales(date);
+        showMessage('menuMessage',item.name+' updated: '+item.quantitySold+' sold.','success');
+    };
+})();
