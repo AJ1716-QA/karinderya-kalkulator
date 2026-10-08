@@ -6049,292 +6049,463 @@ document.addEventListener("DOMContentLoaded", function() {
 
 })();
 
-
 /* =========================================================
-   V7 COMPACT 3 x 2 MOBILE SALES CARDS
-   Keeps V6 calculations and controls, changes presentation only.
-========================================================= */
+   KARINDERYA KALKULATOR — PREMIUM MOBILE UI FINAL OVERRIDE
+   - Compact 3 x 2 sales cards
+   - Vertical + / quantity / − control
+   - Removes the word SOLD
+   - Larger mobile typography and touch targets
+   - In-app delete confirmation (no browser confirm dialog)
+   - Save Today's Sale success confirmation
+   ========================================================= */
 (function(){
-    const style=document.createElement('style');
-    style.id='kk-v7-compact-style';
-    style.textContent=`
-      .kk-v7-grid{
-        display:grid !important;
-        grid-template-columns:repeat(3,minmax(0,1fr));
-        gap:5px !important;
-        width:100%;
-        align-items:stretch;
-      }
-      .kk-v7-box{
-        min-width:0;
-        width:100%;
-        min-height:54px;
-        padding:6px 5px !important;
-        box-sizing:border-box;
-        border-radius:8px !important;
-        display:flex;
-        flex-direction:column;
-        justify-content:center;
-        align-items:center;
-        text-align:center;
-        overflow:hidden;
-      }
-      .kk-v7-box span{
-        display:block;
-        font-size:9px !important;
-        line-height:1.15 !important;
-        text-align:center;
-        white-space:normal;
-      }
-      .kk-v7-box strong{
-        display:block;
-        font-size:14px !important;
-        line-height:1.2 !important;
-        text-align:center;
-        overflow-wrap:anywhere;
-      }
-      .kk-v7-title{
-        text-align:center !important;
-        margin:2px 0 6px !important;
-      }
-      .kk-v7-title .menu-name{
-        text-align:center !important;
-        font-size:15px !important;
-        line-height:1.2 !important;
-        font-weight:700;
-      }
-      .kk-v7-sold{
-        min-height:54px;
-        padding:3px !important;
-        display:grid;
-        grid-template-rows:1fr 1fr 1fr;
-        gap:2px;
-        box-sizing:border-box;
-        border-radius:8px;
-        overflow:hidden;
-      }
-      .kk-v7-sold button{
-        width:100%;
-        min-width:0;
-        min-height:0;
-        height:auto !important;
-        padding:0 !important;
-        border:0 !important;
-        border-radius:5px !important;
-        font-size:16px !important;
-        line-height:1 !important;
-        font-weight:700;
-        cursor:pointer;
-      }
-      .kk-v7-sold-value{
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-size:15px;
-        font-weight:700;
-        line-height:1;
-        text-align:center;
-      }
-      .kk-v7-sold-disabled{
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-size:15px;
-        font-weight:700;
-        line-height:1;
-        min-height:54px;
-      }
-      .kk-v7-actions{
-        display:grid !important;
-        grid-template-columns:repeat(3,minmax(0,1fr));
-        gap:5px !important;
-        margin-top:6px !important;
-        padding-top:0 !important;
-        border-top:0 !important;
-      }
-      .kk-v7-actions.kk-one-action{
-        grid-template-columns:1fr;
-      }
-      .kk-v7-actions button,
-      .kk-v7-delete button{
-        width:100%;
-        min-width:0;
-        height:34px !important;
-        min-height:34px !important;
-        padding:4px 5px !important;
-        font-size:10px !important;
-        border-radius:7px !important;
-      }
-      .kk-v7-other-grid{
-        display:grid !important;
-        grid-template-columns:repeat(3,minmax(0,1fr));
-        gap:5px !important;
-        width:100%;
-        align-items:stretch;
-      }
-      .kk-v7-other-box{
-        min-width:0;
-        min-height:54px;
-        padding:5px !important;
-        box-sizing:border-box;
-        border-radius:8px !important;
-        display:flex;
-        flex-direction:column;
-        justify-content:center;
-        align-items:center;
-        text-align:center;
-      }
-      .kk-v7-other-box label{
-        font-size:9px !important;
-        line-height:1.15 !important;
-        margin:0 0 3px !important;
-        text-align:center;
-      }
-      .kk-v7-other-box .kk-v7-value{
-        font-size:14px;
-        font-weight:700;
-        line-height:1.2;
-        overflow-wrap:anywhere;
-        text-align:center;
-      }
-      .kk-v7-other-box input{
-        width:100% !important;
-        min-width:0 !important;
-        max-width:100% !important;
-        height:31px !important;
-        box-sizing:border-box;
-        padding:3px 4px !important;
-        text-align:center !important;
-        font-size:13px !important;
-        margin:0 !important;
-      }
-      .kk-v7-other-sold{
-        min-height:54px;
-      }
-      .kk-v7-other-delete{
-        margin-top:6px !important;
-      }
-      .kk-v7-other-delete button{
-        width:100%;
-        height:34px !important;
-        min-height:34px !important;
-        padding:4px !important;
-        font-size:10px !important;
-        border-radius:7px !important;
-      }
-      .kk-v7-sold-out-label{
-        text-align:center !important;
-        font-size:9px !important;
-        margin-top:2px !important;
-      }
-      @media(max-width:520px){
+    'use strict';
+
+    /* ---------- PREMIUM UI STYLES ---------- */
+    const style = document.createElement('style');
+    style.id = 'kk-premium-final-ui';
+    style.textContent = `
+        .kk-premium-grid{
+            display:grid !important;
+            grid-template-columns:repeat(3,minmax(0,1fr));
+            gap:8px;
+            width:100%;
+            align-items:stretch;
+        }
+        .kk-premium-grid .menu-summary-box,
+        .kk-premium-grid .kk-premium-cell{
+            min-width:0 !important;
+            width:100%;
+            box-sizing:border-box;
+        }
+        .kk-premium-cell{
+            background:var(--card-bg,#f8fafc);
+            border:1px solid rgba(100,116,139,.18);
+            border-radius:10px;
+            padding:9px 7px;
+            min-height:66px;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            text-align:center;
+            overflow:hidden;
+        }
+        .kk-premium-cell label,
+        .kk-premium-cell span{
+            display:block;
+            font-size:12px !important;
+            line-height:1.2;
+            font-weight:600;
+            opacity:.78;
+            margin:0 0 4px;
+            white-space:normal;
+        }
+        .kk-premium-cell strong{
+            display:block;
+            font-size:18px !important;
+            line-height:1.15;
+            font-weight:800;
+            overflow-wrap:anywhere;
+        }
+        .kk-premium-food-title,
+        .kk-premium-other-title{
+            text-align:center;
+            margin:2px 0 9px;
+        }
+        .kk-premium-food-title .menu-name,
+        .kk-premium-other-title .menu-name{
+            font-size:18px !important;
+            line-height:1.2;
+            font-weight:800 !important;
+            letter-spacing:.1px;
+            overflow-wrap:anywhere;
+        }
+        .kk-premium-sold-control{
+            display:grid;
+            grid-template-rows:30px 1fr 30px;
+            width:44px;
+            min-width:44px;
+            gap:3px;
+            margin:0 auto;
+        }
+        .kk-premium-sold-control button{
+            width:44px !important;
+            height:30px !important;
+            min-height:30px !important;
+            padding:0 !important;
+            border-radius:8px !important;
+            font-size:21px !important;
+            line-height:1 !important;
+            font-weight:800 !important;
+        }
+        .kk-premium-sold-value{
+            width:44px;
+            min-height:38px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:18px;
+            line-height:1;
+            font-weight:800;
+            border-radius:8px;
+            background:rgba(15,23,42,.06);
+            border:1px solid rgba(100,116,139,.16);
+        }
+        .kk-premium-sold-value strong{font-size:18px !important;}
+        .kk-premium-actions{
+            display:grid;
+            grid-template-columns:repeat(3,minmax(0,1fr));
+            gap:7px;
+            margin-top:9px;
+            padding-top:9px;
+            border-top:1px solid rgba(100,116,139,.15);
+        }
+        .kk-premium-actions.kk-one-action{grid-template-columns:1fr;}
+        .kk-premium-actions button,
+        .kk-premium-delete button{
+            min-height:40px !important;
+            font-size:13px !important;
+            font-weight:700 !important;
+            border-radius:9px !important;
+        }
+        .kk-premium-delete{
+            margin-top:8px;
+            text-align:center;
+            padding-top:8px;
+            border-top:1px solid rgba(100,116,139,.15);
+        }
+        .kk-premium-delete button{width:100%;}
+        .kk-premium-soldout{
+            margin-top:4px;
+            font-size:11px !important;
+            font-weight:800 !important;
+            letter-spacing:.7px;
+        }
+        .kk-premium-other-grid{
+            display:grid !important;
+            grid-template-columns:repeat(3,minmax(0,1fr));
+            gap:8px;
+            width:100%;
+        }
+        .kk-premium-other-grid .form-group{
+            margin:0 !important;
+            min-width:0;
+            text-align:center;
+        }
+        .kk-premium-other-grid .form-group label{
+            display:block;
+            font-size:12px !important;
+            line-height:1.2;
+            font-weight:600;
+            margin:0 0 4px;
+            opacity:.78;
+        }
+        .kk-premium-other-grid input{
+            width:100% !important;
+            min-width:0 !important;
+            height:42px !important;
+            box-sizing:border-box;
+            text-align:center;
+            font-size:17px !important;
+            font-weight:700;
+            border-radius:9px !important;
+        }
+        .kk-premium-other-grid .kk-premium-cell{min-height:66px;}
         .menu-item{
-          padding:8px !important;
-          margin-bottom:7px !important;
-          border-radius:10px !important;
-          box-sizing:border-box;
-          overflow:hidden;
+            box-sizing:border-box;
+            width:100%;
+            max-width:100%;
+            overflow:hidden;
         }
-        .kk-v7-grid,.kk-v7-other-grid{gap:4px !important;}
-        .kk-v7-box,.kk-v7-sold,.kk-v7-sold-disabled,.kk-v7-other-box,.kk-v7-other-sold{
-          min-height:50px;
+        .menu-empty{font-size:15px !important;line-height:1.4;}
+        .saved-row-main strong,.saved-recipe-name{font-size:16px !important;font-weight:800 !important;}
+        .saved-row-main span,.saved-recipe-cost{font-size:13px !important;}
+        .saved-row-actions button{min-height:38px;font-size:13px !important;}
+
+        /* Delete confirmation modal */
+        .kk-confirm-backdrop{
+            position:fixed;
+            inset:0;
+            z-index:99999;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:20px;
+            background:rgba(2,6,23,.62);
+            backdrop-filter:blur(5px);
+            -webkit-backdrop-filter:blur(5px);
         }
-        .kk-v7-box{padding:5px 3px !important;}
-        .kk-v7-box span,.kk-v7-other-box label{font-size:8.5px !important;}
-        .kk-v7-box strong,.kk-v7-other-box .kk-v7-value{font-size:13px !important;}
-        .kk-v7-title{margin:1px 0 5px !important;}
-        .kk-v7-title .menu-name{font-size:14px !important;}
-        .kk-v7-sold{padding:2px !important;}
-        .kk-v7-sold button{font-size:15px !important;}
-        .kk-v7-sold-value,.kk-v7-sold-disabled{font-size:14px !important;}
-        .kk-v7-actions,.kk-v7-other-delete{margin-top:5px !important;}
-        .kk-v7-actions button,.kk-v7-other-delete button{height:32px !important;min-height:32px !important;font-size:9.5px !important;}
-        .kk-v7-other-box input{height:29px !important;font-size:12px !important;}
-      }
-      @media(max-width:380px){
-        .menu-item{padding:7px !important;}
-        .kk-v7-box,.kk-v7-sold,.kk-v7-sold-disabled,.kk-v7-other-box,.kk-v7-other-sold{min-height:47px;}
-        .kk-v7-box strong,.kk-v7-other-box .kk-v7-value{font-size:12px !important;}
-        .kk-v7-sold button{font-size:14px !important;}
-        .kk-v7-sold-value,.kk-v7-sold-disabled{font-size:13px !important;}
-      }
+        .kk-confirm-modal{
+            width:min(420px,100%);
+            box-sizing:border-box;
+            background:#fff;
+            color:#0f172a;
+            border-radius:18px;
+            padding:22px;
+            box-shadow:0 24px 70px rgba(0,0,0,.28);
+            animation:kkModalIn .16s ease-out;
+        }
+        .kk-confirm-icon{
+            width:48px;height:48px;
+            margin:0 auto 12px;
+            border-radius:14px;
+            display:flex;align-items:center;justify-content:center;
+            font-size:24px;font-weight:800;
+            background:#fee2e2;color:#b91c1c;
+        }
+        .kk-confirm-title{
+            text-align:center;
+            font-size:19px;
+            font-weight:800;
+            margin:0 0 7px;
+        }
+        .kk-confirm-text{
+            text-align:center;
+            font-size:15px;
+            line-height:1.45;
+            margin:0 0 18px;
+            color:#475569;
+        }
+        .kk-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+        .kk-confirm-actions button{
+            min-height:46px;
+            border:0;
+            border-radius:10px;
+            font-size:15px;
+            font-weight:750;
+            cursor:pointer;
+        }
+        .kk-confirm-cancel{background:#e2e8f0;color:#0f172a;}
+        .kk-confirm-delete{background:#dc2626;color:#fff;}
+        @keyframes kkModalIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+
+        /* Save confirmation toast */
+        .kk-save-toast{
+            position:fixed;
+            left:50%;
+            bottom:24px;
+            transform:translateX(-50%);
+            z-index:99998;
+            width:min(420px,calc(100% - 32px));
+            box-sizing:border-box;
+            padding:13px 16px;
+            border-radius:12px;
+            background:#0f172a;
+            color:#fff;
+            text-align:center;
+            font-size:15px;
+            font-weight:750;
+            box-shadow:0 12px 32px rgba(0,0,0,.22);
+        }
+
+        @media(max-width:520px){
+            .kk-premium-grid,.kk-premium-other-grid{gap:6px;}
+            .kk-premium-cell{min-height:62px;padding:8px 5px;border-radius:9px;}
+            .kk-premium-cell label,.kk-premium-cell span,
+            .kk-premium-other-grid .form-group label{font-size:11px !important;}
+            .kk-premium-cell strong{font-size:17px !important;}
+            .kk-premium-food-title .menu-name,
+            .kk-premium-other-title .menu-name{font-size:17px !important;}
+            .kk-premium-sold-control{width:40px;min-width:40px;grid-template-rows:28px 1fr 28px;gap:3px;}
+            .kk-premium-sold-control button{width:40px !important;height:28px !important;min-height:28px !important;font-size:20px !important;}
+            .kk-premium-sold-value{width:40px;min-height:34px;font-size:17px;}
+            .kk-premium-sold-value strong{font-size:17px !important;}
+            .kk-premium-actions{gap:5px;margin-top:8px;padding-top:8px;}
+            .kk-premium-actions button,.kk-premium-delete button{min-height:39px !important;font-size:12px !important;}
+            .kk-premium-other-grid input{height:40px !important;font-size:16px !important;}
+            .kk-confirm-modal{padding:20px;border-radius:16px;}
+        }
+        @media(max-width:380px){
+            .kk-premium-grid,.kk-premium-other-grid{gap:4px;}
+            .kk-premium-cell{min-height:58px;padding:7px 3px;}
+            .kk-premium-cell strong{font-size:16px !important;}
+            .kk-premium-cell label,.kk-premium-cell span,
+            .kk-premium-other-grid .form-group label{font-size:10px !important;}
+            .kk-premium-actions button,.kk-premium-delete button{font-size:11px !important;min-height:37px !important;}
+        }
     `;
     document.head.appendChild(style);
 
-    function box(label,value,profit){
-        let cls='kk-v7-box';
-        if(typeof profit==='number'){
-            cls += profit>0?' profit-positive':profit<0?' profit-negative':'';
-        }
-        return '<div class="'+cls+'"><span>'+label+'</span><strong>'+value+'</strong></div>';
-    }
+    /* ---------- IN-APP CONFIRMATION ---------- */
+    window.kkConfirm = function(message, title){
+        return new Promise(function(resolve){
+            const old=document.getElementById('kkConfirmBackdrop');
+            if(old)old.remove();
 
-    function soldControl(id,qty,other){
-        return '<div class="kk-v7-sold" aria-label="Quantity sold control">'
-          +'<button type="button" class="btn btn-secondary" onclick="'+(other?'changeDailyOtherSoldQuantity(this,1)':'changeStage4SoldQuantity(this,1)')+'" aria-label="Increase sold quantity">+</button>'
-          +'<div class="kk-v7-sold-value">'+numberValue(qty)+'</div>'
-          +'<button type="button" class="btn btn-secondary" onclick="'+(other?'changeDailyOtherSoldQuantity(this,-1)':'changeStage4SoldQuantity(this,-1)')+'" aria-label="Decrease sold quantity">−</button>'
-          +'</div>';
-    }
+            const backdrop=document.createElement('div');
+            backdrop.id='kkConfirmBackdrop';
+            backdrop.className='kk-confirm-backdrop';
+            backdrop.innerHTML=
+                '<div class="kk-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="kkConfirmTitle">'+
+                    '<div class="kk-confirm-icon">!</div>'+
+                    '<h3 id="kkConfirmTitle" class="kk-confirm-title">'+escapeHtml(title||'Confirm deletion')+'</h3>'+
+                    '<p class="kk-confirm-text">'+escapeHtml(message||'Are you sure you want to delete this item?')+'</p>'+ 
+                    '<div class="kk-confirm-actions">'+
+                        '<button type="button" class="kk-confirm-cancel" data-action="cancel">Cancel</button>'+ 
+                        '<button type="button" class="kk-confirm-delete" data-action="delete">Delete</button>'+ 
+                    '</div>'+ 
+                '</div>';
 
+            document.body.appendChild(backdrop);
+            const close=function(result){
+                if(backdrop.parentNode)backdrop.parentNode.removeChild(backdrop);
+                resolve(result);
+            };
+            backdrop.querySelector('[data-action="cancel"]').onclick=function(){close(false);};
+            backdrop.querySelector('[data-action="delete"]').onclick=function(){close(true);};
+            backdrop.addEventListener('click',function(e){if(e.target===backdrop)close(false);});
+            const onKey=function(e){
+                if(e.key==='Escape'){document.removeEventListener('keydown',onKey);close(false);}
+                if(e.key==='Enter'){document.removeEventListener('keydown',onKey);close(true);}
+            };
+            document.addEventListener('keydown',onKey);
+            setTimeout(function(){const b=backdrop.querySelector('[data-action="cancel"]');if(b)b.focus();},0);
+        });
+    };
+
+    window.kkShowSaveSuccess=function(message){
+        const old=document.getElementById('kkSaveToast');
+        if(old)old.remove();
+        const toast=document.createElement('div');
+        toast.id='kkSaveToast';
+        toast.className='kk-save-toast';
+        toast.textContent='✓ '+(message||"Today's sales saved successfully.");
+        document.body.appendChild(toast);
+        setTimeout(function(){if(toast.parentNode)toast.parentNode.removeChild(toast);},4000);
+    };
+
+    /* ---------- ALL DELETE ACTIONS ---------- */
+    window.deleteIngredient=async function(id){
+        if(!await window.kkConfirm('Delete this ingredient?','Delete ingredient'))return;
+        const userId=await getCurrentUserId();
+        if(!userId)return;
+        const {error}=await supabaseClient.from('ingredients').delete().eq('id',Number(id)).eq('user_id',userId);
+        if(error){console.error(error);showMessage('ingredientMessage','Unable to delete ingredient.','error');return;}
+        await renderIngredientList();
+        showMessage('ingredientMessage','Ingredient deleted successfully.','success');
+    };
+
+    window.deleteOtherItem=async function(id){
+        if(!await window.kkConfirm('Delete this other item?','Delete other item'))return;
+        const userId=await getCurrentUserId();
+        if(!userId)return;
+        const {error}=await supabaseClient.from('other_items').delete().eq('id',Number(id)).eq('user_id',userId);
+        if(error){console.error(error);showMessage('otherItemMessage','Unable to delete other item.','error');return;}
+        await renderOtherItemList();
+        showMessage('otherItemMessage','Other item deleted successfully.','success');
+    };
+
+    window.deleteSavedRecipe=async function(id){
+        if(!await window.kkConfirm('Delete this recipe? This cannot be undone.','Delete recipe'))return;
+        savedRecipes=savedRecipes.filter(function(recipe){return String(recipe.id)!==String(id);});
+        saveAllData();
+        loadSavedRecipes();
+        loadMenuOfDay();
+        showMessage('recipeMessage','Recipe deleted successfully.','success');
+    };
+
+    window.deleteStage4Food=async function(btn){
+        const el=btn&&btn.closest?btn.closest('.menu-item'):null;
+        if(!el)return;
+        if(!await window.kkConfirm('Delete this food sale? This cannot be undone.','Delete food sale'))return;
+        const date=document.getElementById('menuDate').value||todayString();
+        const record=stage4TodayRecord(date);
+        record.foodItems=record.foodItems.filter(function(x){return String(x.id)!==String(el.dataset.foodId);});
+        setStage4FoodSoldOut(record,el.dataset.foodId,false);
+        saveAllData();
+        loadMenuOfDay();
+        updateDashboard();
+    };
+
+    window.deleteDailyOtherItem=async function(btn){
+        const el=btn&&btn.closest?btn.closest('.menu-item'):null;
+        if(!el)return;
+        if(!await window.kkConfirm('Delete this other item sale? This cannot be undone.','Delete other item sale'))return;
+        const date=document.getElementById('menuDate').value||todayString();
+        const record=stage4TodayRecord(date);
+        record.otherItems=record.otherItems.filter(function(x){return String(x.id)!==String(el.dataset.otherId);});
+        saveAllData();
+        loadMenuOfDay();
+        updateDashboard();
+    };
+
+    /* Older Daily Sales screen delete actions are also protected. */
+    window.deleteSalesFoodItem=async function(rowId){
+        if(!await window.kkConfirm('Delete this food sale? This cannot be undone.','Delete food sale'))return;
+        const date=document.getElementById('salesDate').value;
+        const record=getSavedDailySales(date);
+        if(!record||!Array.isArray(record.foodItems))return;
+        record.foodItems=record.foodItems.filter(function(item){return String(item.id)!==String(rowId);});
+        saveAllData();
+        loadDailySales();
+    };
+
+    window.deleteSalesOtherItem=async function(rowId){
+        if(!await window.kkConfirm('Delete this other item sale? This cannot be undone.','Delete other item sale'))return;
+        const date=document.getElementById('salesDate').value;
+        const record=getSavedDailySales(date);
+        if(!record||!Array.isArray(record.otherItems))return;
+        record.otherItems=record.otherItems.filter(function(item){return String(item.id)!==String(rowId);});
+        saveAllData();
+        loadDailySales();
+    };
+
+    /* ---------- PREMIUM FOOD CARDS: EXACT 3 x 2 ---------- */
     window.renderMenuItems=function(date){
         const c=document.getElementById('menuItems');
         if(!c)return;
         const record=stage4TodayRecord(date);
         c.innerHTML='';
-        if(!record.foodItems.length){
-            c.innerHTML='<div class="menu-empty">No food sales added yet.</div>';
-            return;
-        }
+        if(!record.foodItems.length){c.innerHTML='<div class="menu-empty">No food menus added yet.</div>';return;}
+
         record.foodItems.forEach(function(item){
             const sales=numberValue(item.sellingPrice)*numberValue(item.servingsSold);
             const profit=sales-numberValue(item.recipeCost);
             const pct=sales?profit/sales*100:0;
-            const soldOut=stage4IsFoodSoldOut(item);
+            const soldOut=stage4IsFoodSoldOut(record,item.id);
             const d=document.createElement('div');
             d.className='menu-item'+(soldOut?' stage4-food-sold-out':'');
             d.dataset.foodId=item.id;
 
-            const soldCell=soldOut
-                ? '<div class="kk-v7-sold-disabled">'+numberValue(item.servingsSold)+'</div>'
-                : soldControl(item.id,item.servingsSold,false);
+            const control=soldOut
+                ? '<div class="kk-premium-cell"><span>Servings Sold</span><strong>'+numberValue(item.servingsSold)+'</strong></div>'
+                : '<div class="kk-premium-cell"><span>Servings Sold</span><div class="kk-premium-sold-control">'+
+                    '<button type="button" class="btn btn-secondary btn-small" onclick="changeStage4SoldQuantity(this,1)" aria-label="Increase servings sold">+</button>'+
+                    '<div class="kk-premium-sold-value"><strong>'+numberValue(item.servingsSold)+'</strong></div>'+
+                    '<button type="button" class="btn btn-secondary btn-small" onclick="changeStage4SoldQuantity(this,-1)" aria-label="Decrease servings sold">−</button>'+
+                  '</div></div>';
 
             const actions=soldOut
-                ? '<div class="kk-v7-actions kk-one-action">'+
-                    '<button type="button" class="btn btn-secondary btn-small" onclick="editStage4Food(this)">Edit</button>'+
-                  '</div>'
-                : '<div class="kk-v7-actions">'+
+                ? '<div class="kk-premium-actions kk-one-action"><button type="button" class="btn btn-secondary btn-small" onclick="editStage4Food(this)">Edit</button></div>'
+                : '<div class="kk-premium-actions">'+
                     '<button type="button" class="btn btn-danger btn-small" onclick="deleteStage4Food(this)">Delete</button>'+
                     '<button type="button" class="btn btn-secondary btn-small" onclick="soldOutStage4Food(this)">Sold Out</button>'+
-                    '<button type="button" class="btn btn-secondary btn-small" onclick="editStage4Food(this)">Edit</button>'+
+                    '<button type="button" class="btn btn-secondary btn-small" onclick="editStage4Food(this)">Edit</button>'+ 
                   '</div>';
 
             d.innerHTML=
-                '<div class="kk-v7-title">'+
-                    '<div class="menu-name">'+escapeHtml(item.recipeName)+'</div>'+ 
-                    (soldOut?'<div class="stage4-sold-out-label kk-v7-sold-out-label">SOLD OUT</div>':'')+
-                '</div>'+ 
-                '<div class="kk-v7-grid">'+
-                    box('Recipe Cost',money(item.recipeCost))+ 
-                    box('Selling Price',money(item.sellingPrice))+ 
-                    box('Total Sales',money(sales))+ 
-                    box('Profit',money(profit),profit)+
-                    box('Profit %',pct.toFixed(2)+'%',profit)+
-                    soldCell+
+                '<div class="kk-premium-food-title"><div class="menu-name">'+escapeHtml(item.recipeName)+'</div>'+(soldOut?'<div class="stage4-sold-out-label kk-premium-soldout">SOLD OUT</div>':'')+'</div>'+ 
+                '<div class="kk-premium-grid">'+
+                    stage4Box('Recipe Cost',money(item.recipeCost))+ 
+                    stage4Box('Selling / Serving',money(item.sellingPrice))+ 
+                    stage4Box('Total Sales',money(sales))+ 
+                    stage4Box('Profit',money(profit),profit)+ 
+                    stage4Box('Profit %',pct.toFixed(2)+'%',profit)+ 
+                    control+
                 '</div>'+actions;
             c.appendChild(d);
         });
     };
 
+    /* ---------- PREMIUM OTHER ITEM CARDS: EXACT 3 x 2 ---------- */
     window.renderDailyOtherItems=function(date){
         const c=document.getElementById('dailyOtherItemsList');
         if(!c)return;
         const record=stage4TodayRecord(date);
         c.innerHTML='';
-        if(!record.otherItems.length){
-            c.innerHTML='<div class="menu-empty">No other items sold.</div>';
-            return;
-        }
+        if(!record.otherItems.length){c.innerHTML='<div class="menu-empty">No other items sold.</div>';return;}
+
         record.otherItems.forEach(function(item){
             const sales=numberValue(item.sellingPrice)*numberValue(item.quantitySold);
             const cost=numberValue(item.unitCost)*numberValue(item.quantitySold);
@@ -6343,60 +6514,30 @@ document.addEventListener("DOMContentLoaded", function() {
             d.className='menu-item';
             d.dataset.otherId=item.id;
             d.innerHTML=
-                '<div class="kk-v7-title"><div class="menu-name">'+escapeHtml(item.name)+'</div></div>'+
-                '<div class="kk-v7-other-grid">'+
-                    '<div class="kk-v7-other-box">'+
-                        '<label>Selling Price</label>'+ 
-                        '<input class="other-sale-price" type="number" min="0" step="0.01" value="'+numberValue(item.sellingPrice)+'" inputmode="decimal" autocomplete="off" oninput="updateDailyOtherItem(this)">'+
-                    '</div>'+ 
-                    '<div class="kk-v7-other-box">'+
-                        '<label>Unit Cost</label><div class="kk-v7-value">'+money(item.unitCost)+'</div>'+ 
-                    '</div>'+ 
-                    '<div class="kk-v7-other-box">'+
-                        '<label>Unit</label><div class="kk-v7-value">'+escapeHtml(item.unit||'')+'</div>'+ 
-                    '</div>'+ 
-                    '<div class="kk-v7-other-box">'+
-                        '<label>Total Sales</label><div class="kk-v7-value">'+money(sales)+'</div>'+ 
-                    '</div>'+ 
-                    '<div class="kk-v7-other-box'+(profit>0?' profit-positive':profit<0?' profit-negative':'')+'">'+
-                        '<label>Profit</label><div class="kk-v7-value">'+money(profit)+'</div>'+ 
-                    '</div>'+ 
-                    soldControl(item.id,item.quantitySold,true)+
+                '<div class="kk-premium-other-title"><div class="menu-name">'+escapeHtml(item.name)+'</div></div>'+ 
+                '<div class="kk-premium-other-grid">'+
+                    '<div class="form-group"><label>Selling Price</label><input class="other-sale-price" type="number" min="0" step="0.01" value="'+numberValue(item.sellingPrice)+'" inputmode="decimal" autocomplete="off" oninput="updateDailyOtherItem(this)"></div>'+ 
+                    '<div class="form-group"><label>Unit Cost</label><input class="other-unit-cost" type="number" value="'+numberValue(item.unitCost)+'" readonly></div>'+ 
+                    '<div class="form-group"><label>Unit</label><input class="other-unit" type="text" value="'+escapeHtml(item.unit||'')+'" readonly></div>'+ 
+                    '<div class="kk-premium-cell"><span>Total Sales</span><strong>'+money(sales)+'</strong></div>'+ 
+                    '<div class="kk-premium-cell"><span>Profit</span><strong class="'+(profit>0?'profit-positive':profit<0?'profit-negative':'')+'">'+money(profit)+'</strong></div>'+ 
+                    '<div class="kk-premium-cell"><span>Qty Sold</span><div class="kk-premium-sold-control">'+
+                        '<button type="button" class="btn btn-secondary btn-small" onclick="changeDailyOtherSoldQuantity(this,1)" aria-label="Increase quantity sold">+</button>'+ 
+                        '<div class="kk-premium-sold-value"><strong>'+numberValue(item.quantitySold)+'</strong></div>'+ 
+                        '<button type="button" class="btn btn-secondary btn-small" onclick="changeDailyOtherSoldQuantity(this,-1)" aria-label="Decrease quantity sold">−</button>'+ 
+                    '</div></div>'+ 
                 '</div>'+ 
-                '<div class="kk-v7-other-delete">'+
-                    '<button type="button" class="btn btn-danger btn-small" onclick="deleteDailyOtherItem(this)">Delete</button>'+ 
-                '</div>';
+                '<div class="kk-premium-delete"><button type="button" class="btn btn-danger btn-small" onclick="deleteDailyOtherItem(this)">Delete</button></div>';
             c.appendChild(d);
         });
     };
 
-    /* Save confirmation: keep the existing save calculation and add a
-       dedicated, visible confirmation under the sales summary. */
-    const originalSaveCombinedMenuSales=window.saveCombinedMenuSales;
+    /* ---------- SAVE CONFIRMATION ---------- */
     window.saveCombinedMenuSales=function(){
-        if(typeof originalSaveCombinedMenuSales==='function'){
-            originalSaveCombinedMenuSales();
-        }
-        const date=document.getElementById('menuDate')?.value||todayString();
-        const msg=document.getElementById('menuMessage');
-        if(msg){
-            msg.textContent='✓ Today\'s sales saved successfully.';
-            msg.className='message success';
-            msg.style.display='block';
-            clearTimeout(window.__kkV7SaveTimer);
-            window.__kkV7SaveTimer=setTimeout(function(){msg.style.display='';},4000);
-        }
-        if(typeof calculateCombinedSales==='function')calculateCombinedSales(date);
+        const date=document.getElementById('menuDate').value||todayString();
+        calculateCombinedSales(date);
+        showMessage('menuMessage',"Today's Menu & Sales saved successfully.",'success');
+        window.kkShowSaveSuccess("Today's sales saved successfully.");
     };
 
-    if(typeof document!=='undefined'){
-        const refresh=function(){
-            try{
-                const dateEl=document.getElementById('menuDate');
-                if(dateEl && dateEl.value && typeof loadMenuOfDay==='function')loadMenuOfDay();
-            }catch(e){console.error('V7 compact refresh error:',e);}
-        };
-        if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});
-        else setTimeout(refresh,0);
-    }
 })();
