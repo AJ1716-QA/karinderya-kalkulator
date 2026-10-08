@@ -6048,3 +6048,423 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
 })();
+
+/* =========================================================
+   V7 COMPACT MOBILE LAYOUT + SAVE CONFIRMATION
+   - Keeps V6 sales behavior unchanged.
+   - Reduces card height, padding and vertical gaps.
+   - Keeps tap targets comfortable for mobile users.
+   - Shows a clear confirmation directly below Sales Summary.
+========================================================= */
+(function(){
+    if(typeof document === "undefined") return;
+
+    var style = document.createElement("style");
+    style.id = "kk-v7-compact-sales-style";
+    style.textContent = `
+        /* Compact food/other-item cards */
+        .menu-item{
+            box-sizing:border-box !important;
+            width:100% !important;
+            max-width:100% !important;
+            padding:9px 10px !important;
+            margin:0 0 7px !important;
+            border-radius:10px !important;
+            overflow:hidden !important;
+        }
+
+        .kk-prof-card-title{
+            margin-bottom:6px !important;
+            gap:6px !important;
+        }
+
+        .kk-prof-card-title .menu-name,
+        .menu-name{
+            font-size:15px !important;
+            line-height:1.2 !important;
+        }
+
+        .kk-prof-values{
+            gap:4px !important;
+            margin:0 !important;
+        }
+
+        .kk-prof-values .menu-summary-box,
+        .menu-summary-box{
+            min-height:0 !important;
+            padding:5px 6px !important;
+            border-radius:7px !important;
+        }
+
+        .kk-prof-values .menu-summary-box span,
+        .menu-summary-box span{
+            font-size:8px !important;
+            line-height:1.15 !important;
+            margin-bottom:2px !important;
+        }
+
+        .kk-prof-values .menu-summary-box strong,
+        .menu-summary-box strong{
+            font-size:13px !important;
+            line-height:1.15 !important;
+        }
+
+        .kk-prof-sales-row{
+            gap:5px !important;
+            margin-top:5px !important;
+        }
+
+        .kk-sold-total-box{
+            padding:5px 7px !important;
+            border-radius:7px !important;
+        }
+
+        .kk-sold-total-box span{
+            font-size:8px !important;
+            line-height:1.1 !important;
+        }
+
+        .kk-sold-total-box strong{
+            font-size:17px !important;
+            line-height:1.1 !important;
+        }
+
+        .kk-v6-sold-control{
+            grid-template-columns:34px minmax(0,1fr) 34px !important;
+            gap:4px !important;
+        }
+
+        .kk-v6-sold-control button{
+            width:34px !important;
+            min-width:34px !important;
+            height:34px !important;
+            min-height:34px !important;
+            padding:0 !important;
+            font-size:17px !important;
+            line-height:1 !important;
+        }
+
+        .kk-v6-sold-value{
+            height:34px !important;
+            min-height:34px !important;
+            padding:3px 4px !important;
+            border-radius:7px !important;
+        }
+
+        .kk-v6-sold-value span{
+            font-size:7px !important;
+            line-height:1 !important;
+        }
+
+        .kk-v6-sold-value strong{
+            font-size:15px !important;
+            line-height:1.05 !important;
+        }
+
+        .kk-prof-actions,
+        .kk-prof-other-actions{
+            gap:5px !important;
+            margin-top:6px !important;
+            padding-top:6px !important;
+        }
+
+        .kk-prof-actions button,
+        .kk-prof-other-actions button{
+            height:34px !important;
+            min-height:34px !important;
+            padding:4px 8px !important;
+            font-size:10px !important;
+            line-height:1 !important;
+        }
+
+        .kk-prof-other-fields{
+            gap:5px !important;
+            margin:0 !important;
+        }
+
+        .kk-prof-other-fields .form-group{
+            margin-bottom:0 !important;
+        }
+
+        .kk-prof-other-fields label{
+            font-size:8px !important;
+            margin-bottom:2px !important;
+        }
+
+        .kk-prof-other-fields input{
+            height:34px !important;
+            min-height:34px !important;
+            padding:5px 7px !important;
+            font-size:13px !important;
+            box-sizing:border-box !important;
+        }
+
+        .kk-prof-other-fields + .kk-prof-sales-row{
+            margin-top:5px !important;
+        }
+
+        .kk-prof-other-actions{
+            border-top:0 !important;
+        }
+
+        .kk-prof-other-actions button{
+            width:auto !important;
+            min-width:72px !important;
+        }
+
+        .stage4-sold-out-label{
+            font-size:8px !important;
+            line-height:1 !important;
+            margin-top:2px !important;
+        }
+
+        /* Compact edit mode without making fields difficult to tap */
+        .menu-item .form-grid{
+            gap:6px !important;
+        }
+
+        .menu-item .form-group{
+            margin-bottom:5px !important;
+        }
+
+        .menu-item .form-group label{
+            font-size:9px !important;
+            margin-bottom:3px !important;
+        }
+
+        .menu-item .form-group input,
+        .menu-item .form-group select{
+            min-height:36px !important;
+            height:36px !important;
+            padding:5px 7px !important;
+            font-size:13px !important;
+            box-sizing:border-box !important;
+        }
+
+        .menu-item .button-row{
+            gap:5px !important;
+            margin-top:5px !important;
+        }
+
+        .menu-item .button-row button{
+            min-height:34px !important;
+            height:34px !important;
+            padding:5px 9px !important;
+            font-size:10px !important;
+        }
+
+        /* Save confirmation directly beneath Sales Summary */
+        .kk-sales-save-confirmation{
+            display:none;
+            box-sizing:border-box;
+            width:100%;
+            margin:8px 0 10px;
+            padding:8px 10px;
+            border-radius:8px;
+            text-align:center;
+            font-size:12px;
+            font-weight:700;
+            line-height:1.25;
+            background:rgba(34,197,94,.12);
+            border:1px solid rgba(34,197,94,.35);
+            color:#15803d;
+        }
+
+        .kk-sales-save-confirmation.show{
+            display:block;
+        }
+
+        @media(max-width:520px){
+            .menu-item{
+                padding:8px 9px !important;
+                margin-bottom:6px !important;
+                border-radius:9px !important;
+            }
+
+            .kk-prof-card-title{
+                margin-bottom:5px !important;
+            }
+
+            .kk-prof-card-title .menu-name,
+            .menu-name{
+                font-size:14px !important;
+            }
+
+            .kk-prof-values{
+                gap:3px !important;
+            }
+
+            .kk-prof-values .menu-summary-box,
+            .menu-summary-box{
+                padding:4px 5px !important;
+            }
+
+            .kk-prof-values .menu-summary-box span,
+            .menu-summary-box span{
+                font-size:7px !important;
+            }
+
+            .kk-prof-values .menu-summary-box strong,
+            .menu-summary-box strong{
+                font-size:12px !important;
+            }
+
+            .kk-prof-sales-row{
+                gap:4px !important;
+                margin-top:4px !important;
+            }
+
+            .kk-sold-total-box{
+                padding:4px 6px !important;
+            }
+
+            .kk-sold-total-box strong{
+                font-size:16px !important;
+            }
+
+            .kk-v6-sold-control{
+                grid-template-columns:32px minmax(0,1fr) 32px !important;
+                gap:3px !important;
+            }
+
+            .kk-v6-sold-control button{
+                width:32px !important;
+                min-width:32px !important;
+                height:32px !important;
+                min-height:32px !important;
+            }
+
+            .kk-v6-sold-value{
+                height:32px !important;
+                min-height:32px !important;
+            }
+
+            .kk-prof-actions,
+            .kk-prof-other-actions{
+                gap:4px !important;
+                margin-top:5px !important;
+                padding-top:5px !important;
+            }
+
+            .kk-prof-actions button,
+            .kk-prof-other-actions button{
+                height:32px !important;
+                min-height:32px !important;
+                padding:4px 6px !important;
+                font-size:9px !important;
+            }
+
+            .kk-prof-other-fields{
+                gap:4px !important;
+            }
+
+            .kk-prof-other-fields input{
+                height:33px !important;
+                min-height:33px !important;
+                font-size:12px !important;
+            }
+
+            .kk-sales-save-confirmation{
+                margin:6px 0 8px;
+                padding:7px 8px;
+                font-size:11px;
+            }
+        }
+
+        @media(max-width:380px){
+            .menu-item{
+                padding:7px 8px !important;
+            }
+
+            .kk-prof-card-title .menu-name,
+            .menu-name{
+                font-size:13px !important;
+            }
+
+            .kk-prof-values .menu-summary-box strong,
+            .menu-summary-box strong{
+                font-size:11px !important;
+            }
+
+            .kk-prof-actions button,
+            .kk-prof-other-actions button{
+                font-size:8.5px !important;
+                padding-left:5px !important;
+                padding-right:5px !important;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    function ensureSalesSavedConfirmation(){
+        var percent = document.getElementById("combinedProfitPercent");
+        if(!percent) return null;
+
+        var existing = document.getElementById("kkSalesSaveConfirmation");
+        if(existing) return existing;
+
+        /* Put the message after the summary's containing block. */
+        var summary = percent.parentElement;
+        if(summary && summary.parentElement) summary = summary.parentElement;
+
+        var msg = document.createElement("div");
+        msg.id = "kkSalesSaveConfirmation";
+        msg.className = "kk-sales-save-confirmation";
+        msg.setAttribute("role","status");
+        msg.setAttribute("aria-live","polite");
+        msg.textContent = "✓ Today’s sales saved successfully.";
+
+        if(summary && summary.parentNode){
+            summary.parentNode.insertBefore(msg, summary.nextSibling);
+        }else if(percent.parentNode){
+            percent.parentNode.appendChild(msg);
+        }
+
+        return msg;
+    }
+
+    function showSalesSavedConfirmation(){
+        var msg = ensureSalesSavedConfirmation();
+        if(!msg) return;
+
+        msg.textContent = "✓ Today’s sales saved successfully.";
+        msg.classList.add("show");
+
+        if(msg._hideTimer) clearTimeout(msg._hideTimer);
+        msg._hideTimer = setTimeout(function(){
+            msg.classList.remove("show");
+        }, 4000);
+    }
+
+    /* Override only the save action. The existing V6 calculation/storage
+       function remains unchanged and is called first. */
+    window.saveCombinedMenuSales = function(){
+        var dateEl = document.getElementById("menuDate");
+        var date = (dateEl && dateEl.value) ||
+            (typeof todayString === "function" ? todayString() : "");
+
+        if(typeof calculateCombinedSales === "function"){
+            calculateCombinedSales(date);
+        }
+
+        showMessage(
+            "menuMessage",
+            "Today’s Menu & Sales saved successfully.",
+            "success"
+        );
+
+        /* Allow the summary values to finish rendering before placing
+           the confirmation immediately beneath the summary. */
+        setTimeout(showSalesSavedConfirmation, 0);
+    };
+
+    function installMessageWhenReady(){
+        ensureSalesSavedConfirmation();
+    }
+
+    if(document.readyState === "loading"){
+        document.addEventListener("DOMContentLoaded", installMessageWhenReady, {once:true});
+    }else{
+        setTimeout(installMessageWhenReady, 0);
+    }
+})();
