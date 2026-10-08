@@ -7018,3 +7018,279 @@ document.addEventListener("DOMContentLoaded", function() {
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refreshPremiumProfit,{once:true});
     else setTimeout(refreshPremiumProfit,0);
 })();
+
+/* =========================================================
+   PROFIT CALCULATOR PREMIUM V3 — MOBILE REFINEMENT / BUG FIX
+   - 4-column Sales + Cost of Goods summary
+   - Reliable Add Employee handler
+   - No manual Labor input
+   - Rent starts from saved recurring setting only; no forced ₱3,000
+   - Employee rows calculate labor immediately
+   - OPEX daily/monthly logic preserved
+========================================================= */
+(function(){
+    'use strict';
+
+    const STYLE_ID='kk-profit-premium-v3';
+
+    function n(v){return typeof numberValue==='function'?numberValue(v):(parseFloat(v)||0);}
+    function m(v){return typeof money==='function'?money(v):'₱'+n(v).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+    function today(){return typeof todayString==='function'?todayString():new Date().toISOString().slice(0,10);}
+
+    function addStyles(){
+        if(document.getElementById(STYLE_ID))return;
+        const s=document.createElement('style');s.id=STYLE_ID;
+        s.textContent=`
+          .kk-profit-sales-cost-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
+          .kk-profit-sales-cost-cell{min-width:0;border:1px solid #d9e2ec;border-radius:11px;background:#f8fafc;padding:10px 6px;text-align:center}
+          .kk-profit-sales-cost-cell span{display:block;font-size:11px;font-weight:750;color:#64748b;line-height:1.2;min-height:27px}
+          .kk-profit-sales-cost-cell strong{display:block;font-size:17px;font-weight:900;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+          .kk-profit-sales-cost-cell.total{background:#eef4f9}
+          .kk-profit-section-title{font-size:18px;font-weight:900;color:#123b63;margin-top:2px}
+          .kk-employee-actions{display:flex;justify-content:flex-end;margin-top:9px}
+          .kk-labor-table{table-layout:fixed}
+          .kk-labor-table th,.kk-labor-table td{overflow:hidden}
+          .kk-labor-table input{font-size:16px!important}
+          .kk-present-wrap input{width:23px!important;height:23px!important;cursor:pointer}
+          .kk-labor-delete{cursor:pointer}
+          .kk-employee-total-line{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:10px 12px;border-radius:10px;background:#eef4f9;border:1px solid #cbd5e1}
+          .kk-employee-total-line span{font-size:13px;font-weight:800;color:#475569}.kk-employee-total-line strong{font-size:18px;font-weight:900;color:#123b63}
+          .kk-profit-message-spacer{min-height:0}
+          @media(max-width:600px){
+            .kk-profit-sales-cost-grid{gap:6px}
+            .kk-profit-sales-cost-cell{padding:9px 3px;border-radius:9px}
+            .kk-profit-sales-cost-cell span{font-size:10px;min-height:25px}
+            .kk-profit-sales-cost-cell strong{font-size:14px}
+          }
+          @media(max-width:390px){
+            .kk-profit-sales-cost-cell span{font-size:9px}
+            .kk-profit-sales-cost-cell strong{font-size:13px}
+          }
+        `;
+        document.head.appendChild(s);
+    }
+
+    function getSalesForDate(date){
+        const sales=typeof getSavedDailySales==='function'?getSavedDailySales(date):null;
+        return {
+            foodSales:sales?n(sales.foodSales):0,
+            otherSales:sales?n(sales.otherSales):0,
+            foodCost:sales?n(sales.foodCost):0,
+            otherCost:sales?n(sales.otherCost):0
+        };
+    }
+
+    function renderSalesCostFourColumns(date){
+        const sales=getSalesForDate(date);
+        const totalSales=sales.foodSales+sales.otherSales;
+        const totalCost=sales.foodCost+sales.otherCost;
+        const gross=totalSales-totalCost;
+
+        const oldSales=document.getElementById('profitFoodSales');
+        if(oldSales){
+            const oldCard=oldSales.closest('.card');
+            if(oldCard){
+                let grid=oldCard.querySelector('.kk-profit-sales-cost-grid');
+                if(!grid){
+                    grid=document.createElement('div');grid.className='kk-profit-sales-cost-grid';
+                    grid.innerHTML=
+                      '<div class="kk-profit-sales-cost-cell"><span>Cooked Food Sales</span><strong id="profitFoodSales">'+m(sales.foodSales)+'</strong></div>'+
+                      '<div class="kk-profit-sales-cost-cell"><span>Other Item Sales</span><strong id="profitOtherSales">'+m(sales.otherSales)+'</strong></div>'+
+                      '<div class="kk-profit-sales-cost-cell"><span>Cooked Food Cost</span><strong id="profitFoodCost">'+m(sales.foodCost)+'</strong></div>'+
+                      '<div class="kk-profit-sales-cost-cell"><span>Other Item Cost</span><strong id="profitOtherCost">'+m(sales.otherCost)+'</strong></div>';
+                    oldCard.innerHTML=
+                      '<div class="section-title" style="font-size:18px">Sales & Cost of Goods</div>'+grid.outerHTML+
+                      '<div class="profit-line"><span>Total Sales</span><strong id="profitTotalSales">'+m(totalSales)+'</strong></div>'+ 
+                      '<div class="profit-line"><span>Total Cost of Goods</span><strong id="profitTotalCost">'+m(totalCost)+'</strong></div>'+ 
+                      '<div class="profit-line"><span>Gross Profit</span><strong id="profitGrossProfit">'+m(gross)+'</strong></div>';
+                }else{
+                    const set=function(id,val){const e=document.getElementById(id);if(e)e.textContent=m(val);};
+                    set('profitFoodSales',sales.foodSales);set('profitOtherSales',sales.otherSales);set('profitFoodCost',sales.foodCost);set('profitOtherCost',sales.otherCost);set('profitTotalSales',totalSales);set('profitTotalCost',totalCost);set('profitGrossProfit',gross);
+                }
+            }
+        }
+        return sales;
+    }
+
+    function previousRecord(date){
+        if(!Array.isArray(profitRecords))return null;
+        return profitRecords.filter(r=>r&&r.date&&r.date<date).sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0]||null;
+    }
+
+    function defaultEmployees(){
+        const stamp=Date.now();
+        return [
+          {id:'emp_'+stamp+'_1',name:'Employee 1',dailyRate:0,present:true},
+          {id:'emp_'+stamp+'_2',name:'Employee 2',dailyRate:0,present:true}
+        ];
+    }
+    function normalizeEmployees(list){
+        if(!Array.isArray(list)||!list.length)return defaultEmployees();
+        return list.map((e,i)=>({id:String(e.id||('emp_'+Date.now()+'_'+i)),name:String(e.name||('Employee '+(i+1))),dailyRate:n(e.dailyRate),present:e.present!==false}));
+    }
+    function legacyToOpex(record){
+        const e=record&&record.expenses?record.expenses:{};
+        return {monthlyRent:n(e.rent)*30,gas:n(e.gas),electricityMonthly:n(e.electricity)*30,waterMonthly:n(e.water)*30,wifiMonthly:n(e.wifi)*30,other:n(e.other),employees:e.labor>0?[{id:'legacy_labor',name:'Employee 1',dailyRate:n(e.labor),present:true}]:defaultEmployees()};
+    }
+    function getOpexForDate(date){
+        const existing=profitRecords.find(r=>r.date===date);
+        if(existing&&existing.opex)return {
+          monthlyRent:n(existing.opex.monthlyRent),gas:n(existing.opex.gas),electricityMonthly:n(existing.opex.electricityMonthly),waterMonthly:n(existing.opex.waterMonthly),wifiMonthly:n(existing.opex.wifiMonthly),other:n(existing.opex.other),employees:normalizeEmployees(existing.opex.employees)
+        };
+        if(existing&&existing.expenses)return legacyToOpex(existing);
+        const prev=previousRecord(date);
+        if(prev&&prev.opex)return {monthlyRent:n(prev.opex.monthlyRent),gas:0,electricityMonthly:n(prev.opex.electricityMonthly),waterMonthly:n(prev.opex.waterMonthly),wifiMonthly:n(prev.opex.wifiMonthly),other:0,employees:normalizeEmployees(prev.opex.employees).map(e=>Object.assign({},e,{present:true}))};
+        if(prev&&prev.expenses){const x=legacyToOpex(prev);x.gas=0;x.other=0;return x;}
+        return {monthlyRent:0,gas:0,electricityMonthly:0,waterMonthly:0,wifiMonthly:0,other:0,employees:defaultEmployees()};
+    }
+
+    function getEmployeesFromUI(){
+        return Array.from(document.querySelectorAll('#kkEmployeeTableWrap .kk-employee-row')).map((row,i)=>({
+          id:String(row.dataset.id||('emp_'+Date.now()+'_'+i)),
+          name:String(row.querySelector('.kk-employee-name')?.value||('Employee '+(i+1))).trim()||('Employee '+(i+1)),
+          dailyRate:n(row.querySelector('.kk-employee-rate')?.value),
+          present:!!row.querySelector('.kk-employee-present')?.checked
+        }));
+    }
+    function laborTotal(list){return (list||[]).reduce((sum,e)=>sum+(e.present?n(e.dailyRate):0),0);}
+
+    function opexInput(icon,title,caption,id,value,dailyText){
+        return '<div class="kk-opex-item"><div class="kk-opex-title">'+icon+' '+title+'</div><input id="'+id+'" type="number" min="0" step="0.01" inputmode="decimal" value="'+n(value)+'" aria-label="'+title+' '+caption+'"><div class="kk-opex-caption">'+caption+'</div><div class="kk-opex-daily" id="'+id+'Daily">'+dailyText+'</div></div>';
+    }
+
+    function renderEmployees(employees){
+        const wrap=document.getElementById('kkEmployeeTableWrap');if(!wrap)return;
+        employees=Array.isArray(employees)?employees:[];
+        let html='';
+        if(employees.length){
+          html='<table class="kk-labor-table"><thead><tr><th style="width:40%">Employee</th><th style="width:28%">Daily Rate</th><th style="width:18%;text-align:center">Present</th><th style="width:14%"></th></tr></thead><tbody>';
+          employees.forEach((e,i)=>{
+            html+='<tr class="kk-employee-row" data-id="'+escapeHtml(e.id)+'">'+
+              '<td><input class="kk-employee-name" type="text" value="'+escapeHtml(e.name)+'" placeholder="Employee '+(i+1)+'"></td>'+
+              '<td><input class="kk-employee-rate" type="number" min="0" step="0.01" inputmode="decimal" value="'+n(e.dailyRate)+'" placeholder="₱0"></td>'+
+              '<td><div class="kk-present-wrap"><input class="kk-employee-present" type="checkbox" '+(e.present?'checked':'')+'></div></td>'+
+              '<td><button type="button" class="btn btn-danger btn-small kk-labor-delete" aria-label="Delete employee">×</button></td></tr>';
+          });
+          html+='</tbody></table>';
+        }else html='<div class="kk-labor-empty">No employees added.</div>';
+        wrap.innerHTML=html;
+
+        wrap.querySelectorAll('.kk-employee-row').forEach(row=>{
+          row.querySelectorAll('input').forEach(el=>{
+            el.addEventListener('input',function(){window.calculateProfit();});
+            el.addEventListener('change',function(){window.calculateProfit();});
+          });
+          const del=row.querySelector('.kk-labor-delete');
+          if(del)del.onclick=function(){
+            const remove=function(){
+              const current=getEmployeesFromUI().filter(e=>e.id!==row.dataset.id);
+              renderEmployees(current);window.calculateProfit();
+            };
+            if(typeof window.kkPremiumConfirmDelete==='function')window.kkPremiumConfirmDelete('Delete this employee?',remove);else remove();
+          };
+        });
+    }
+
+    function buildOpex(opex){
+        addStyles();
+        const profit=document.getElementById('profitScreen');if(!profit)return;
+        let card=document.getElementById('kkProfitOpexCard');
+        if(!card){card=document.createElement('div');profit.appendChild(card);}
+        card.className='card kk-opex-card';card.id='kkProfitOpexCard';
+        const emp=normalizeEmployees(opex.employees);
+        card.innerHTML='<div class="section-title" style="font-size:19px">Operating Expenses</div>'+ 
+          '<div class="small-text" style="margin-bottom:10px">Monthly expenses are converted to a daily cost. Gas and Other are actual daily amounts.</div>'+ 
+          '<div class="kk-opex-grid">'+
+          opexInput('🏠','Rent','Monthly','kkMonthlyRent',opex.monthlyRent,'Daily: '+m(n(opex.monthlyRent)/30))+ 
+          opexInput('🔥','Gas / LPG','Actual','kkGasActual',opex.gas,'Daily: '+m(opex.gas))+ 
+          opexInput('⚡','Electricity','Previous Bill','kkElectricityMonthly',opex.electricityMonthly,'Daily: '+m(n(opex.electricityMonthly)/30))+ 
+          opexInput('💧','Water','Previous Bill','kkWaterMonthly',opex.waterMonthly,'Daily: '+m(n(opex.waterMonthly)/30))+ 
+          opexInput('📶','WiFi','Monthly','kkWifiMonthly',opex.wifiMonthly,'Daily: '+m(n(opex.wifiMonthly)/30))+ 
+          opexInput('📦','Other','Actual','kkOtherDaily',opex.other,'Daily: '+m(opex.other))+ 
+          '<div class="kk-opex-item"><div class="kk-opex-title">👷 Labor</div><div id="kkLaborTotalValue" class="kk-opex-labor-value">'+m(laborTotal(emp))+'</div><div class="kk-opex-caption">Auto from employees</div></div>'+ 
+          '<div class="kk-opex-total"><span>Total OPEX</span><strong id="kkOpexTotal">₱0.00</strong></div></div>'+ 
+          '<div class="button-row" style="margin-top:10px"><button type="button" class="btn btn-primary" id="kkCalculatePremiumBtn">Calculate</button><button type="button" class="btn btn-success" id="kkSaveProfitBtn">Save Profit Record</button></div>'+ 
+          '<div id="profitMessage" class="message"></div>';
+
+        let labor=document.getElementById('kkLaborCard');
+        if(!labor){labor=document.createElement('div');labor.id='kkLaborCard';card.insertAdjacentElement('afterend',labor);}
+        labor.className='kk-labor-card';
+        labor.innerHTML='<div class="kk-labor-header"><div class="kk-labor-title">👷 Employees / Labor</div><button type="button" class="btn btn-primary btn-small" id="kkAddEmployeeBtn">＋ Add Employee</button></div><div id="kkEmployeeTableWrap"></div><div class="kk-employee-total-line"><span>Total Labor Cost</span><strong id="kkEmployeeTotalValue">'+m(laborTotal(emp))+'</strong></div>';
+        renderEmployees(emp);
+
+        ['kkMonthlyRent','kkGasActual','kkElectricityMonthly','kkWaterMonthly','kkWifiMonthly','kkOtherDaily'].forEach(id=>{
+          const el=document.getElementById(id);if(el)el.addEventListener('input',function(){window.calculateProfit();});
+        });
+
+        const add=document.getElementById('kkAddEmployeeBtn');
+        if(add){
+          add.onclick=function(e){
+            e.preventDefault();
+            const current=getEmployeesFromUI();
+            const index=current.length+1;
+            current.push({id:'emp_'+Date.now()+'_'+index,name:'Employee '+index,dailyRate:0,present:true});
+            renderEmployees(current);
+            window.calculateProfit();
+            setTimeout(function(){const rows=document.querySelectorAll('#kkEmployeeTableWrap .kk-employee-row');const last=rows[rows.length-1];if(last){last.querySelector('.kk-employee-name')?.focus();}},30);
+          };
+        }
+        if(typeof syncHiddenLegacyInputs==='function')syncHiddenLegacyInputs();
+    }
+
+    function readOpex(){
+        return {
+          monthlyRent:n(document.getElementById('kkMonthlyRent')?.value),gas:n(document.getElementById('kkGasActual')?.value),
+          electricityMonthly:n(document.getElementById('kkElectricityMonthly')?.value),waterMonthly:n(document.getElementById('kkWaterMonthly')?.value),
+          wifiMonthly:n(document.getElementById('kkWifiMonthly')?.value),other:n(document.getElementById('kkOtherDaily')?.value),employees:getEmployeesFromUI()
+        };
+    }
+
+    function updateDaily(opex){
+        const values={kkMonthlyRent:n(opex.monthlyRent)/30,kkGasActual:n(opex.gas),kkElectricityMonthly:n(opex.electricityMonthly)/30,kkWaterMonthly:n(opex.waterMonthly)/30,kkWifiMonthly:n(opex.wifiMonthly)/30};
+        Object.keys(values).forEach(id=>{const el=document.getElementById(id+'Daily');if(el)el.textContent='Daily: '+m(values[id]);});
+        const labor=laborTotal(opex.employees);
+        const lv=document.getElementById('kkLaborTotalValue');if(lv)lv.textContent=m(labor);
+        const ev=document.getElementById('kkEmployeeTotalValue');if(ev)ev.textContent=m(labor);
+        const total=Object.values(values).reduce((a,b)=>a+b,0)+labor+n(opex.other);
+        const ot=document.getElementById('kkOpexTotal');if(ot)ot.textContent=m(total);
+        return {rent:values.kkMonthlyRent,gas:values.kkGasActual,electricity:values.kkElectricityMonthly,water:values.kkWaterMonthly,wifi:values.kkWifiMonthly,labor:labor,other:n(opex.other),total:total};
+    }
+
+    window.calculateProfit=function(){
+        const date=document.getElementById('profitDate')?.value||today();
+        const sales=getSalesForDate(date);
+        const totalSales=sales.foodSales+sales.otherSales,totalCost=sales.foodCost+sales.otherCost,gross=totalSales-totalCost;
+        const opex=readOpex(),daily=updateDaily(opex),net=gross-daily.total,margin=totalSales?net/totalSales*100:0;
+        const set=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=m(val);};
+        set('profitFoodSales',sales.foodSales);set('profitOtherSales',sales.otherSales);set('profitFoodCost',sales.foodCost);set('profitOtherCost',sales.otherCost);set('profitTotalSales',totalSales);set('profitTotalCost',totalCost);set('profitGrossProfit',gross);set('profitExpenses',daily.total);set('profitNetProfit',net);
+        const np=document.getElementById('kkNetProfitPremium');if(np){np.textContent=m(net);np.classList.toggle('kk-profit-positive',net>0);np.classList.toggle('kk-profit-negative',net<0);}
+        const gp=document.getElementById('kkGrossProfitPremium');if(gp)gp.textContent=m(gross);
+        const tp=document.getElementById('kkTotalOpexPremium');if(tp)tp.textContent=m(daily.total);
+        const pct=document.getElementById('kkNetProfitPercent');if(pct)pct.textContent=margin.toFixed(2)+'%';
+        return {foodSales:sales.foodSales,otherSales:sales.otherSales,totalSales,foodCost:sales.foodCost,otherCost:sales.otherCost,totalCost,grossProfit:gross,expenses:daily.total,netProfit:net,netProfitPercent:margin,opex,dailyOpex:daily};
+    };
+
+    window.loadProfitCalculator=function(){
+        const dateInput=document.getElementById('profitDate');if(!dateInput)return;
+        if(!dateInput.value)dateInput.value=today();
+        const date=dateInput.value;
+        renderSalesCostFourColumns(date);
+        buildOpex(getOpexForDate(date));
+        if(typeof ensureProfitResultUI==='function')ensureProfitResultUI();
+        window.calculateProfit();
+    };
+    window.loadProfitForDate=window.loadProfitCalculator;
+
+    window.saveProfitRecord=function(){
+        const date=document.getElementById('profitDate')?.value;if(!date)return;
+        const r=window.calculateProfit(),o=r.opex;
+        const record={id:Date.now().toString(),date:date,foodSales:r.foodSales,otherSales:r.otherSales,totalSales:r.totalSales,foodCost:r.foodCost,otherCost:r.otherCost,totalCost:r.totalCost,grossProfit:r.grossProfit,expenses:{rent:r.dailyOpex.rent,gas:r.dailyOpex.gas,electricity:r.dailyOpex.electricity,water:r.dailyOpex.water,wifi:r.dailyOpex.wifi,labor:r.dailyOpex.labor,other:r.dailyOpex.other},totalExpenses:r.expenses,netProfit:r.netProfit,opex:{monthlyRent:o.monthlyRent,gas:o.gas,electricityMonthly:o.electricityMonthly,waterMonthly:o.waterMonthly,wifiMonthly:o.wifiMonthly,other:o.other,employees:o.employees}};
+        const idx=profitRecords.findIndex(r=>r.date===date);if(idx>=0){record.id=profitRecords[idx].id;profitRecords[idx]=record;}else profitRecords.push(record);
+        saveAllData();
+        if(typeof showMessage==='function')showMessage('profitMessage','Profit Calculator record saved successfully.','success');
+        if(typeof updateDashboard==='function')updateDashboard();
+    };
+
+    function refresh(){addStyles();if(document.getElementById('profitScreen'))setTimeout(()=>window.loadProfitCalculator(),0);}
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
+})();
