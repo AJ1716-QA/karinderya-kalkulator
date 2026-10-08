@@ -5365,3 +5365,130 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 })();
+
+/* =========================================================
+   CUMULATIVE ADD-SOLD PROFESSIONAL MOBILE CARD V4
+   - Professional, mobile-safe card layout
+   - Action buttons are BELOW the values
+   - Delete / Sold Out / Edit share one row
+   - Sold Out card shows Edit only
+   - Prevent horizontal overflow
+========================================================= */
+(function(){
+    const style=document.createElement('style');
+    style.id='kk-professional-mobile-card-v4';
+    style.textContent=''
+      +'.menu-item{box-sizing:border-box;width:100%;max-width:100%;overflow:hidden;border-radius:14px;padding:14px;margin:0 0 14px;} '
+      +'.menu-item *{box-sizing:border-box;max-width:100%;} '
+      +'.menu-top{display:block !important;width:100%;} '
+      +'.menu-top>.menu-actions{display:none !important;} '
+      +'.kk-prof-card-title{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;width:100%;margin-bottom:10px;} '
+      +'.kk-prof-card-title .menu-name{min-width:0;overflow-wrap:anywhere;font-size:18px;font-weight:700;line-height:1.25;} '
+      +'.kk-prof-values{display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;width:100%;} '
+      +'.kk-prof-values .menu-summary-box{min-width:0 !important;width:100%;padding:9px 8px !important;border-radius:9px;overflow:hidden;} '
+      +'.kk-prof-values .menu-summary-box span{font-size:11px !important;line-height:1.2;white-space:normal;} '
+      +'.kk-prof-values .menu-summary-box strong{display:block;font-size:16px !important;line-height:1.25;overflow-wrap:anywhere;} '
+      +'.kk-prof-sales-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:7px;width:100%;margin-top:8px;} '
+      +'.kk-prof-sales-row .kk-sold-total-box,.kk-prof-sales-row .kk-add-sold-control{min-width:0;width:100%;} '
+      +'.kk-prof-sales-row .kk-sold-total-box{padding:9px 10px !important;border-radius:9px;} '
+      +'.kk-prof-sales-row .kk-sold-total-box span,.kk-prof-sales-row .kk-add-sold-control label{font-size:11px !important;} '
+      +'.kk-prof-sales-row .kk-sold-total-box strong{font-size:20px !important;} '
+      +'.kk-prof-sales-row .kk-add-sold-control-row{display:grid !important;grid-template-columns:70px minmax(0,1fr);gap:5px !important;width:100%;} '
+      +'.kk-prof-sales-row input.stage4-add-sales-qty,.kk-prof-sales-row input.other-add-sold-qty{width:100% !important;min-width:0 !important;max-width:none !important;height:40px;text-align:center;} '
+      +'.kk-prof-sales-row button{width:100%;height:40px;white-space:nowrap;font-size:11px;padding-left:5px !important;padding-right:5px !important;} '
+      +'.kk-prof-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.10);} '
+      +'.kk-prof-actions button{width:100%;min-width:0 !important;height:40px;padding:6px 4px !important;font-size:12px !important;white-space:nowrap;} '
+      +'.kk-prof-actions.kk-one-action{grid-template-columns:1fr;} '
+      +'.kk-prof-sold-label{display:inline-block;margin-top:4px;font-size:11px;font-weight:700;letter-spacing:.04em;} '
+      +'.kk-prof-other-fields{display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;width:100%;} '
+      +'.kk-prof-other-fields .form-group{min-width:0 !important;width:100%;} '
+      +'.kk-prof-other-fields input{width:100% !important;min-width:0 !important;} '
+      +'.kk-prof-other-actions{display:grid;grid-template-columns:1fr;width:100%;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.10);} '
+      +'.kk-prof-other-actions button{width:100%;height:40px;} '
+      +'@media(max-width:520px){.menu-item{padding:12px;margin-bottom:12px;}.kk-prof-card-title .menu-name{font-size:17px;}.kk-prof-values{gap:6px !important;}.kk-prof-values .menu-summary-box{padding:8px 7px !important;}.kk-prof-values .menu-summary-box strong{font-size:15px !important;}.kk-prof-sales-row{gap:6px;margin-top:7px;}.kk-prof-sales-row .kk-sold-total-box{padding:8px !important;}.kk-prof-sales-row .kk-sold-total-box strong{font-size:19px !important;}.kk-prof-sales-row .kk-add-sold-control-row{grid-template-columns:64px minmax(0,1fr);}.kk-prof-sales-row button{font-size:10px !important;}.kk-prof-actions{gap:6px;margin-top:9px;padding-top:9px;}.kk-prof-actions button{height:38px;font-size:11px !important;}.kk-prof-other-fields{gap:6px !important;}}';
+    document.head.appendChild(style);
+
+    window.renderMenuItems=function(date){
+        const c=document.getElementById('menuItems');
+        if(!c)return;
+        const record=stage4TodayRecord(date);
+        c.innerHTML='';
+        if(!record.foodItems.length){c.innerHTML='<div class="menu-empty">No food menus added yet.</div>';return;}
+        record.foodItems.forEach(function(item){
+            const sales=numberValue(item.sellingPrice)*numberValue(item.servingsSold);
+            const profit=sales-numberValue(item.recipeCost);
+            const pct=sales?profit/sales*100:0;
+            const soldOut=stage4IsFoodSoldOut(record,item.id);
+            const d=document.createElement('div');
+            d.className='menu-item'+(soldOut?' stage4-food-sold-out':'');
+            d.dataset.foodId=item.id;
+
+            const addSold=soldOut
+              ? '<div class="kk-prof-sales-row"><div class="kk-sold-total-box" style="grid-column:1 / -1"><span>Servings Sold</span><strong>'+numberValue(item.servingsSold)+'</strong></div></div>'
+              : '<div class="kk-prof-sales-row">'
+                +'<div class="kk-sold-total-box"><span>Servings Sold</span><strong>'+numberValue(item.servingsSold)+'</strong></div>'
+                +'<div class="kk-add-sold-control"><label>Add Sold</label><div class="kk-add-sold-control-row">'
+                +'<input class="stage4-add-sales-qty mobile-large-input" type="number" min="1" max="999" step="1" value="1" inputmode="numeric" autocomplete="off" aria-label="Number of servings to add">'
+                +'<button type="button" class="btn btn-primary btn-small" onclick="addStage4Sold(this)">ADD SOLD</button>'
+                +'</div></div></div>';
+
+            const actions=soldOut
+              ? '<div class="kk-prof-actions kk-one-action"><button type="button" class="btn btn-secondary btn-small" onclick="editStage4Food(this)">Edit</button></div>'
+              : '<div class="kk-prof-actions">'
+                +'<button type="button" class="btn btn-danger btn-small" onclick="deleteStage4Food(this)">Delete</button>'
+                +'<button type="button" class="btn btn-secondary btn-small" onclick="soldOutStage4Food(this)">Sold Out</button>'
+                +'<button type="button" class="btn btn-secondary btn-small" onclick="editStage4Food(this)">Edit</button>'
+                +'</div>';
+
+            d.innerHTML='<div class="kk-prof-card-title">'
+                +'<div><div class="menu-name">'+escapeHtml(item.recipeName)+'</div>'+(soldOut?'<div class="stage4-sold-out-label kk-prof-sold-label">SOLD OUT</div>':'')+'</div>'
+                +'</div>'
+                +'<div class="kk-prof-values">'
+                +stage4Box('Recipe Cost',money(item.recipeCost))
+                +stage4Box('Selling / Serving',money(item.sellingPrice))
+                +stage4Box('Total Sales',money(sales))
+                +stage4Box('Profit',money(profit),profit)
+                +stage4Box('Profit %',pct.toFixed(2)+'%',profit)
+                +'</div>'
+                +addSold
+                +actions;
+            c.appendChild(d);
+        });
+    };
+
+    window.renderDailyOtherItems=function(date){
+        const c=document.getElementById('dailyOtherItemsList');
+        if(!c)return;
+        const record=stage4TodayRecord(date);
+        c.innerHTML='';
+        if(!record.otherItems.length){c.innerHTML='<div class="menu-empty">No other items sold.</div>';return;}
+        record.otherItems.forEach(function(item){
+            const sales=numberValue(item.sellingPrice)*numberValue(item.quantitySold);
+            const cost=numberValue(item.unitCost)*numberValue(item.quantitySold);
+            const profit=sales-cost;
+            const pct=sales?profit/sales*100:0;
+            const d=document.createElement('div');
+            d.className='menu-item';
+            d.dataset.otherId=item.id;
+            d.innerHTML='<div class="kk-prof-card-title"><div class="menu-name">'+escapeHtml(item.name)+'</div></div>'
+                +'<div class="kk-prof-other-fields">'
+                +'<div class="form-group"><label>Unit</label><input class="other-unit" type="text" value="'+escapeHtml(item.unit||'')+'" readonly></div>'
+                +'<div class="form-group"><label>Unit Cost</label><input class="other-unit-cost" type="number" value="'+numberValue(item.unitCost)+'" readonly></div>'
+                +'<div class="form-group"><label>Selling Price</label><input class="other-sale-price" type="number" min="0" step="0.01" value="'+numberValue(item.sellingPrice)+'" inputmode="decimal" autocomplete="off" oninput="updateDailyOtherItem(this)"></div>'
+                +'</div>'
+                +'<div class="kk-prof-sales-row">'
+                +'<div class="kk-sold-total-box"><span>Qty Sold</span><strong>'+numberValue(item.quantitySold)+'</strong></div>'
+                +'<div class="kk-add-sold-control"><label>Add Sold</label><div class="kk-add-sold-control-row">'
+                +'<input class="other-add-sold-qty mobile-large-input" type="number" min="1" max="999" step="1" value="1" inputmode="numeric" autocomplete="off" aria-label="Number of other items sold to add">'
+                +'<button type="button" class="btn btn-primary btn-small" onclick="addDailyOtherSold(this)">ADD SOLD</button>'
+                +'</div></div></div>'
+                +'<div class="kk-prof-values">'
+                +stage4Box('Total Sales',money(sales))
+                +stage4Box('Profit',money(profit),profit)
+                +stage4Box('Profit %',pct.toFixed(2)+'%',profit)
+                +'</div>'
+                +'<div class="kk-prof-other-actions"><button type="button" class="btn btn-danger btn-small" onclick="deleteDailyOtherItem(this)">Delete</button></div>';
+            c.appendChild(d);
+        });
+    };
+})();
