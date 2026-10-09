@@ -4688,7 +4688,10 @@ function calculateProfit(showMessage){
   set('kkProfitSummarySales',money(totalSales));set('kkProfitSummaryCapex',money(capex));set('kkProfitSummaryOpex',money(opex));set('kkProfitTotalCapex',money(capex));set('kkProfitTotalOpex',money(opex));
   const p=document.getElementById('kkProfitSummaryProfit'),n=document.getElementById('kkProfitNet');
   [p,n].forEach(el=>{if(el){el.classList.remove('kk-profit-positive','kk-profit-negative');if(profit>0)el.classList.add('kk-profit-positive');if(profit<0)el.classList.add('kk-profit-negative');}});
-  if(showMessage){set('kkProfitSummaryProfit',money(profit));set('kkProfitNet',money(profit));set('kkProfitMessage','Profit calculated.');}
+  // Always show the current profit immediately; never leave a stale 'Press Calculate' placeholder.
+  set('kkProfitSummaryProfit',money(profit));
+  set('kkProfitNet',money(profit));
+  if(showMessage){set('kkProfitMessage','Profit calculated.');}
   return {date,foodSales,otherSales,totalSales,foodCost,otherCost,otherFees:fees,totalCost:foodCost+otherCost,totalCapex:capex,expenses,totalExpenses:opex,grossProfit:totalSales-foodCost-otherCost,netProfit:profit,profit};
 }
 function saveProfitRecord(){
