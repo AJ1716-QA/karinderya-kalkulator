@@ -47,6 +47,8 @@ let targetFoodCost = 40;
 
 let currentUserId = null;
 let userDataLoaded = false;
+let hasLifetimeAccess = false;
+let entitlementCheckInProgress = false;
 let currentSalesSoldOutFoodIds = [];
 let editingMenuRecipeId = null;
 let ingredientRenderRequest = 0;
@@ -68,6 +70,7 @@ function userStorageKey(name) {
 }
 
 function readUserData(name, fallback) {
+    if (!hasLifetimeAccess) return fallback;
     const key = userStorageKey(name);
     if (!key) return fallback;
 
@@ -81,6 +84,7 @@ function readUserData(name, fallback) {
 }
 
 function saveUserData(name, value) {
+    if (!hasLifetimeAccess) return;
     const key = userStorageKey(name);
     if (!key) return;
 
@@ -3896,13 +3900,7 @@ document.addEventListener(
             targetInput.value = targetFoodCost;
         }
 
-        const { data } =
-            await supabaseClient.auth.getSession();
-
-        if (data.session) {
-            await initializeUserData();
-        }
-
+        // Verify lifetime access before loading any account data.
         await updateAppAccess();
     }
 );
@@ -4003,10 +4001,11 @@ document.getElementById("loginBtn").addEventListener("click", async function () 
         return;
     }
 
-    await initializeUserData();
+    await updateAppAccess();
 
-    document.getElementById("authMessage").textContent =
-        "Login successful.";
+    document.getElementById("authMessage").textContent = hasLifetimeAccess
+        ? "Login successful."
+        : "Your account is signed in, but lifetime access is not active yet. Please complete GCash payment and wait for manual verification.";
 });
 
 
@@ -4068,50 +4067,107 @@ document.getElementById("logoutBtn").addEventListener("click", async function ()
 });
 
 
-async function updateAppAccess() {
-
-    const authScreen =
-        document.getElementById("authScreen");
-
-    const appContainer =
-        document.getElementById("appContent");
-
-    const { data } =
-        await supabaseClient.auth.getSession();
-
-    if (data.session) {
-
-        authScreen.style.display = "none";
-        appContainer.style.display = "block";
-
-    } else {
-
-        authScreen.style.display = "block";
-        appContainer.style.display = "none";
+async function checkLifetimeEntitlement(userId) {
+    if (!userId) return false;
+    const { data, error } = await supabaseClient
+        .from("user_entitlements")
+        .select("status, access_type")
+        .eq("user_id", userId)
+        .maybeSingle();
+    if (error) {
+        console.error("Lifetime access check failed:", error.message);
+        return false; // fail closed
     }
+    return !!data && data.status === "active" && data.access_type === "lifetime";
 }
 
+function ensureLifetimeLockScreen() {
+    let lock = document.getElementById("kkLifetimeLockScreen");
+    if (lock) return lock;
+    lock = document.createElement("section");
+    lock.id = "kkLifetimeLockScreen";
+    lock.style.cssText = "display:none;min-height:100vh;box-sizing:border-box;padding:28px 18px;background:#f1f5f9;color:#123b63;font-family:Arial,sans-serif;align-items:center;justify-content:center;";
+    lock.innerHTML = '<div style="width:100%;max-width:440px;margin:auto;background:#fff;border:1px solid #d9e2ec;border-radius:18px;padding:24px;box-sizing:border-box;box-shadow:0 8px 28px rgba(15,23,42,.08);text-align:center"><h2 style="margin:0 0 12px;color:#123b63">Karinderya Kalkulator</h2><h3 style="margin:0 0 10px">Lifetime Access Required</h3><p style="line-height:1.5;color:#475569">This account does not have active lifetime access yet. Pay through GCash and send your payment reference to the app owner for manual verification.</p><p style="font-weight:700">After your payment is verified, tap Check Activation Again.</p><button type="button" id="kkCheckActivationBtn" style="width:100%;min-height:46px;border:0;border-radius:10px;background:#123b63;color:#fff;font-weight:700;margin:8px 0">Check Activation Again</button><button type="button" id="kkPaidLogoutBtn" style="width:100%;min-height:44px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#123b63;font-weight:700">Log Out</button><p id="kkLifetimeLockMessage" role="status" style="font-size:13px;color:#64748b"></p></div>';
+    document.body.appendChild(lock);
+    document.getElementById("kkCheckActivationBtn").addEventListener("click", async function () {
+        const msg = document.getElementById("kkLifetimeLockMessage");
+        msg.textContent = "Checking access…";
+        await updateAppAccess(true);
+        if (!hasLifetimeAccess) msg.textContent = "Access is not active yet. If you have paid, please wait for the owner to verify your GCash payment.";
+    });
+    document.getElementById("kkPaidLogoutBtn").addEventListener("click", async function () {
+        await supabaseClient.auth.signOut();
+        hasLifetimeAccess = false;
+        currentUserId = null;
+        userDataLoaded = false;
+        updateAppAccess();
+    });
+    return lock;
+}
 
-supabaseClient.auth.onAuthStateChange(
-    async function(event, session) {
+async function updateAppAccess(forceCheck) {
+    if (entitlementCheckInProgress) return;
+    entitlementCheckInProgress = true;
+    try {
+        const authScreen = document.getElementById("authScreen");
+        const appContainer = document.getElementById("appContent");
+        const lock = ensureLifetimeLockScreen();
+        const { data, error } = await supabaseClient.auth.getSession();
+        const session = !error && data ? data.session : null;
 
-        if (session) {
-            loadUserScopedData(session.user.id);
+        if (!session) {
+            hasLifetimeAccess = false;
+            lock.style.display = "none";
+            if (authScreen) authScreen.style.display = "block";
+            if (appContainer) appContainer.style.display = "none";
+            currentUserId = null;
+            userDataLoaded = false;
+            return;
+        }
 
-            /*
-               Supabase auth callbacks can occur while the page is
-               still settling. Refresh cloud master data here so
-               the new account gets its own ingredients/items.
-            */
+        const userId = session.user.id;
+        hasLifetimeAccess = await checkLifetimeEntitlement(userId);
+        if (!hasLifetimeAccess) {
+            lock.style.display = "flex";
+            if (authScreen) authScreen.style.display = "none";
+            if (appContainer) appContainer.style.display = "none";
+            currentUserId = null;
+            userDataLoaded = false;
+            return;
+        }
+
+        lock.style.display = "none";
+        if (authScreen) authScreen.style.display = "none";
+        if (appContainer) appContainer.style.display = "block";
+        if (currentUserId !== userId || !userDataLoaded || forceCheck) {
+            loadUserScopedData(userId);
             await renderIngredientList();
             await renderOtherItemList();
             updateDashboard();
+        }
+    } catch (err) {
+        console.error("Unable to verify paid access:", err);
+        hasLifetimeAccess = false;
+        const lock = ensureLifetimeLockScreen();
+        lock.style.display = "flex";
+        const authScreen = document.getElementById("authScreen");
+        const appContainer = document.getElementById("appContent");
+        if (authScreen) authScreen.style.display = "none";
+        if (appContainer) appContainer.style.display = "none";
+        const msg = document.getElementById("kkLifetimeLockMessage");
+        if (msg) msg.textContent = "Unable to verify access. Please check your connection and try again.";
+    } finally {
+        entitlementCheckInProgress = false;
+    }
+}
 
-        } else {
-
+supabaseClient.auth.onAuthStateChange(function(event, session) {
+    // Defer to avoid doing Supabase work inside the auth callback lock.
+    Promise.resolve().then(async function () {
+        if (!session) {
+            hasLifetimeAccess = false;
             currentUserId = null;
             userDataLoaded = false;
-
             savedRecipes = [];
             savedMenus = [];
             ingredientPrices = [];
@@ -4121,13 +4177,14 @@ supabaseClient.auth.onAuthStateChange(
             targetFoodCost = 40;
             currentSalesSoldOutFoodIds = [];
         }
-
         await updateAppAccess();
-    }
-);
+    });
+});
 
 
 async function getCurrentUserId() {
+
+    if (!hasLifetimeAccess) return null;
 
     if (currentUserId) {
         return currentUserId;
