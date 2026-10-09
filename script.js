@@ -4028,11 +4028,6 @@ document.getElementById("signupBtn").addEventListener("click", async function ()
     }
 });
 
-    document.getElementById("authMessage").textContent =
-        "Account created. Please check your email if confirmation is required.";
-});
-
-
 document.getElementById("loginBtn").addEventListener("click", async function () {
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
