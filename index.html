@@ -103,6 +103,190 @@ input:focus,select:focus{border-color:#123B63}.form-group{margin-bottom:13px}.fo
   .daily-other-grid label{font-size:13px!important}
   .daily-other-grid input{font-size:17px!important}
 }
+  
+/* =========================================
+   KARINDERYA KALKULATOR — MOBILE LAYOUT FIX
+   CSS ONLY: preserves JavaScript and payment
+   ========================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+img,
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+.card,
+.dashboard-card,
+.summary-box,
+.menu-summary-box,
+.sales-box,
+.sales-summary-box,
+.detail-box,
+.menu-item,
+.saved-item-card,
+.record-card {
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-grid,
+.summary-grid,
+.menu-summary-grid-6,
+.daily-other-grid,
+.sales-grid,
+.sales-summary,
+.kk-premium-grid,
+.kk-prof-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboard-card,
+.summary-box,
+.menu-summary-box,
+.sales-box,
+.sales-summary-box,
+.detail-box,
+.kk-premium-grid > *,
+.kk-prof-values > * {
+  min-width: 0;
+  height: 100%;
+  min-height: 100px;
+  padding: 14px;
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.dashboard-card h3,
+.dashboard-card h4,
+.summary-box strong,
+.menu-summary-box strong,
+.sales-box strong,
+.sales-summary-box strong {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 44px;
+  font-size: 16px;
+}
+
+button,
+.btn {
+  min-height: 42px;
+  touch-action: manipulation;
+}
+
+table {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  .dashboard-grid,
+  .summary-grid,
+  .menu-summary-grid-6,
+  .daily-other-grid,
+  .sales-grid,
+  .sales-summary,
+  .kk-premium-grid,
+  .kk-prof-values {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .dashboard-card,
+  .summary-box,
+  .menu-summary-box,
+  .sales-box,
+  .sales-summary-box,
+  .detail-box,
+  .kk-premium-grid > *,
+  .kk-prof-values > * {
+    min-height: 96px;
+    padding: 12px;
+  }
+
+  h1 {
+    font-size: clamp(22px, 6vw, 30px);
+  }
+
+  h2 {
+    font-size: clamp(19px, 5vw, 25px);
+  }
+
+  h3,
+  h4 {
+    font-size: 16px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .dashboard-grid,
+  .summary-grid,
+  .menu-summary-grid-6,
+  .daily-other-grid,
+  .sales-grid,
+  .sales-summary,
+  .kk-premium-grid,
+  .kk-prof-values {
+    gap: 8px;
+  }
+
+  .dashboard-card,
+  .summary-box,
+  .menu-summary-box,
+  .sales-box,
+  .sales-summary-box,
+  .detail-box,
+  .kk-premium-grid > *,
+  .kk-prof-values > * {
+    padding: 9px;
+  }
+}
 </style>
 </head>
 <body>
