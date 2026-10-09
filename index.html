@@ -1,363 +1,93 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Karinderya Kalkulator</title>
-  <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#123B63">
+<link href="./manifest.json" rel="manifest"/>
+<meta content="#123B63" name="theme-color"/>
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f6f8;color:#1f2937}
-button,input,select{font-family:inherit}button{cursor:pointer}
-.app-header{background:#123B63;color:white;padding:14px 16px;text-align:center;position:relative}.header-top{display:flex;align-items:center;justify-content:center;position:relative}.header-menu{position:absolute;right:0;top:50%;transform:translateY(-50%);background:transparent;color:white;border:0;font-size:28px;line-height:1;padding:4px 8px}.header-dropdown{display:none;position:absolute;right:0;top:54px;z-index:1000;background:white;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.2);padding:6px;min-width:130px}.header-dropdown.open{display:block}.header-dropdown button{width:100%;border:0;background:white;color:#1f2937;text-align:left;padding:10px 12px;border-radius:7px;font-weight:700}.header-dropdown button:hover{background:#f4f6f8}
-.app-header h1{margin:0;font-size:25px;font-weight:700}.app-header p{margin:6px 0 0;font-size:14px;opacity:.9}
-.container{max-width:900px;margin:auto;padding:16px}.screen{display:none}.screen.active{display:block}
-.section-title{font-size:21px;color:#123B63;margin:4px 0 14px;font-weight:700}
-.card{background:white;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
-.dashboard-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.dashboard-card{background:white;border-radius:14px;padding:18px 12px;min-height:105px;box-shadow:0 2px 8px rgba(0,0,0,.07);border:1px solid #e5e7eb;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
-.dashboard-card .icon{font-size:27px;margin-bottom:7px}.dashboard-card strong{color:#123B63;font-size:15px}.dashboard-card span{font-size:12px;color:#6b7280;margin-top:4px}
-.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.summary-box{background:#f4f6f8;border-radius:10px;padding:12px 6px;text-align:center}
-.summary-box span{display:block;font-size:11px;color:#6b7280;margin-bottom:5px}.summary-box strong{color:#123B63;font-size:16px}
-label{display:block;margin-bottom:6px;color:#374151;font-weight:700;font-size:14px}
-input,select{width:100%;min-height:44px;padding:10px 11px;border:1px solid #cbd5e1;border-radius:8px;background:white;color:#111827;font-size:15px;outline:none}
-input:focus,select:focus{border-color:#123B63}.form-group{margin-bottom:13px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn{border:none;border-radius:8px;padding:11px 15px;min-height:43px;font-size:14px;font-weight:700}.btn-primary{background:#123B63;color:white}.btn-secondary{background:#e5e7eb;color:#1f2937}.btn-danger{background:#b91c1c;color:white}.btn-success{background:#166534;color:white}.btn-small{padding:8px 11px;min-height:36px;font-size:12px}
-.button-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}.button-row .btn{width:100%}.back-button{margin-bottom:14px}
-.ingredient-row{display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:7px;align-items:end;margin-bottom:9px}.ingredient-row .form-group{margin-bottom:0}
-.recipe-total{background:#eef3f7;border-radius:10px;padding:12px;text-align:right;margin-top:12px;color:#123B63;font-weight:700}
-.menu-entry-card{background:#f8fafc;border:1px solid #dbe2e8;border-radius:12px;padding:12px}.menu-entry-title{color:#123B63;font-weight:700;font-size:16px;margin-bottom:10px}
-.menu-entry-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.menu-entry-grid label{font-size:11px;margin-bottom:4px}.menu-entry-grid input{min-height:40px;padding:7px;font-size:14px}.menu-save-row{display:flex;justify-content:flex-end;margin-top:10px}
-.menu-table-wrapper{width:100%;overflow-x:auto}.menu-child-table{width:100%;border-collapse:collapse;min-width:600px}
-.menu-child-table th{background:#123B63;color:white;padding:9px 7px;font-size:11px;text-align:left}.menu-child-table td{padding:9px 7px;border-bottom:1px solid #e5e7eb;font-size:12px;color:#1f2937;vertical-align:middle}.menu-child-table td strong{color:#123B63}
-.menu-status{font-weight:700}.menu-status.good{color:#166534}.menu-status.low{color:#b45309}.menu-status.sold{color:#b91c1c}.menu-empty{text-align:center;padding:18px;color:#6b7280;font-size:13px}
-.menu-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:12px}.menu-summary-box{background:#f4f6f8;border-radius:8px;padding:9px 5px;text-align:center}
-.menu-summary-box span{display:block;color:#6b7280;font-size:9px;margin-bottom:4px}.menu-summary-box strong{color:#123B63;font-size:12px}.menu-entry-card{margin-bottom:10px}.menu-item{background:#f8fafc;border:1px solid #dbe2e8;border-radius:12px;padding:12px;margin-bottom:10px}.menu-top{display:grid;grid-template-columns:1.4fr .7fr .8fr;gap:8px;align-items:end}.menu-name{font-size:16px;font-weight:700;color:#123B63}.menu-cost{font-size:12px;color:#6b7280;margin-top:3px}.menu-field label{font-size:11px;margin-bottom:4px}.menu-field input{min-height:40px;padding:7px;font-size:13px}.menu-info{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}.menu-info-box{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:8px;text-align:center}.menu-info-label{font-size:9px;color:#6b7280}.menu-info-value{font-size:12px;font-weight:700;color:#123B63;margin-top:3px}.menu-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:9px}@media(max-width:500px){.menu-top{grid-template-columns:1fr 1fr}.menu-top>div:first-child{grid-column:1/-1}.menu-info{grid-template-columns:repeat(3,1fr)}}
-.sales-child-card{background:#f8fafc;border:1px solid #dbe2e8;border-radius:10px;padding:11px;margin-top:9px}.sales-child-header{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}.sales-child-header strong{color:#123B63;font-size:14px}
-.sales-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.sales-box{background:white;border-radius:7px;padding:7px 5px;border:1px solid #e5e7eb}.sales-box span{display:block;color:#6b7280;font-size:9px;margin-bottom:3px}.sales-box strong{display:block;color:#123B63;font-size:12px}.sales-box input{min-height:34px;padding:5px;font-size:12px}
-.sales-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.sales-summary-box{background:#eef3f7;border-radius:9px;padding:10px 5px;text-align:center}.sales-summary-box span{display:block;font-size:10px;color:#6b7280;margin-bottom:4px}.sales-summary-box strong{color:#123B63;font-size:13px}
-.saved-item-card{background:#f8fafc;border:1px solid #dbe2e8;border-radius:10px;padding:11px;margin-top:8px}.saved-item-header{display:flex;justify-content:space-between;gap:10px;align-items:center}.saved-item-header strong{color:#123B63;font-size:14px}
-.saved-item-details{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}.detail-box{background:white;border-radius:7px;padding:7px}.detail-box span{display:block;font-size:9px;color:#6b7280}.detail-box strong{font-size:12px;color:#123B63}
-.profit-line{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:14px}.profit-line strong{color:#123B63}
-.profit-total{background:#123B63;color:white;border-radius:10px;padding:15px;display:flex;justify-content:space-between;margin-top:12px;font-size:18px;font-weight:700}
-.profit-calculated{background:#eef3f7;border-radius:10px;padding:10px;margin-top:10px;text-align:center;color:#123B63;font-weight:700;font-size:13px}
-.record-card{background:#f8fafc;border:1px solid #dbe2e8;border-radius:10px;padding:12px;margin-bottom:9px}.record-card-header{display:flex;justify-content:space-between;gap:10px;align-items:center}.record-card-header strong{color:#123B63}
-.small-text{font-size:12px;color:#6b7280}.message{display:none;background:#ecfdf5;color:#166534;border:1px solid #bbf7d0;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:700;margin-top:9px}
-.record-section-title{font-size:17px;color:#123B63;font-weight:700;margin-bottom:12px}
-@media(max-width:600px){.container{padding:12px}.form-grid{grid-template-columns:1fr 1fr}.ingredient-row{grid-template-columns:1.3fr .7fr .8fr auto}.dashboard-grid{grid-template-columns:repeat(2,1fr)}.menu-entry-grid{grid-template-columns:1fr 1fr 1fr}.menu-summary{grid-template-columns:repeat(4,1fr)}.sales-grid{grid-template-columns:repeat(4,1fr)}}
-@media(max-width:420px){.recipe-ingredient-row{grid-template-columns:1.25fr .65fr .8fr auto;gap:5px}.recipe-ingredient-row input,.recipe-ingredient-row select{font-size:12px;padding:6px}.app-header h1{font-size:22px}.dashboard-card{min-height:95px;padding:14px 8px}.dashboard-card strong{font-size:13px}.menu-entry-grid{gap:5px}.menu-entry-grid input{font-size:12px;padding:6px}.menu-summary{gap:5px}.menu-summary-box{padding:8px 3px}.menu-summary-box strong{font-size:10px}.sales-grid{gap:5px}.sales-box{padding:6px 3px}.sales-box strong{font-size:10px}}
-@media(max-width:350px){.dashboard-grid{grid-template-columns:1fr}.menu-summary{grid-template-columns:repeat(2,1fr)}.sales-summary{grid-template-columns:1fr}}
-
-.recipe-ingredient-row{display:grid;grid-template-columns:1.5fr .7fr .9fr auto;gap:7px;align-items:end;margin-bottom:9px}.recipe-ingredient-row label{margin-bottom:4px}.recipe-ingredient-row input,.recipe-ingredient-row select{min-height:40px;padding:7px;font-size:13px}.recipe-ingredient-search-wrap{position:relative}
-.recipe-ingredient-results{display:none;position:absolute;left:0;right:0;top:100%;z-index:100;background:white;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.12);max-height:220px;overflow:auto}
-.recipe-search-result{display:block;width:100%;border:0;background:white;text-align:left;padding:10px 11px;font-size:14px;cursor:pointer}
-.recipe-search-result:hover{background:#f4f6f8}
-.recipe-search-empty{padding:10px 11px;color:#6b7280;font-size:13px}
-
-.saved-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px;border:1px solid #dbe2e8;border-radius:10px;background:#f8fafc;margin-top:8px}.saved-row-main{min-width:0}.saved-row-main strong{display:block;color:#123B63;font-size:14px}.saved-row-main span{display:block;color:#6b7280;font-size:12px;margin-top:3px}.saved-row-actions{display:flex;gap:6px;flex-wrap:wrap}.saved-recipe-row{display:grid;grid-template-columns:minmax(0,1fr) 100px auto auto;gap:7px;align-items:center;padding:10px;border:1px solid #dbe2e8;border-radius:10px;background:#f8fafc;margin-top:8px}.saved-recipe-name{font-weight:700;color:#123B63;min-width:0}.saved-recipe-cost{font-weight:700;text-align:right;color:#123B63}@media(max-width:500px){.saved-recipe-row{grid-template-columns:minmax(0,1fr) auto auto auto}.saved-recipe-cost{font-size:12px}.saved-row{grid-template-columns:1fr auto}}
-
-.menu-item{background:#f8fafc;border:1px solid #dbe2e8;border-radius:12px;padding:12px;margin-top:10px}.menu-top{display:grid;grid-template-columns:minmax(0,1fr) 90px 110px;gap:8px;align-items:end}.menu-name{font-weight:700;color:#123B63;font-size:16px}.menu-cost{font-size:12px;color:#6b7280;margin-top:3px}.menu-field label{font-size:10px;margin-bottom:4px}.menu-field input{min-height:38px;padding:6px;font-size:13px}.menu-info{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}.menu-info-box{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:8px;text-align:center}.menu-info-label{font-size:9px;color:#6b7280}.menu-info-value{font-size:12px;font-weight:700;color:#123B63;margin-top:3px}.menu-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:10px}
-@media(max-width:500px){.menu-top{grid-template-columns:1fr 1fr}.menu-top>div:first-child{grid-column:1/-1}.menu-info{grid-template-columns:1fr 1fr 1fr}.menu-actions .btn{flex:1}}
-</style>
-<style>
-.readonly-value{padding:11px 12px;border:1px solid #d8dee8;border-radius:10px;background:#f7f9fc;font-weight:700}
-.menu-summary-grid-6{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
-.menu-summary-grid-6 .menu-summary-box{min-width:0}
-.profit-positive{color:#16803c!important}.profit-negative{color:#c62828!important}
-.daily-other-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-@media(max-width:600px){.menu-summary-grid-6{grid-template-columns:repeat(3,minmax(0,1fr));}.daily-other-grid{grid-template-columns:1fr 1fr}.menu-summary-box strong{font-size:13px}}
+:root{--navy:#0b2f53;--navy2:#154e7a;--blue:#2477b3;--green:#14804a;--red:#c93636;--amber:#e7a62b;--ink:#142333;--muted:#6d7b8a;--line:#dce5ec;--surface:#fff;--soft:#f5f8fb;--radius:20px;--shadow:0 10px 30px rgba(15,47,77,.08)}
+*{box-sizing:border-box}html{width:100%;overflow-x:hidden;scroll-behavior:smooth}body{margin:0;width:100%;overflow-x:hidden;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(180deg,#eef4f8 0,#f8fafc 260px);color:var(--ink);-webkit-font-smoothing:antialiased}button,input,select,textarea{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(36,119,179,.22);outline-offset:2px}
+.app-header{position:sticky;top:0;z-index:900;color:#fff;padding:max(14px,env(safe-area-inset-top)) 18px 16px;background:linear-gradient(135deg,var(--navy),var(--navy2));box-shadow:0 8px 24px rgba(7,35,61,.2)}.header-top{position:relative;display:flex;align-items:center;justify-content:center}.app-header h1{margin:0;font-size:clamp(21px,5vw,28px);font-weight:850;letter-spacing:-.5px}.app-header p{margin:5px 0 0;font-size:13px;opacity:.8}.header-menu{position:absolute;right:0;top:50%;transform:translateY(-50%);width:44px;height:44px;border:0;border-radius:13px;background:rgba(255,255,255,.1);color:#fff;font-size:28px;line-height:1}.header-dropdown{display:none;position:absolute;right:0;top:52px;z-index:1000;min-width:160px;padding:7px;border:1px solid rgba(255,255,255,.35);border-radius:14px;background:#fff;box-shadow:0 18px 50px rgba(15,23,42,.22)}.header-dropdown.open{display:block}.header-dropdown button{width:100%;border:0;border-radius:10px;background:#fff;color:var(--ink);padding:11px 12px;text-align:left;font-weight:750}.header-dropdown button:hover{background:var(--soft)}
+.container{width:min(100%,980px);margin:auto;padding:18px 16px calc(30px + env(safe-area-inset-bottom))}.screen{display:none}.screen.active{display:block;animation:fadeUp .22s ease}@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}.section-title{margin:6px 0 14px;color:var(--navy);font-size:clamp(21px,4vw,27px);font-weight:850;letter-spacing:-.4px}.card{min-width:0;margin-bottom:16px;padding:18px;border:1px solid rgba(210,222,232,.9);border-radius:var(--radius);background:rgba(255,255,255,.97);box-shadow:var(--shadow)}
+#authScreen{min-height:100dvh!important;max-width:none!important;margin:0!important;padding:28px 16px!important;display:grid!important;place-items:center;background:radial-gradient(circle at top,#1c6597 0,#0b2f53 46%,#071e34 100%)}#authScreen .card{width:min(100%,430px);padding:28px;border:1px solid rgba(255,255,255,.25);box-shadow:0 30px 75px rgba(0,0,0,.3)}#authScreen .section-title{font-size:28px}#authScreen .small-text{font-size:14px!important}.auth-brand{width:58px;height:58px;margin:0 auto 14px;display:grid;place-items:center;border-radius:18px;background:linear-gradient(145deg,var(--navy),var(--blue));color:#fff;font-size:28px;box-shadow:0 12px 25px rgba(11,47,83,.25)}
+.dashboard-hero{position:relative;overflow:hidden;margin-bottom:14px;padding:22px;border-radius:24px;background:linear-gradient(135deg,#0d3b66,#1c689c);color:#fff;box-shadow:0 16px 40px rgba(13,59,102,.22)}.dashboard-hero:after{content:"";position:absolute;width:180px;height:180px;right:-75px;top:-90px;border-radius:50%;background:rgba(255,255,255,.09)}.dashboard-kicker{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1.3px;opacity:.75}.dashboard-hero h2{margin:7px 0 4px;font-size:25px;letter-spacing:-.5px}.dashboard-hero p{margin:0;font-size:13px;line-height:1.45;opacity:.8}.summary-card{padding:18px}.summary-card.today{border:0;background:linear-gradient(145deg,#fff,#f2f8fc)}.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.summary-box{min-width:0;padding:15px 8px;border:1px solid var(--line);border-radius:15px;background:#fff;text-align:center}.summary-box span{display:block;margin-bottom:6px;color:var(--muted);font-size:11px;font-weight:750}.summary-box strong{display:block;color:var(--navy);font-size:clamp(15px,4vw,21px);font-weight:900;overflow-wrap:anywhere}.summary-box.profit strong,#todayProfit,#monthlyProfit{color:var(--green)}
+.dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:14px 0}.dashboard-card{min-width:0;min-height:128px;padding:17px;border:1px solid var(--line);border-radius:19px;background:#fff;box-shadow:0 7px 22px rgba(15,47,77,.06);display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;text-align:left;transition:.18s ease;touch-action:manipulation}.dashboard-card:hover{transform:translateY(-2px);border-color:#b9d1e2;box-shadow:0 12px 28px rgba(15,47,77,.1)}.dashboard-card .icon{width:42px;height:42px;margin:0 0 13px;display:grid;place-items:center;border-radius:13px;background:#edf5fa;font-size:22px}.dashboard-card strong{color:var(--navy);font-size:15px;font-weight:850}.dashboard-card span{margin-top:4px;color:var(--muted);font-size:12px;line-height:1.35}
+label{display:block;margin:0 0 6px;color:#34495d;font-size:13px;font-weight:780}input,select,textarea{width:100%;min-width:0;min-height:48px;padding:11px 12px;border:1px solid #cbd8e2;border-radius:12px;background:#fff;color:#102131;font-size:16px;outline:none;transition:.16s}input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(36,119,179,.1)}input[readonly]{background:#f3f6f8;color:#516171}.form-group{min-width:0;margin-bottom:14px}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.btn{min-height:46px;padding:11px 16px;border:0;border-radius:12px;font-size:14px;font-weight:800;transition:.16s;touch-action:manipulation}.btn:active{transform:scale(.985)}.btn-primary{background:linear-gradient(135deg,var(--navy),#195d8d);color:#fff;box-shadow:0 7px 16px rgba(13,59,102,.18)}.btn-secondary{background:#eaf0f4;color:#20374a}.btn-success{background:linear-gradient(135deg,#147a45,#1b9255);color:#fff}.btn-danger{background:#c92626;color:#fff}.btn-small{min-height:38px;padding:8px 11px;font-size:12px}.button-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:11px}.button-row .btn{width:100%}.back-button{margin-bottom:14px;background:#e7edf2;color:#20384d}.small-text{color:var(--muted);font-size:12px;line-height:1.5}.message{display:none;margin-top:10px;padding:11px 12px;border:1px solid #b9e5cb;border-radius:11px;background:#edf9f2;color:#12683a;font-size:13px;font-weight:750}.message.show,.message.success,.message.error,.message.info{display:block}.message.error{border-color:#f0b8b8;background:#fff0f0;color:#a82222}
+.readonly-value,.recipe-total{padding:13px;border:1px solid #d8e3eb;border-radius:13px;background:#f2f7fa;color:var(--navy);font-weight:850}.recipe-total{margin-top:12px;text-align:right}.recipe-ingredient-row{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(70px,.65fr) minmax(80px,.8fr) auto;gap:7px;align-items:end;margin-bottom:9px}.saved-row,.saved-recipe-row{min-width:0;margin-top:9px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#f8fafb}.saved-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}.saved-row-main{min-width:0}.saved-row-main strong,.saved-recipe-name{display:block;color:var(--navy);font-size:15px;font-weight:850}.saved-row-main span{display:block;margin-top:4px;color:var(--muted);font-size:12px}.saved-row-actions{display:flex;gap:6px;flex-wrap:wrap}.saved-recipe-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:7px;align-items:center}.saved-recipe-cost{color:var(--navy);font-weight:850}
+.menu-entry-card,.menu-item,.saved-item-card,.record-card{min-width:0;padding:14px;border:1px solid var(--line);border-radius:16px;background:#f8fafb}.menu-entry-title,.record-section-title{margin-bottom:11px;color:var(--navy);font-size:17px;font-weight:850}.menu-add-note{margin-top:9px;padding:11px;border:1px solid #dbe8f1;border-radius:12px;background:#f2f7fa;color:#536575;font-size:13px;line-height:1.45}.menu-item{margin:10px 0}.menu-name{color:var(--navy);font-size:18px;font-weight:900}.menu-top{display:flex!important;justify-content:space-between;gap:9px;align-items:flex-start}.menu-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}.menu-summary-grid-6,.menu-summary,.menu-info,.sales-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:10px}.menu-summary-box,.menu-info-box,.sales-summary-box,.sales-box,.detail-box{min-width:0;padding:10px 6px;border:1px solid var(--line);border-radius:11px;background:#fff;text-align:center}.menu-summary-box span,.menu-info-label,.sales-summary-box span,.sales-box span,.detail-box span{display:block;margin-bottom:4px;color:var(--muted);font-size:10px;font-weight:700}.menu-summary-box strong,.menu-info-value,.sales-summary-box strong,.sales-box strong,.detail-box strong{display:block;color:var(--navy);font-size:14px;font-weight:900;overflow-wrap:anywhere}.profit-positive{color:var(--green)!important}.profit-negative{color:var(--red)!important}.menu-empty{padding:24px 10px;color:var(--muted);text-align:center;font-size:14px}.daily-other-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stage4-sold-out-label{display:inline-block;margin-top:5px;padding:4px 8px;border-radius:999px;background:#536474;color:#fff;font-size:10px;font-weight:850}.stage4-food-sold-out{opacity:.9}
+.profit-line{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #e7edf2;font-size:14px}.profit-line strong{color:var(--navy)}.profit-total{margin-top:13px;padding:17px;border-radius:14px;background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;display:flex;justify-content:space-between;font-size:18px;font-weight:900}.profit-calculated{margin-top:10px;padding:10px;border-radius:10px;background:#eef4f8;color:var(--navy);font-size:13px;font-weight:750;text-align:center}.record-card{margin-bottom:9px}.record-card-header{display:flex;justify-content:space-between;gap:10px}.month-header{width:100%;margin-top:10px;padding:13px 14px;border:1px solid var(--line);border-radius:13px;background:#fff;color:var(--navy);font-weight:850;text-align:left}
+@media(max-width:600px){.container{padding:14px 12px 28px}.card{padding:15px;border-radius:18px}.section-title{font-size:22px}.app-header p{display:none}.summary-grid{gap:6px}.summary-box{padding:12px 4px}.dashboard-grid{gap:9px}.dashboard-card{min-height:116px;padding:14px}.form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.menu-summary-grid-6{gap:6px}.menu-summary-box{padding:9px 4px}.button-row{gap:7px}}
+@media(max-width:420px){.container{padding-left:10px;padding-right:10px}.dashboard-hero{padding:19px}.dashboard-hero h2{font-size:22px}.dashboard-card{min-height:110px}.dashboard-card .icon{width:38px;height:38px;margin-bottom:10px}.recipe-ingredient-row{grid-template-columns:minmax(0,1.25fr) minmax(58px,.6fr) minmax(68px,.78fr) auto;gap:5px}.recipe-ingredient-row input,.recipe-ingredient-row select{font-size:12px;padding:6px}.menu-summary-grid-6,.menu-info{grid-template-columns:repeat(3,minmax(0,1fr))}.menu-summary-box strong{font-size:13px}.saved-recipe-row{grid-template-columns:minmax(0,1fr) auto auto}.saved-recipe-cost{grid-column:1/-1;text-align:left}}
+@media(max-width:350px){.dashboard-grid{grid-template-columns:1fr}.summary-box strong{font-size:14px}.button-row{grid-template-columns:1fr}}
 </style>
 
-<style>
-.stage4-sold-out{border-color:#94a3b8;background:#f1f5f9}
-.stage4-sold-out-label{display:inline-block;margin-top:5px;padding:3px 7px;border-radius:6px;background:#334155;color:white;font-size:10px;font-weight:700;letter-spacing:.4px}
-</style>
 
-<style>
-/* STAGE 4 MOBILE-FRIENDLY CONTROLS */
-.mobile-large-input{font-size:18px!important;min-height:50px!important;font-weight:600}
-.menu-add-note{font-size:14px;line-height:1.45;color:#4b5563;background:#f7f9fc;border:1px solid #dbe2e8;border-radius:10px;padding:10px 12px;margin-top:8px}
-.menu-name{font-size:18px!important}
-.menu-summary-box{padding:10px 6px!important;min-height:68px;display:flex;flex-direction:column;justify-content:center}
-.menu-summary-box span{font-size:11px!important;line-height:1.2}
-.menu-summary-box strong{font-size:15px!important;line-height:1.25;word-break:break-word}
-.stage4-live-servings{width:100%;min-height:38px;padding:7px 5px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font-size:16px;font-weight:700;text-align:center}
-.stage4-live-servings:disabled{background:#eef1f4;color:#6b7280}
-.menu-serving-input-box{background:#fff}
-.stage4-sold-out-label{display:inline-block;margin-top:5px;padding:4px 8px;border-radius:7px;background:#e5e7eb;color:#374151;font-size:12px;font-weight:800}
-.stage4-food-sold-out{opacity:.94}
-.daily-other-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-.daily-other-grid input{font-size:17px!important;min-height:48px!important}
-@media(max-width:600px){
-  .container{padding:10px!important}
-  .card{padding:13px!important;margin-bottom:11px}
-  .section-title{font-size:22px!important}
-  label{font-size:15px!important}
-  input,select{font-size:17px;min-height:48px}
-  .menu-summary-grid-6{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
-  .menu-summary-box{padding:8px 3px!important;min-height:70px}
-  .menu-summary-box span{font-size:10px!important}
-  .menu-summary-box strong{font-size:14px!important}
-  .menu-actions{gap:5px!important;flex-wrap:wrap}
-  .menu-actions .btn{font-size:13px!important;padding:8px 9px!important}
-  .daily-other-grid{gap:7px!important}
-  .daily-other-grid label{font-size:13px!important}
-  .daily-other-grid input{font-size:17px!important}
-}
-  
-/* =========================================
-   KARINDERYA KALKULATOR — MOBILE LAYOUT FIX
-   CSS ONLY: preserves JavaScript and payment
-   ========================================= */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html {
-  width: 100%;
-  overflow-x: hidden;
-}
-
-body {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  overflow-x: hidden;
-}
-
-img,
-input,
-select,
-textarea,
-button {
-  max-width: 100%;
-}
-
-.card,
-.dashboard-card,
-.summary-box,
-.menu-summary-box,
-.sales-box,
-.sales-summary-box,
-.detail-box,
-.menu-item,
-.saved-item-card,
-.record-card {
-  min-width: 0;
-  height: auto;
-  min-height: 0;
-  overflow-wrap: anywhere;
-}
-
-.dashboard-grid,
-.summary-grid,
-.menu-summary-grid-6,
-.daily-other-grid,
-.sales-grid,
-.sales-summary,
-.kk-premium-grid,
-.kk-prof-values {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: stretch;
-  gap: 12px;
-  width: 100%;
-  min-width: 0;
-}
-
-.dashboard-card,
-.summary-box,
-.menu-summary-box,
-.sales-box,
-.sales-summary-box,
-.detail-box,
-.kk-premium-grid > *,
-.kk-prof-values > * {
-  min-width: 0;
-  height: 100%;
-  min-height: 100px;
-  padding: 14px;
-  border-radius: 12px;
-  overflow-wrap: anywhere;
-}
-
-.dashboard-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
-
-.dashboard-card h3,
-.dashboard-card h4,
-.summary-box strong,
-.menu-summary-box strong,
-.sales-box strong,
-.sales-summary-box strong {
-  overflow-wrap: anywhere;
-  word-break: normal;
-}
-
-input,
-select,
-textarea {
-  width: 100%;
-  min-height: 44px;
-  font-size: 16px;
-}
-
-button,
-.btn {
-  min-height: 42px;
-  touch-action: manipulation;
-}
-
-table {
-  width: 100%;
-  max-width: 100%;
-}
-
-@media (max-width: 600px) {
-  .dashboard-grid,
-  .summary-grid,
-  .menu-summary-grid-6,
-  .daily-other-grid,
-  .sales-grid,
-  .sales-summary,
-  .kk-premium-grid,
-  .kk-prof-values {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .dashboard-card,
-  .summary-box,
-  .menu-summary-box,
-  .sales-box,
-  .sales-summary-box,
-  .detail-box,
-  .kk-premium-grid > *,
-  .kk-prof-values > * {
-    min-height: 96px;
-    padding: 12px;
-  }
-
-  h1 {
-    font-size: clamp(22px, 6vw, 30px);
-  }
-
-  h2 {
-    font-size: clamp(19px, 5vw, 25px);
-  }
-
-  h3,
-  h4 {
-    font-size: 16px;
-  }
-
-  .card {
-    width: 100%;
-    max-width: 100%;
-    margin-left: 0;
-    margin-right: 0;
-  }
-}
-
-@media (max-width: 360px) {
-  .dashboard-grid,
-  .summary-grid,
-  .menu-summary-grid-6,
-  .daily-other-grid,
-  .sales-grid,
-  .sales-summary,
-  .kk-premium-grid,
-  .kk-prof-values {
-    gap: 8px;
-  }
-
-  .dashboard-card,
-  .summary-box,
-  .menu-summary-box,
-  .sales-box,
-  .sales-summary-box,
-  .detail-box,
-  .kk-premium-grid > *,
-  .kk-prof-values > * {
-    padding: 9px;
-  }
-}
-</style>
 </head>
 <body>
-<div id="authScreen" style="display:block;max-width:420px;margin:60px auto;padding:16px;">
-<div class="card">
+<div id="authScreen">
+<div class="card"><div aria-hidden="true" class="auth-brand">₱</div>
 <div class="section-title" style="text-align:center;">Karinderya Kalkulator</div>
 <div class="small-text" style="text-align:center;margin-bottom:14px;">Please log in to continue.</div>
-<div class="form-group"><label>Email</label><input type="email" id="authEmail" autocomplete="email"></div>
-<div class="form-group"><label>Password</label><input type="password" id="authPassword" autocomplete="current-password"></div>
+<div class="form-group"><label>Email</label><input autocomplete="email" id="authEmail" type="email"/></div>
+<div class="form-group"><label>Password</label><input autocomplete="current-password" id="authPassword" type="password"/></div>
 <div class="button-row">
-<button type="button" class="btn btn-primary" id="loginBtn">Log In</button>
-<button type="button" class="btn btn-secondary" id="signupBtn">Sign Up</button>
-<button type="button" class="btn btn-secondary" id="forgotPasswordBtn">Forgot Password</button>
+<button class="btn btn-primary" id="loginBtn" type="button">Log In</button>
+<button class="btn btn-secondary" id="signupBtn" type="button">Sign Up</button>
+<button class="btn btn-secondary" id="forgotPasswordBtn" type="button">Forgot Password</button>
 </div>
-<div id="authMessage" class="message"></div>
+<div class="message" id="authMessage"></div>
 </div>
 </div>
 <div id="appContent" style="display:none;">
-<header class="app-header"><div class="header-top"><h1>Karinderya Kalkulator</h1><button type="button" id="headerMenuBtn" class="header-menu" aria-label="More options" aria-expanded="false">⋮</button><div id="headerDropdown" class="header-dropdown"><button type="button" id="logoutBtn">Log Out</button></div></div><p>Simple Business Calculator for Your Karinderya</p></header>
+<header class="app-header"><div class="header-top"><h1>Karinderya Kalkulator</h1><button aria-expanded="false" aria-label="More options" class="header-menu" id="headerMenuBtn" type="button">⋮</button><div class="header-dropdown" id="headerDropdown"><button id="logoutBtn" type="button">Log Out</button></div></div><p>Simple Business Calculator for Your Karinderya</p></header>
 <div class="container">
-
-<section id="homeScreen" class="screen active">
-<div class="section-title">Dashboard</div>
+<section class="screen active" id="homeScreen">
+<div class="dashboard-hero"><div class="dashboard-kicker">Business overview</div><h2>Good day</h2><p>Track costs, sales, and profit from one simple workspace.</p></div>
+<div class="card summary-card today"><div class="section-title" style="font-size:18px">Today's performance</div><div class="summary-grid"><div class="summary-box"><span>Sales</span><strong id="todaySales">₱0.00</strong></div><div class="summary-box"><span>Expenses</span><strong id="todayExpenses">₱0.00</strong></div><div class="summary-box profit"><span>Profit</span><strong id="todayProfit">₱0.00</strong></div></div></div>
+<div class="section-title" style="font-size:18px;margin-top:20px">Quick actions</div>
 <div class="dashboard-grid">
-<div class="dashboard-card" onclick="showScreen('ingredientScreen')"><div class="icon">🥬</div><strong>Ingredients</strong><span>Manage ingredient costs</span></div>
-<div class="dashboard-card" onclick="showScreen('otherItemScreen')"><div class="icon">🥤</div><strong>Other Items</strong><span>Manage resale items</span></div>
-<div class="dashboard-card" onclick="showScreen('recipeScreen')"><div class="icon">🍳</div><strong>Recipe of the Day</strong><span>Calculate food cost</span></div>
-<div class="dashboard-card" onclick="showScreen('menuScreen')"><div class="icon">🍽️</div><strong>Today’s Menu &amp; Sales</strong><span>Menu and actual sales</span></div>
-<div class="dashboard-card" onclick="showScreen('profitScreen')"><div class="icon">💸</div><strong>Daily Expenses</strong><span>Manage daily expenses</span></div>
-<div class="dashboard-card" onclick="showScreen('recordsScreen')"><div class="icon">💾</div><strong>Records</strong><span>View monthly records</span></div>
+<button class="dashboard-card" onclick="showScreen('ingredientScreen')" type="button"><div class="icon">🥬</div><strong>Ingredients</strong><span>Manage ingredient costs</span></button>
+<button class="dashboard-card" onclick="showScreen('otherItemScreen')" type="button"><div class="icon">🥤</div><strong>Other Items</strong><span>Manage resale products</span></button>
+<button class="dashboard-card" onclick="showScreen('recipeScreen')" type="button"><div class="icon">🍳</div><strong>Recipe of the Day</strong><span>Build and cost recipes</span></button>
+<button class="dashboard-card" onclick="showScreen('menuScreen')" type="button"><div class="icon">🍽️</div><strong>Today's Menu &amp; Sales</strong><span>Record actual sales</span></button>
+<button class="dashboard-card" onclick="showScreen('profitScreen')" type="button"><div class="icon">💸</div><strong>Daily Expenses</strong><span>Review OPEX and profit</span></button>
+<button class="dashboard-card" onclick="showScreen('recordsScreen')" type="button"><div class="icon">💾</div><strong>Records</strong><span>View saved performance</span></button>
 </div>
-<div class="card" style="margin-top:14px"><div class="section-title" style="font-size:18px">Today's Summary</div><div class="summary-grid">
-<div class="summary-box"><span>Sales</span><strong id="todaySales">₱0.00</strong></div>
-<div class="summary-box"><span>Expenses</span><strong id="todayExpenses">₱0.00</strong></div>
-<div class="summary-box"><span>Profit</span><strong id="todayProfit">₱0.00</strong></div>
-</div></div>
-<div class="card" style="margin-top:14px"><div class="section-title" style="font-size:18px">Monthly Summary — <span id="monthlySummaryLabel"></span></div><div class="summary-grid"><div class="summary-box"><span>Sales</span><strong id="monthlySales">₱0.00</strong></div><div class="summary-box"><span>Expenses</span><strong id="monthlyExpenses">₱0.00</strong></div><div class="summary-box"><span>Profit</span><strong id="monthlyProfit">₱0.00</strong></div></div></div>
+<div class="card summary-card"><div class="section-title" style="font-size:18px">Monthly Summary · <span id="monthlySummaryLabel"></span></div><div class="summary-grid"><div class="summary-box"><span>Sales</span><strong id="monthlySales">₱0.00</strong></div><div class="summary-box"><span>Expenses</span><strong id="monthlyExpenses">₱0.00</strong></div><div class="summary-box profit"><span>Profit</span><strong id="monthlyProfit">₱0.00</strong></div></div></div>
 </section>
-
-<section id="recipeScreen" class="screen">
-<button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')">← Back</button>
+<section class="screen" id="recipeScreen">
+<button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')" type="button">← Back</button>
 <div class="section-title">Recipe of the Day</div>
 <div class="card">
-<div class="form-group"><label>Recipe Date</label><input type="date" id="recipeDate" onchange="calculateRecipeTotal()"></div>
-<div class="form-group"><label>Recipe Name</label><input type="text" id="recipeName" placeholder="Example: Adobo"></div>
+<div class="form-group"><label>Recipe Date</label><input id="recipeDate" onchange="calculateRecipeTotal()" type="date"/></div>
+<div class="form-group"><label>Recipe Name</label><input id="recipeName" placeholder="Example: Adobo" type="text"/></div>
 <div class="form-group"><label>Ingredients</label><div id="recipeIngredients"></div></div>
-<button class="btn btn-secondary" onclick="addRecipeIngredient()">+ Add Ingredient</button>
+<button class="btn btn-secondary" onclick="addRecipeIngredient()" type="button">+ Add Ingredient</button>
 <div class="recipe-total">Recipe Cost: <span id="recipeTotalCost">₱0.00</span></div>
-<div class="button-row"><button class="btn btn-primary" onclick="saveRecipe()">Save Recipe</button><button class="btn btn-secondary" onclick="clearRecipeForm()">Clear</button></div>
-<div id="recipeMessage" class="message"></div>
+<div class="button-row"><button class="btn btn-primary" onclick="saveRecipe()" type="button">Save Recipe</button><button class="btn btn-secondary" onclick="clearRecipeForm()" type="button">Clear</button></div>
+<div class="message" id="recipeMessage"></div>
 </div>
-<div class="card"><div class="section-title" style="font-size:18px">Saved Recipes</div><div class="form-group"><label>Recipe Date</label><input type="date" id="savedRecipeDate" onchange="loadSavedRecipes()"></div><div id="savedRecipesList"></div></div>
+<div class="card"><div class="section-title" style="font-size:18px">Saved Recipes</div><div class="form-group"><label>Recipe Date</label><input id="savedRecipeDate" onchange="loadSavedRecipes()" type="date"/></div><div id="savedRecipesList"></div></div>
 </section>
-
-<section id="menuScreen" class="screen">
-<button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')">← Back</button>
+<section class="screen" id="menuScreen">
+<button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')" type="button">← Back</button>
 <div class="section-title">Today's Menu &amp; Sales</div>
 <div class="card">
-<div class="form-group"><label>Date</label><input type="date" id="menuDate" onchange="loadMenuOfDay()"></div>
+<div class="form-group"><label>Date</label><input id="menuDate" onchange="loadMenuOfDay()" type="date"/></div>
 <div class="menu-entry-card">
 <div class="menu-entry-title">Add Food Menu</div>
 <div class="form-group"><label>Select Recipe</label><select id="menuRecipeSelect" onchange="selectMenuRecipe()"><option value="">-- Select Recipe --</option></select></div>
 <div id="menuRecipeEntry" style="display:none">
-<div class="form-group"><label>Recipe Cost</label><div id="selectedMenuRecipeCost" class="readonly-value">₱0.00</div></div>
-<div class="form-group"><label>Selling Price / Serving</label><input class="mobile-large-input" type="number" id="menuSellingPrice" min="0" step="0.01" placeholder="Enter selling price" inputmode="decimal" autocomplete="off" oninput="calculateMenuEntryForm()"></div>
+<div class="form-group"><label>Recipe Cost</label><div class="readonly-value" id="selectedMenuRecipeCost">₱0.00</div></div>
+<div class="form-group"><label>Selling Price / Serving</label><input autocomplete="off" class="mobile-large-input" id="menuSellingPrice" inputmode="decimal" min="0" oninput="calculateMenuEntryForm()" placeholder="Enter selling price" step="0.01" type="number"/></div>
 <div class="menu-add-note">After adding the food, enter and adjust <strong>Servings Sold</strong> directly on its saved card below. You can update it anytime during the day.</div>
-<div class="button-row"><button type="button" class="btn btn-primary" onclick="addFoodMenuSale()">Add Food</button></div>
+<div class="button-row"><button class="btn btn-primary" onclick="addFoodMenuSale()" type="button">Add Food</button></div>
 </div></div>
-<div id="menuMessage" class="message"></div>
+<div class="message" id="menuMessage"></div>
 </div>
 <div class="card"><div class="section-title" style="font-size:18px">Food Sales</div><div id="menuItems"><div class="menu-empty">No food sales added yet.</div></div></div>
 <div class="card">
@@ -372,49 +102,45 @@ table {
 <div class="menu-summary-box"><span>Total Cost</span><strong id="combinedTotalCost">₱0.00</strong></div>
 <div class="menu-summary-box"><span>Gross Profit</span><strong id="combinedGrossProfit">₱0.00</strong></div>
 <div class="menu-summary-box"><span>Profit %</span><strong id="combinedProfitPercent">0.00%</strong></div>
-</div><div class="button-row"><button type="button" class="btn btn-primary" onclick="saveCombinedMenuSales()">Save Today's Sales</button></div></div>
+</div><div class="button-row"><button class="btn btn-primary" onclick="saveCombinedMenuSales()" type="button">Save Today's Sales</button></div></div>
 </section>
-
-<section id="ingredientScreen" class="screen">
-<button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')">← Back</button>
+<section class="screen" id="ingredientScreen">
+<button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')" type="button">← Back</button>
 <div class="section-title">Ingredient Prices</div>
 <div class="card">
 <div class="section-title" style="font-size:17px">Ingredients</div>
 <div class="form-grid">
 <div class="form-group"><label>Ingredient</label><select id="ingredientName" onchange="handleCustomIngredient()"><option value="">Select ingredient...</option></select></div>
-<div class="form-group"><label>Purchase Price</label><input type="number" id="ingredientPurchasePrice" min="0" step="0.01"></div>
-<div class="form-group"><label>Quantity</label><input type="number" id="ingredientQuantity" min="0" step="0.001"></div>
+<div class="form-group"><label>Purchase Price</label><input id="ingredientPurchasePrice" inputmode="decimal" min="0" step="0.01" type="number"/></div>
+<div class="form-group"><label>Quantity</label><input id="ingredientQuantity" inputmode="decimal" min="0" step="0.001" type="number"/></div>
 <div class="form-group"><label>Unit</label><select id="ingredientUnit"><option value="kg">kg</option><option value="g">g</option><option value="liter">liter</option><option value="ml">ml</option><option value="piece">piece</option><option value="pack">pack</option><option value="bottle">bottle</option><option value="can">can</option></select></div>
 </div>
-
-<div id="customIngredientGroup" style="display:none"><div class="form-group"><label>Custom Ingredient Name</label><input type="text" id="customIngredientName"></div></div><div class="button-row"><button class="btn btn-primary" onclick="saveIngredient()">Save Ingredient</button></div><div id="ingredientMessage" class="message"></div>
+<div id="customIngredientGroup" style="display:none"><div class="form-group"><label>Custom Ingredient Name</label><input id="customIngredientName" type="text"/></div></div><div class="button-row"><button class="btn btn-primary" onclick="saveIngredient()" type="button">Save Ingredient</button></div><div class="message" id="ingredientMessage"></div>
 </div>
 <div class="card"><div class="section-title" style="font-size:17px">Saved Ingredients</div><div id="ingredientList"></div></div>
- </section>
-
-<section id="otherItemScreen" class="screen">
-<button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')">← Back</button>
+</section>
+<section class="screen" id="otherItemScreen">
+<button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')" type="button">← Back</button>
 <div class="section-title">Other Items</div>
 <div class="card">
 <div class="section-title" style="font-size:17px">Add Other Item</div>
 <div class="small-text" style="margin-bottom:12px">Add only the resale items you actually sell in your store.</div>
 <div class="form-grid">
-<div class="form-group"><label>Item Name</label><input type="text" id="otherItemName" placeholder="Example: Sprite"></div>
-<div class="form-group"><label>Purchase Price</label><input type="number" id="otherPurchasePrice" min="0" step="0.01"></div>
-<div class="form-group"><label>Quantity Purchased</label><input type="number" id="otherQuantity" min="0" step="0.001"></div>
-<div class="form-group"><label>Unit</label><input type="text" id="otherUnit" placeholder="bottle"></div>
-<div class="form-group"><label>Selling Price</label><input type="number" id="otherSellingPrice" min="0" step="0.01"></div>
+<div class="form-group"><label>Item Name</label><input id="otherItemName" placeholder="Example: Sprite" type="text"/></div>
+<div class="form-group"><label>Purchase Price</label><input id="otherPurchasePrice" inputmode="decimal" min="0" step="0.01" type="number"/></div>
+<div class="form-group"><label>Quantity Purchased</label><input id="otherQuantity" inputmode="decimal" min="0" step="0.001" type="number"/></div>
+<div class="form-group"><label>Unit</label><input id="otherUnit" placeholder="bottle" type="text"/></div>
+<div class="form-group"><label>Selling Price</label><input id="otherSellingPrice" inputmode="decimal" min="0" step="0.01" type="number"/></div>
 </div>
-<div class="button-row"><button class="btn btn-primary" onclick="saveOtherItem()">Save Other Item</button></div><div id="otherItemMessage" class="message"></div>
+<div class="button-row"><button class="btn btn-primary" onclick="saveOtherItem()" type="button">Save Other Item</button></div><div class="message" id="otherItemMessage"></div>
 </div>
 <div class="card"><div class="section-title" style="font-size:17px">Saved Other Items</div><div id="otherItemList"></div></div>
 </section>
-
-<section id="profitScreen" class="screen">
-<button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')">← Back</button>
+<section class="screen" id="profitScreen">
+<button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')" type="button">← Back</button>
 <div class="section-title">Profit Calculator</div>
 <div class="card">
-<div class="form-group"><label>Date</label><input type="date" id="profitDate" onchange="loadProfitForDate()"></div>
+<div class="form-group"><label>Date</label><input id="profitDate" onchange="loadProfitForDate()" type="date"/></div>
 <div class="section-title" style="font-size:17px">Sales</div>
 <div class="profit-line"><span>Cooked Food Sales</span><strong id="profitFoodSales">₱0.00</strong></div>
 <div class="profit-line"><span>Other Item Sales</span><strong id="profitOtherSales">₱0.00</strong></div>
@@ -431,63 +157,55 @@ table {
 <div class="section-title" style="font-size:17px">Operating Expenses</div>
 <div class="small-text" style="margin-bottom:10px">For a new date, the latest previous Profit Calculator expenses are copied here. You may change any amount before calculating or saving.</div>
 <div class="form-grid">
-<div class="form-group"><label>Rent</label><input type="number" id="expenseRent" min="0" step="0.01"></div>
-<div class="form-group"><label>LPG / Gas</label><input type="number" id="expenseGas" min="0" step="0.01"></div>
-<div class="form-group"><label>Electricity</label><input type="number" id="expenseElectricity" min="0" step="0.01"></div>
-<div class="form-group"><label>Water</label><input type="number" id="expenseWater" min="0" step="0.01"></div>
-<div class="form-group"><label>WiFi / Internet</label><input type="number" id="expenseWifi" min="0" step="0.01"></div>
-<div class="form-group"><label>Labor</label><input type="number" id="expenseLabor" min="0" step="0.01"></div>
-<div class="form-group"><label>Other Expenses</label><input type="number" id="expenseOther" min="0" step="0.01"></div>
+<div class="form-group"><label>Rent</label><input id="expenseRent" inputmode="decimal" min="0" step="0.01" type="number"/></div>
+<div class="form-group"><label>LPG / Gas</label><input id="expenseGas" inputmode="decimal" min="0" step="0.01" type="number"/></div>
+<div class="form-group"><label>Electricity</label><input id="expenseElectricity" inputmode="decimal" min="0" step="0.01" type="number"/></div>
+<div class="form-group"><label>Water</label><input id="expenseWater" inputmode="decimal" min="0" step="0.01" type="number"/></div>
+<div class="form-group"><label>WiFi / Internet</label><input id="expenseWifi" inputmode="decimal" min="0" step="0.01" type="number"/></div>
+<div class="form-group"><label>Labor</label><input id="expenseLabor" inputmode="decimal" min="0" step="0.01" type="number"/></div>
+<div class="form-group"><label>Other Expenses</label><input id="expenseOther" inputmode="decimal" min="0" step="0.01" type="number"/></div>
 </div>
 <div class="button-row">
-<button class="btn btn-primary" onclick="calculateProfit(true)">Calculate</button>
-<button class="btn btn-success" onclick="saveProfitRecord()">Save Profit Record</button>
+<button class="btn btn-primary" onclick="calculateProfit(true)" type="button">Calculate</button>
+<button class="btn btn-success" onclick="saveProfitRecord()" type="button">Save Profit Record</button>
 </div>
-<div id="profitMessage" class="message"></div>
+<div class="message" id="profitMessage"></div>
 <div class="profit-line"><span>Total Operating Expenses</span><strong id="profitExpenses">₱0.00</strong></div>
 <div class="profit-total"><span>NET PROFIT</span><span id="profitNetProfit">₱0.00</span></div>
-<div id="profitCalculatedMessage" class="profit-calculated">Press Calculate to update the profit result.</div>
+<div class="profit-calculated" id="profitCalculatedMessage">Press Calculate to update the profit result.</div>
 </div>
 </section>
-
-<section id="recordsScreen" class="screen">
-<button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')">← Back</button>
+<section class="screen" id="recordsScreen">
+<button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')" type="button">← Back</button>
 <div class="section-title">Saved Records</div>
 <div class="card"><div class="record-section-title">Daily Sales Records</div><div id="savedSalesList"></div></div><div id="monthlyRecords"></div>
 <div class="card"><div class="record-section-title">Profit Calculator Records</div><div id="savedProfitList"></div></div>
 </section>
-
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="script.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded",function(){
-  var btn=document.getElementById("headerMenuBtn");
-  var menu=document.getElementById("headerDropdown");
-  if(btn&&menu){
-    btn.addEventListener("click",function(e){e.stopPropagation();var open=menu.classList.toggle("open");btn.setAttribute("aria-expanded",open?"true":"false");});
-    document.addEventListener("click",function(){menu.classList.remove("open");btn.setAttribute("aria-expanded","false");});
-    menu.addEventListener("click",function(e){e.stopPropagation();});
-    ```
-// Show feedback when authentication buttons are tapped
-["signupBtn", "loginBtn", "forgotPasswordBtn"].forEach(function(id) {
-    var button = document.getElementById(id);
-    var message = document.getElementById("authMessage");
-
-    if (button && message) {
-        button.addEventListener("click", function() {
-            message.style.display = "block";
-            message.style.background = "#eef3f7";
-            message.style.color = "#123B63";
-            message.textContent =
-                id === "signupBtn" ? "Creating your account..." :
-                id === "loginBtn" ? "Checking your login..." :
-                "Processing password reset...";
-        });
-    }
-});
-```
+document.addEventListener("DOMContentLoaded", function () {
+  const btn = document.getElementById("headerMenuBtn");
+  const menu = document.getElementById("headerDropdown");
+  if (btn && menu) {
+    btn.addEventListener("click", function (event) {
+      event.stopPropagation();
+      const open = menu.classList.toggle("open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    menu.addEventListener("click", function (event) { event.stopPropagation(); });
+    document.addEventListener("click", function () {
+      menu.classList.remove("open");
+      btn.setAttribute("aria-expanded", "false");
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        menu.classList.remove("open");
+        btn.setAttribute("aria-expanded", "false");
+      }
+    });
   }
 });
 </script>
