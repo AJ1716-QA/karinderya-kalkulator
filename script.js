@@ -4141,11 +4141,25 @@ function ensureLifetimeLockScreen() {
         msg.textContent = "";
 
         try {
-            const { data, error } = await supabaseClient.functions.invoke(
-                "create-checkout",
-                { body: {} }
-            );
+            
+const { data: sessionData, error: sessionError } =
+    await supabaseClient.auth.getSession();
 
+const session = sessionData?.session;
+
+if (sessionError || !session?.access_token) {
+    throw new Error("Your login session has expired. Please log out and log in again.");
+}
+
+const { data, error } = await supabaseClient.functions.invoke(
+    "create-checkout",
+    {
+        body: {},
+        headers: {
+            Authorization: `Bearer ${session.access_token}`
+        }
+    }
+);
             if (error) throw error;
 
             if (!data || !data.checkout_url) {
