@@ -3964,21 +3964,69 @@ if ("serviceWorker" in navigator) {
    AUTHENTICATION
 ========================================================= */
 
+
 document.getElementById("signupBtn").addEventListener("click", async function () {
+    const button = document.getElementById("signupBtn");
+    const message = document.getElementById("authMessage");
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
 
-    const { data, error } =
-        await supabaseClient.auth.signUp({
+    message.style.display = "block";
+    message.style.color = "#123B63";
+    message.textContent = "";
+
+    if (!email || !password) {
+        message.textContent = "Please enter your email and password.";
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Creating account...";
+
+    try {
+        const { data, error } = await supabaseClient.auth.signUp({
             email: email,
             password: password
         });
 
-    if (error) {
-        document.getElementById("authMessage").textContent =
-            error.message;
-        return;
+        if (error) {
+            message.style.color = "#b42318";
+            message.textContent = error.message;
+            return;
+        }
+
+        // Ensure registration does not bypass the normal login flow.
+        if (data.session) {
+            const { error: signOutError } =
+                await supabaseClient.auth.signOut();
+
+            if (signOutError) {
+                message.style.color = "#b42318";
+                message.textContent =
+                    "Account created, but automatic sign-out failed. Please log out before continuing.";
+                return;
+            }
+        }
+
+        // Keep the user on the login screen.
+        document.getElementById("authScreen").style.display = "block";
+        document.getElementById("appContent").style.display = "none";
+
+        document.getElementById("authPassword").value = "";
+
+        message.style.color = "#16803c";
+        message.textContent =
+            "Account Created, Please log-in to continue.";
+
+    } catch (err) {
+        message.style.color = "#b42318";
+        message.textContent =
+            err.message || "Unable to create your account. Please try again.";
+    } finally {
+        button.disabled = false;
+        button.textContent = "Sign Up";
     }
+});
 
     document.getElementById("authMessage").textContent =
         "Account created. Please check your email if confirmation is required.";
