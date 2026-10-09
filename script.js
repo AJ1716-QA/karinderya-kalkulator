@@ -8049,3 +8049,21 @@ document.addEventListener("DOMContentLoaded", function() {
   function init(){if(document.getElementById('profitScreen'))setTimeout(function(){window.loadProfitCalculator();},0);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
+
+/* FINAL NAVIGATION FIX: always render the agreed redesigned Profit Calculator
+   after the Profit Calculator screen is activated. This prevents the older
+   three-card Sales & Operating Expenses layout from remaining on screen. */
+(function () {
+  if (typeof showScreen !== 'function' || typeof window.loadProfitCalculator !== 'function') return;
+  var kkProfitOriginalShowScreen = showScreen;
+  showScreen = function (screenId) {
+    kkProfitOriginalShowScreen(screenId);
+    if (screenId === 'profitScreen') {
+      setTimeout(function () {
+        if (typeof window.loadProfitCalculator === 'function') {
+          window.loadProfitCalculator();
+        }
+      }, 0);
+    }
+  };
+})();
