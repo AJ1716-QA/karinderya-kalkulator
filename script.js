@@ -9165,3 +9165,50 @@ window.renderDailyOtherItems=function(date){
         label.remove();
     });
 };
+
+
+/* CUSTOM DELETE CONFIRMATION — KEEP WARNING WITHOUT BROWSER ORIGIN TEXT */
+window.deleteDailyOtherItem=function(button){
+    const card=button.closest('.daily-other-simple-card')||button.closest('.menu-item');
+    if(!card)return;
+    const date=(document.getElementById('menuDate')&&document.getElementById('menuDate').value)||todayString();
+    const record=stage4TodayRecord(date);
+    const item=record.otherItems.find(function(x){return String(x.id)===String(card.dataset.otherId);});
+    if(!item)return;
+    const existing=document.getElementById('kkDeleteOtherItemDialog');
+    if(existing)existing.remove();
+    const overlay=document.createElement('div');
+    overlay.id='kkDeleteOtherItemDialog';
+    overlay.setAttribute('role','dialog');
+    overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-labelledby','kkDeleteOtherItemTitle');
+    overlay.innerHTML=
+      '<div class="kk-delete-dialog-card">'+
+      '<div class="kk-delete-dialog-title" id="kkDeleteOtherItemTitle">Delete item?</div>'+
+      '<p>Are you sure you want to remove <strong>'+escapeHtml(item.name||'this item')+'</strong> from today\'s sales?</p>'+
+      '<div class="kk-delete-dialog-actions">'+
+      '<button type="button" class="btn btn-secondary" id="kkCancelDeleteOtherItem">Cancel</button>'+
+      '<button type="button" class="btn btn-danger" id="kkConfirmDeleteOtherItem">Delete</button>'+
+      '</div></div>';
+    const style=document.getElementById('kk-delete-dialog-style')||document.createElement('style');
+    style.id='kk-delete-dialog-style';
+    style.textContent=
+      '#kkDeleteOtherItemDialog{position:fixed;inset:0;z-index:99999;background:rgba(10,20,40,.55);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}'+
+      '#kkDeleteOtherItemDialog .kk-delete-dialog-card{width:100%;max-width:360px;background:#fff;color:#17243a;border-radius:16px;padding:22px;box-shadow:0 16px 48px rgba(0,0,0,.25)}'+
+      '#kkDeleteOtherItemDialog .kk-delete-dialog-title{font-size:19px;font-weight:800;margin-bottom:10px}'+
+      '#kkDeleteOtherItemDialog p{font-size:15px;line-height:1.5;margin:0 0 20px}'+
+      '#kkDeleteOtherItemDialog .kk-delete-dialog-actions{display:flex;justify-content:flex-end;gap:10px}'+
+      '#kkDeleteOtherItemDialog .kk-delete-dialog-actions button{min-height:42px;padding:8px 16px}';
+    if(!style.parentNode)document.head.appendChild(style);
+    document.body.appendChild(overlay);
+    document.getElementById('kkCancelDeleteOtherItem').onclick=function(){overlay.remove();};
+    document.getElementById('kkConfirmDeleteOtherItem').onclick=function(){
+        record.otherItems=record.otherItems.filter(function(x){return String(x.id)!==String(card.dataset.otherId);});
+        saveAllData();
+        overlay.remove();
+        renderDailyOtherItemDropdown(date);
+        window.renderDailyOtherItems(date);
+        calculateCombinedSales(date);
+    };
+    overlay.addEventListener('click',function(event){if(event.target===overlay)overlay.remove();});
+};
