@@ -9071,3 +9071,75 @@ window.deleteDailyOtherItem=function(button){
     renderDailyOtherItems(date);
     calculateCombinedSales(date);
 };
+
+
+/* OTHER ITEMS SOLD — 3x2 SUMMARY GRID WITH QTY +/- AND DELETE */
+window.kkChangeDailyOtherSoldQty=function(button,delta){
+    const card=button.closest('.daily-other-simple-card');
+    if(!card)return;
+    const date=(document.getElementById('menuDate')&&document.getElementById('menuDate').value)||todayString();
+    const record=stage4TodayRecord(date);
+    const item=record.otherItems.find(function(x){return String(x.id)===String(card.dataset.otherId);});
+    if(!item)return;
+    kkNormalizeDailyOtherItem(item);
+    item.quantitySold=Math.max(0,Math.floor(numberValue(item.quantitySold))+delta);
+    saveAllData();
+    window.renderDailyOtherItems(date);
+    renderDailyOtherItemDropdown(date);
+    calculateCombinedSales(date);
+};
+window.renderDailyOtherItems=function(date){
+    const container=document.getElementById('dailyOtherItemsList');
+    if(!container)return;
+    const selectedDate=date||(document.getElementById('menuDate')&&document.getElementById('menuDate').value)||todayString();
+    const record=stage4TodayRecord(selectedDate);
+    container.innerHTML='';
+    if(!record.otherItems.length){
+        container.innerHTML='<div class="menu-empty">No other items sold. Select an item from the dropdown above.</div>';
+        return;
+    }
+    record.otherItems.forEach(function(raw){
+        const item=kkNormalizeDailyOtherItem(raw);
+        const qty=Math.max(0,Math.floor(numberValue(item.quantitySold)));
+        const unitCost=numberValue(item.unitCost);
+        const unitSell=numberValue(item.sellingPrice);
+        const sales=unitSell*qty;
+        const cost=unitCost*qty;
+        const profit=sales-cost;
+        const card=document.createElement('div');
+        card.className='menu-item daily-other-simple-card';
+        card.dataset.otherId=String(item.id);
+        card.innerHTML=
+          '<div class="menu-top"><div class="menu-name">'+escapeHtml(item.name||'Other Item')+' <span class="muted">('+escapeHtml(item.unit||'unit')+')</span></div></div>'+
+          '<div class="kk-other-sold-3x2-grid">'+
+          '<div class="kk-other-sold-tile"><span>Unit Cost</span><strong>'+money(unitCost)+'</strong></div>'+
+          '<div class="kk-other-sold-tile"><span>Qty Sold</span><div class="kk-other-qty-control">'+
+          '<button type="button" class="btn btn-secondary btn-small" onclick="kkChangeDailyOtherSoldQty(this,-1)" aria-label="Decrease quantity sold">−</button>'+
+          '<strong>'+qty+'</strong>'+
+          '<button type="button" class="btn btn-secondary btn-small" onclick="kkChangeDailyOtherSoldQty(this,1)" aria-label="Increase quantity sold">+</button>'+
+          '</div></div>'+
+          '<div class="kk-other-sold-tile"><span>Total Sales</span><strong>'+money(sales)+'</strong></div>'+
+          '<div class="kk-other-sold-tile"><span>Total Cost</span><strong>'+money(cost)+'</strong></div>'+
+          '<div class="kk-other-sold-tile"><span>Profit</span><strong class="'+(profit>0?'profit-positive':profit<0?'profit-negative':'')+'">'+money(profit)+'</strong></div>'+
+          '<div class="kk-other-sold-tile kk-other-delete-tile"><span>Action</span><button type="button" class="btn btn-danger btn-small" onclick="deleteDailyOtherItem(this)">Delete</button></div>'+
+          '</div>';
+        container.appendChild(card);
+    });
+    saveAllData();
+};
+(function(){
+    if(document.getElementById('kk-other-sold-3x2-styles'))return;
+    const style=document.createElement('style');
+    style.id='kk-other-sold-3x2-styles';
+    style.textContent=
+      '#dailyOtherItemsList .kk-other-sold-3x2-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}'+
+      '#dailyOtherItemsList .kk-other-sold-tile{box-sizing:border-box;min-width:0;min-height:76px;padding:9px 5px;border:1px solid var(--line);border-radius:10px;background:#f7f9fc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center}'+
+      '#dailyOtherItemsList .kk-other-sold-tile>span{font-size:11px;line-height:1.2;font-weight:700;color:var(--muted,#5b6575)}'+
+      '#dailyOtherItemsList .kk-other-sold-tile>strong{font-size:14px;line-height:1.2;overflow-wrap:anywhere}'+
+      '#dailyOtherItemsList .kk-other-qty-control{width:100%;display:flex;align-items:center;justify-content:center;gap:5px}'+
+      '#dailyOtherItemsList .kk-other-qty-control strong{min-width:18px;font-size:16px}'+
+      '#dailyOtherItemsList .kk-other-qty-control .btn{min-width:28px;min-height:30px;padding:3px 7px;font-size:17px;line-height:1}'+
+      '#dailyOtherItemsList .kk-other-delete-tile .btn{min-height:30px;padding:5px 10px}'+
+      '@media(max-width:380px){#dailyOtherItemsList .kk-other-sold-3x2-grid{gap:5px}#dailyOtherItemsList .kk-other-sold-tile{padding:8px 3px;min-height:72px}#dailyOtherItemsList .kk-other-sold-tile>span{font-size:10px}#dailyOtherItemsList .kk-other-sold-tile>strong{font-size:12px}#dailyOtherItemsList .kk-other-qty-control{gap:3px}#dailyOtherItemsList .kk-other-qty-control .btn{min-width:24px;padding:3px 5px}}';
+    document.head.appendChild(style);
+})();
