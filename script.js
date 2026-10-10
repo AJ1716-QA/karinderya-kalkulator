@@ -8763,3 +8763,91 @@ function calculateCombinedSales(date){
     }
   });
 })();
+
+
+/* OTHER ITEM SOLD — align price fields and convert purchase-pack pricing to
+   individual sale units (e.g. dozen -> 12 cans/bottles). */
+(function(){
+  function kkOtherUnitFactor(unit){
+    const u=String(unit||"").trim().toLowerCase();
+    const factors={dozen:12, "half-dozen":6, tray:30, "30 eggs":30, "liter":1000, "litre":1000, "l":1000, kg:1000, kilogram:1000};
+    return factors[u]||1;
+  }
+  window.kkOtherUnitFactor=kkOtherUnitFactor;
+
+  const oldAdd=window.addDailyOtherItemFromSelect;
+  window.addDailyOtherItemFromSelect=function(){
+    const select=document.getElementById("dailyOtherItemSelect");
+    const id=String(select&&select.value||"");
+    if(!id)return;
+    const date=(document.getElementById("menuDate")&&document.getElementById("menuDate").value)||todayString();
+    const master=otherItems.find(function(x){return String(x.id)===id;});
+    if(!master)return;
+    const record=stage4TodayRecord(date);
+    if(record.otherItems.some(function(x){return String(x.otherItemId)===id;})){
+      showMessage("menuMessage","This other item is already added for today.","error");
+      renderDailyOtherItemDropdown(date);
+      return;
+    }
+    const factor=kkOtherUnitFactor(master.unit);
+    record.otherItems.push({
+      id:createSalesRowId(),
+      otherItemId:id,
+      name:master.name,
+      unit:factor>1 ? (String(master.unit).toLowerCase()==="dozen" ? "piece" : (String(master.unit).toLowerCase()==="tray" ? "piece" : (["liter","litre","l"].includes(String(master.unit).toLowerCase()) ? "ml" : "g"))) : (master.unit||"piece"),
+      purchaseUnit:master.unit||"",
+      purchasePrice:numberValue(master.purchasePrice),
+      purchaseQuantity:numberValue(master.quantity),
+      unitFactor:factor,
+      unitCost:numberValue(master.unitCost)/factor,
+      sellingPrice:numberValue(master.sellingPrice)/factor,
+      quantitySold:0
+    });
+    saveAllData();
+    loadMenuOfDay();
+  };
+
+  const previousRender=window.renderDailyOtherItems;
+  window.renderDailyOtherItems=function(date){
+    const c=document.getElementById("dailyOtherItemsList");
+    if(!c)return;
+    const record=stage4TodayRecord(date||(document.getElementById("menuDate")&&document.getElementById("menuDate").value)||todayString());
+    c.innerHTML="";
+    if(!record.otherItems.length){c.innerHTML='<div class="menu-empty">No other items sold.</div>';return;}
+    record.otherItems.forEach(function(item){
+      const master=otherItems.find(function(x){return String(x.id)===String(item.otherItemId);});
+      const factor=numberValue(item.unitFactor)||kkOtherUnitFactor(item.purchaseUnit||(master&&master.unit)||item.unit);
+      const purchase=numberValue(item.purchasePrice!==undefined?item.purchasePrice:(master&&master.purchasePrice));
+      const unitCost=numberValue(item.unitCost!==undefined?item.unitCost:(master&&master.unitCost))/((item.unitCost!==undefined?1:factor)||1);
+      const selling=numberValue(item.sellingPrice);
+      const qty=Math.max(0,Math.floor(numberValue(item.quantitySold)));
+      const sales=selling*qty, cost=unitCost*qty, profit=sales-cost;
+      const card=document.createElement("div");
+      card.className="menu-item";
+      card.dataset.otherId=item.id;
+      card.innerHTML=
+        '<div class="menu-top"><div class="menu-name">'+escapeHtml(item.name||"Other Item")+'</div><div class="menu-actions"><button type="button" class="btn btn-danger btn-small" onclick="deleteDailyOtherItem(this)">Delete</button></div></div>'+
+        '<div class="daily-other-grid kk-auto-other-grid">'+
+          '<div class="form-group kk-other-sold-field"><label>Purchase Price</label><input type="text" value="'+money(purchase)+'" readonly aria-label="Purchase price"></div>'+
+          '<div class="form-group kk-other-sold-field"><label>Selling Price / '+escapeHtml(item.unit||"unit")+'</label><input class="other-sale-price" type="number" min="0" step="0.01" inputmode="decimal" value="'+selling+'" onchange="updateDailyOtherItem(this)" aria-label="Selling price per sold unit"></div>'+
+          '<div class="form-group kk-other-sold-field"><label>Unit</label><input type="text" value="'+escapeHtml(item.unit||"piece")+'" readonly aria-label="Selling unit"></div>'+
+          '<div class="kk-premium-cell"><span>Qty Sold</span><div class="kk-premium-sold-control"><button type="button" class="btn btn-secondary btn-small" onclick="changeDailyOtherSoldQuantity(this,-1)" aria-label="Decrease quantity sold">−</button><div class="kk-premium-sold-value"><strong>'+qty+'</strong></div><button type="button" class="btn btn-secondary btn-small" onclick="changeDailyOtherSoldQuantity(this,1)" aria-label="Increase quantity sold">+</button></div></div>'+
+          '<div class="kk-premium-cell"><span>Total Sales</span><strong class="other-sales-total">'+money(sales)+'</strong></div>'+
+          '<div class="kk-premium-cell"><span>Profit</span><strong class="other-profit-total '+(profit>0?"profit-positive":profit<0?"profit-negative":"")+'">'+money(profit)+'</strong></div>'+
+        '</div>';
+      c.appendChild(card);
+    });
+  };
+
+  const style=document.createElement("style");
+  style.id="kk-other-sold-alignment-pricing";
+  style.textContent=`
+    #dailyOtherItemsList .kk-auto-other-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;align-items:stretch;gap:8px}
+    #dailyOtherItemsList .kk-other-sold-field{min-width:0;margin:0;padding:9px 7px;border:1px solid var(--line);border-radius:11px;background:#fff;display:flex;flex-direction:column;justify-content:flex-start}
+    #dailyOtherItemsList .kk-other-sold-field label{display:flex;align-items:center;justify-content:center;text-align:center;min-height:30px;line-height:1.2;font-size:11px;font-weight:750;margin-bottom:6px}
+    #dailyOtherItemsList .kk-other-sold-field input{box-sizing:border-box;width:100%;min-width:0;min-height:40px;height:40px;text-align:center;padding:6px 4px;font-size:14px;margin:0}
+    #dailyOtherItemsList .kk-other-sold-field input[readonly]{background:#f4f7fb;color:var(--navy);opacity:1}
+    @media(max-width:768px){#dailyOtherItemsList .kk-auto-other-grid{gap:6px}#dailyOtherItemsList .kk-other-sold-field{padding:8px 4px}#dailyOtherItemsList .kk-other-sold-field label{font-size:10px;min-height:34px}#dailyOtherItemsList .kk-other-sold-field input{font-size:12px;padding:5px 2px}}
+  `;
+  if(!document.getElementById(style.id))document.head.appendChild(style);
+})();
