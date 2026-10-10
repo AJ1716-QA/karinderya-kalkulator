@@ -200,14 +200,15 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 #performanceMetrics input[type=checkbox]:focus-visible{outline:3px solid rgba(36,119,179,.24);outline-offset:2px}
 @media(max-width:420px){#performanceMetrics{gap:7px!important}#performanceMetrics label{min-height:38px;padding:7px 10px;font-size:13px!important}}
 
-/* Keep Graph Period dropdown aligned with the metric selector cards */
-#performanceRecordsCard > .form-grid:first-of-type{display:inline-flex;vertical-align:middle;align-items:center;width:170px;max-width:100%;margin:12px 10px 12px 0;gap:0}
-#performanceRecordsCard > .form-grid:first-of-type .form-group{width:100%;min-width:0;margin:0}
-#performanceRecordsCard > .form-grid:first-of-type label{white-space:nowrap;margin-bottom:6px}
-#performanceRecordsCard > .form-grid:first-of-type select{width:100%;min-height:40px}
-#performanceMetrics{display:inline-flex!important;vertical-align:middle;align-items:center;max-width:100%}
-@media(max-width:520px){#performanceRecordsCard > .form-grid:first-of-type{width:145px;margin-right:8px}#performanceMetrics{gap:7px!important}}
-@media(max-width:380px){#performanceRecordsCard > .form-grid:first-of-type{width:100%;margin:10px 0 4px}#performanceMetrics{display:flex!important;width:100%}}
+/* Align Graph Period and metric checkboxes in one reliable flex row */
+#performanceControlRow{display:flex;align-items:center;flex-wrap:wrap;gap:10px 12px;width:100%;margin:12px 0 14px}
+#performanceControlRow > .form-grid{display:flex!important;flex:0 0 170px;width:170px;max-width:100%;margin:0;padding:0;gap:0}
+#performanceControlRow > .form-grid .form-group{width:100%;min-width:0;margin:0}
+#performanceControlRow > .form-grid label{white-space:nowrap;margin-bottom:6px}
+#performanceControlRow > .form-grid select{width:100%;min-height:40px}
+#performanceMetrics{display:flex!important;flex:1 1 300px;align-items:center;flex-wrap:wrap;gap:9px 10px!important;max-width:100%;margin:0!important}
+@media(max-width:520px){#performanceControlRow{gap:8px}#performanceControlRow > .form-grid{flex-basis:145px;width:145px}#performanceMetrics{flex:1 1 240px;gap:7px!important}}
+@media(max-width:380px){#performanceControlRow{display:flex;flex-direction:column;align-items:stretch}#performanceControlRow > .form-grid{flex:0 0 auto;width:100%}#performanceMetrics{width:100%;flex:0 0 auto}}
 </style>
 
 
@@ -359,8 +360,10 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 <div class="section-title">Saved Records</div>
 <div class="card" id="performanceRecordsCard">
 <div class="record-section-title">Business Performance</div>
+<div id="performanceControlRow">
 <div class="form-grid"><div class="form-group"><label for="performancePeriod">Graph Period</label><select id="performancePeriod"><option value="daily">Daily</option><option value="monthly">Monthly</option></select></div></div>
-<div id="performanceMetrics" style="display:flex;flex-wrap:wrap;gap:8px 14px;margin:12px 0"><label style="display:inline-flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" value="sales" checked> Sales</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" value="profit" checked> Profit</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" value="capex" checked> CAPEX</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" value="opex" checked> OPEX</label></div>
+<div id="performanceMetrics"><label><input type="checkbox" value="sales" checked> Sales</label><label><input type="checkbox" value="profit" checked> Profit</label><label><input type="checkbox" value="capex" checked> CAPEX</label><label><input type="checkbox" value="opex" checked> OPEX</label></div>
+</div>
 <div id="performanceDateRange" style="margin:8px 0 14px"><div id="performanceDailyRange" class="form-grid"><div class="form-group"><label for="performanceStartDate">From Date</label><input id="performanceStartDate" type="date"></div><div class="form-group"><label for="performanceEndDate">To Date</label><input id="performanceEndDate" type="date"></div></div><div id="performanceMonthlyRange" class="form-grid" style="display:none"><div class="form-group"><label for="performanceStartMonth">From Month</label><select id="performanceStartMonth"></select></div><div class="form-group"><label for="performanceEndMonth">To Month</label><select id="performanceEndMonth"></select></div></div></div>
 <div id="performanceGraph" role="img" aria-label="Business performance graph"></div><div id="performanceTable"></div>
 <div class="small-text">Graphs use finalized saved Sales Monitoring and Financial Data records. Months without saved records are not estimated.</div></div>
@@ -370,7 +373,7 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=20261010g"></script>
+<script src="script.js?v=20261010j"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const btn = document.getElementById("headerMenuBtn");
