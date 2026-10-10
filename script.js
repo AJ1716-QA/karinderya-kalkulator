@@ -671,6 +671,12 @@ async function loadRecipeScreen() {
         addRecipeIngredient();
     }
 
+    /* Rebuild each ingredient dropdown only after the cloud master list
+       has finished loading. Keep existing selections, remove ingredients
+       already selected in another row, and recalculate the live recipe cost. */
+    refreshRecipeIngredientDropdowns();
+    calculateRecipeTotal();
+
     loadSavedRecipes();
 }
 
