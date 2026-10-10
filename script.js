@@ -45,6 +45,19 @@ const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
+
+/* Prevent the login/access UI from spinning forever when Supabase is unreachable. */
+function kkWithTimeout(promise, milliseconds, message) {
+    let timeoutId;
+    const timeout = new Promise(function(resolve, reject) {
+        timeoutId = setTimeout(function() {
+            reject(new Error(message || "The request timed out. Please check your connection and try again."));
+        }, milliseconds);
+    });
+    return Promise.race([promise, timeout]).finally(function() {
+        clearTimeout(timeoutId);
+    });
+}
 /* =========================================================
    KARINDERYA KALKULATOR
    MOBILE-FIRST BUSINESS CALCULATOR
@@ -4111,10 +4124,14 @@ document.getElementById("loginBtn").addEventListener("click", async function () 
     message.className = "message";
 
     try {
-        const { error } = await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
+        const { error } = await kkWithTimeout(
+            supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            }),
+            15000,
+            "Login request timed out. Please check your internet connection and try again."
+        );
 
         if (error) {
             message.textContent = error.message;
@@ -4200,11 +4217,15 @@ document.getElementById("logoutBtn").addEventListener("click", async function ()
 
 async function checkLifetimeEntitlement(userId) {
     if (!userId) return false;
-    const { data, error } = await supabaseClient
-        .from("user_entitlements")
-        .select("status, access_type")
-        .eq("user_id", userId)
-        .maybeSingle();
+    const { data, error } = await kkWithTimeout(
+        supabaseClient
+            .from("user_entitlements")
+            .select("status, access_type")
+            .eq("user_id", userId)
+            .maybeSingle(),
+        12000,
+        "Lifetime access check timed out. Please check your connection and try again."
+    );
     if (error) {
         console.error("Lifetime access check failed:", error.message);
         return false; // fail closed
@@ -4299,7 +4320,11 @@ async function updateAppAccess(forceCheck) {
         const authScreen = document.getElementById("authScreen");
         const appContainer = document.getElementById("appContent");
         const lock = ensureLifetimeLockScreen();
-        const { data, error } = await supabaseClient.auth.getSession();
+        const { data, error } = await kkWithTimeout(
+            supabaseClient.auth.getSession(),
+            12000,
+            "Session check timed out. Please check your connection and try again."
+        );
         const session = !error && data ? data.session : null;
 
         if (!session) {
