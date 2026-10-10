@@ -5265,6 +5265,28 @@ async function saveOtherItem(editId) {
         return;
     }
 
+    /* Recheck the user's current cloud list; the in-memory list can be stale
+       when the same account is open in another tab or on another device. */
+    const duplicateCheck = await supabaseClient
+        .from("other_items")
+        .select("id,name")
+        .eq("user_id", userId);
+    if (duplicateCheck.error) {
+        console.error("Unable to verify duplicate Other Items:", duplicateCheck.error);
+        showMessage("otherItemMessage", "Unable to verify duplicate items. Please try again.", "error");
+        return;
+    }
+    const normalizedName = name.trim().toLocaleLowerCase();
+    const cloudDuplicate = (duplicateCheck.data || []).find(function(item) {
+        return String(item.name || "").trim().toLocaleLowerCase() === normalizedName &&
+               String(item.id) !== String(editId || "");
+    });
+    if (cloudDuplicate) {
+        await renderOtherItemList();
+        showMessage("otherItemMessage", "This item is already saved. Edit the existing item instead.", "error");
+        return;
+    }
+
     const unitCost = purchasePrice / quantity;
     let error = null;
 
