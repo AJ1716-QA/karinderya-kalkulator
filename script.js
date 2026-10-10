@@ -8379,7 +8379,7 @@ function styles(){
   }
   window.calculateProfit=function(){return calculate(true);};
   window.saveProfitRecord=function(){return saveRecord('✓ Profit record saved successfully.');};
-  window.loadProfitCalculator=function(){var old=document.getElementById('profitDate');build((old&&old.value)||D());};
+  window.loadProfitCalculator=function(){var current=document.getElementById('kkdpProfitDate');var legacy=document.getElementById('profitDate');build((current&&current.value)||(legacy&&legacy.value)||D());};
   window.loadProfitForDate=window.loadProfitCalculator;
   function init(){if(document.getElementById('profitScreen'))setTimeout(function(){window.loadProfitCalculator();},0);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
