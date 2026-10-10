@@ -9355,3 +9355,59 @@ window.deleteDailyOtherItem=function(button){
   window.loadProfitForDate=window.loadProfitCalculator;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){if(el('profitScreen')&&el('profitScreen').offsetParent!==null)setupDailyExpenseLayout();});
 })(); 
+
+
+/* DAILY EXPENSES — PREMIUM CARD POLISH */
+(function(){
+  var STYLE_ID='kkDailyExpensePremiumPolish';
+  function applyPremiumPolish(){
+    if(!document.getElementById('profitScreen'))return;
+    var style=document.getElementById(STYLE_ID)||document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent=
+      /* CAPEX: equal card heights; remove the duplicate fee amount below input */
+      '#profitScreen .kkdp-capex-row{align-items:stretch!important}'+
+      '#profitScreen .kkdp-capex-row>.kkdp-card{display:flex!important;flex-direction:column!important;justify-content:space-between!important;align-items:stretch!important;min-height:104px!important;height:100%!important;box-sizing:border-box!important;border:1px solid #dbe4ef!important;border-radius:13px!important;background:linear-gradient(160deg,#fff 0%,#f5f8fc 100%)!important;box-shadow:0 3px 10px rgba(15,35,65,.07)!important}'+
+      '#profitScreen #kkdpOtherFeesDisplay{display:none!important}'+
+      '#profitScreen .kkdp-capex-row .kkdp-value{margin-top:auto!important;padding-top:8px!important}'+
+      /* Daily Expense: identical centered typography for every OPEX row */
+      '#profitScreen .kkdp-expense-row .kkdp-daily-wrap:before{display:block!important;text-align:center!important;font-size:11px!important;font-weight:700!important;line-height:1.25!important;color:#52647a!important;margin:0 0 5px!important;content:"Daily Expense"!important}'+
+      '#profitScreen .kkdp-expense-row .kkdp-opex-daily,#profitScreen .kkdp-expense-row .kkdp-labor-value{display:block!important;text-align:center!important;font-size:13px!important;font-weight:800!important;line-height:1.3!important;color:#102b4e!important;white-space:normal!important;overflow-wrap:anywhere!important}'+
+      '#profitScreen .kkdp-expense-row .kkdp-daily-wrap{display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:stretch!important;min-width:0!important}'+
+      /* Gas/LPG should use the same label as all other expenses */
+      '#profitScreen #kkdpGasDaily{font-size:13px!important;font-weight:800!important}'+
+      /* Premium, consistent OPEX row surfaces */
+      '#profitScreen .kkdp-expense-row{border:1px solid #dbe4ef!important;border-radius:13px!important;background:linear-gradient(160deg,#fff 0%,#f7f9fc 100%)!important;box-shadow:0 3px 10px rgba(15,35,65,.055)!important}'+
+      '#profitScreen .kkdp-expense-row .kkdp-opex-name{font-size:13px!important;font-weight:800!important;color:#163452!important}'+
+      '#profitScreen .kkdp-expense-row input{border:1px solid #cbd7e5!important;border-radius:9px!important;background:#fff!important;font-weight:600!important}'+
+      /* Employee table: Employee | Daily Rate | delete only */
+      '#profitScreen #kkdpEmployeeBody tr>td:nth-child(3),#profitScreen #kkdpEmployeeBody tr>th:nth-child(3),#profitScreen #kkdpEmployeeBody tr.kkdp-employee-header>th:nth-child(3){display:none!important}'+
+      '#profitScreen .kkdp-employees table thead th:nth-child(3){display:none!important}'+
+      '#profitScreen .kkdp-emp-present{display:none!important}'+
+      '#profitScreen .kkdp-delete-employee{width:36px!important;height:36px!important;min-width:36px!important;padding:0!important;border-radius:10px!important;font-size:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#fff1f2!important;color:#be123c!important;border:1px solid #fecdd3!important}'+
+      '#profitScreen .kkdp-delete-employee:before{content:"×";font-size:23px!important;line-height:1!important;font-weight:500!important}'+
+      '#profitScreen .kkdp-labor-total-separate{border:1px solid #cbd9e8!important;border-radius:13px!important;background:linear-gradient(160deg,#f8fbff,#edf4fb)!important;color:#153657!important;box-shadow:0 3px 10px rgba(15,35,65,.05)!important}'+
+      '@media(max-width:430px){#profitScreen .kkdp-capex-row>.kkdp-card{min-height:100px!important;padding:9px 5px!important}#profitScreen .kkdp-expense-row .kkdp-daily-wrap:before{font-size:10px!important}#profitScreen .kkdp-expense-row .kkdp-opex-daily,#profitScreen .kkdp-expense-row .kkdp-labor-value{font-size:12px!important}#profitScreen .kkdp-expense-row .kkdp-opex-name{font-size:11px!important}}';
+    if(!style.parentNode)document.head.appendChild(style);
+    document.querySelectorAll('#profitScreen #kkdpEmployeeBody tr[data-id]').forEach(function(row){
+      var check=row.querySelector('.kkdp-emp-present');
+      if(check){check.checked=true;check.setAttribute('aria-hidden','true');}
+      var del=row.querySelector('.kkdp-delete-employee');
+      if(del){del.setAttribute('aria-label','Delete employee');del.setAttribute('title','Delete employee');}
+    });
+    var gas=document.getElementById('kkdpGasDaily');
+    if(gas){gas.textContent=gas.textContent.replace(/^Daily Consumption:\s*/i,'').replace(/^Daily:\s*/i,'');}
+  }
+  var baseLoad=window.loadProfitCalculator;
+  if(typeof baseLoad==='function'&&!baseLoad.__kkPremiumPolish){
+    var wrapped=function(){var result=baseLoad.apply(this,arguments);applyPremiumPolish();return result;};
+    wrapped.__kkPremiumPolish=true;
+    window.loadProfitCalculator=wrapped;
+    window.loadProfitForDate=wrapped;
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',applyPremiumPolish);
+  else applyPremiumPolish();
+  document.addEventListener('input',function(e){
+    if(e.target&&e.target.classList&&e.target.classList.contains('kkdp-emp-rate'))applyPremiumPolish();
+  });
+})();
