@@ -758,7 +758,7 @@ function convertAmount(amount,fromUnit,toUnit){
     amount=numberValue(amount);
     if(fromUnit===toUnit)return amount;
     const from=getUnitDimension(fromUnit),to=getUnitDimension(toUnit);
-    if(from.type!==to.type)return null;
+    if(from.type!==to.type || from.type==="other")return null;
     return amount*from.factor/to.factor;
 }
 function calculateIngredientCost(ingredient,amount,recipeUnit){
