@@ -785,6 +785,7 @@ function saveRecipe() {
             "recipeName"
         ).value.trim();
 
+    const servingsPerRecipe = Math.floor(numberValue(document.getElementById("recipeServings")?.value || 0));
     if (!date || !name) {
 
         showMessage(
@@ -793,6 +794,11 @@ function saveRecipe() {
             "error"
         );
 
+        return;
+    }
+
+    if (servingsPerRecipe < 1) {
+        showMessage("recipeMessage", "Enter at least 1 serving per recipe.", "error");
         return;
     }
 
@@ -845,6 +851,7 @@ function saveRecipe() {
     if (existing) {
 
         existing.totalCost = totalCost;
+        existing.servingsPerRecipe = servingsPerRecipe;
         existing.ingredients = ingredients;
 
     } else {
@@ -854,6 +861,7 @@ function saveRecipe() {
             date: date,
             name: name,
             totalCost: totalCost,
+            servingsPerRecipe: servingsPerRecipe,
             ingredients: ingredients
         });
     }
@@ -891,6 +899,8 @@ function clearRecipeForm(showMessageFlag) {
     document.getElementById(
         "recipeName"
     ).value = "";
+    const servingsInput = document.getElementById("recipeServings");
+    if (servingsInput) servingsInput.value = "1";
 
     document.getElementById(
         "recipeIngredients"
@@ -939,6 +949,8 @@ async function editSavedRecipe(id){
 
     document.getElementById("recipeDate").value=r.date||todayString();
     document.getElementById("recipeName").value=r.name||"";
+    const servingsInput = document.getElementById("recipeServings");
+    if (servingsInput) servingsInput.value = String(Math.max(1, Math.floor(numberValue(r.servingsPerRecipe || 1))));
     loadSavedRecipes();
 
     const container=document.getElementById("recipeIngredients");
@@ -8493,3 +8505,196 @@ function calculateCombinedSales(date){
     set('combinedProfitPercent',(record.totalSales?record.grossProfit/record.totalSales*100:0).toFixed(2)+'%');
     saveAllData();if(typeof updateDashboard==='function')updateDashboard();
 }
+
+
+/* =========================================================
+   AUTO-POPULATED DAILY MENU — SERVINGS AND PER-SERVING COST
+   Recipes saved for the selected date automatically become menu cards.
+   Existing sales quantities and selling prices are preserved.
+   ========================================================= */
+(function(){
+  'use strict';
+  function n(v){ return typeof numberValue==='function' ? numberValue(v) : (Number(v)||0); }
+  function perServing(item){
+    const servings=Math.max(1,Math.floor(n(item.servingsPerRecipe || 1)));
+    return n(item.costPerServing !== undefined ? item.costPerServing : n(item.recipeCost)/servings);
+  }
+  function syncFoodFromRecipes(date){
+    const record=stage4TodayRecord(date);
+    const recipes=getRecipesForDate(date);
+    recipes.forEach(function(recipe){
+      let item=record.foodItems.find(function(x){
+        return String(x.recipeId||'')===String(recipe.id) ||
+          (!x.recipeId && String(x.recipeName||'').toLowerCase()===String(recipe.name||'').toLowerCase());
+      });
+      if(!item){
+        item={id:createSalesRowId(),recipeId:String(recipe.id),recipeName:recipe.name,
+          recipeCost:n(recipe.totalCost),servingsPerRecipe:Math.max(1,Math.floor(n(recipe.servingsPerRecipe||1))),
+          costPerServing:0,sellingPrice:0,servingsSold:0};
+        record.foodItems.push(item);
+      }
+      item.recipeId=String(recipe.id);
+      item.recipeName=recipe.name;
+      item.recipeCost=n(recipe.totalCost);
+      item.servingsPerRecipe=Math.max(1,Math.floor(n(recipe.servingsPerRecipe||1)));
+      item.costPerServing=item.recipeCost/item.servingsPerRecipe;
+    });
+    return record;
+  }
+  window.loadMenuOfDay=function(){
+    const dateEl=document.getElementById('menuDate');
+    if(!dateEl)return;
+    if(!dateEl.value)dateEl.value=todayString();
+    const date=dateEl.value;
+    syncFoodFromRecipes(date);
+    renderMenuItems(date);
+    renderDailyOtherItemDropdown(date);
+    renderDailyOtherItems(date);
+    calculateCombinedSales(date);
+  };
+  window.updateStage4SellingPrice=function(input){
+    const card=input.closest('.menu-item');
+    if(!card)return;
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    const item=record.foodItems.find(function(x){return String(x.id)===String(card.dataset.foodId);});
+    if(!item)return;
+    item.sellingPrice=Math.max(0,n(input.value));
+    saveAllData();
+    calculateCombinedSales(date);
+    const sales=n(item.sellingPrice)*n(item.servingsSold);
+    const cost=perServing(item)*n(item.servingsSold);
+    const profit=sales-cost;
+    const set=function(sel,val,cls){
+      const el=card.querySelector(sel);
+      if(el){el.textContent=val;el.classList.remove('profit-positive','profit-negative');if(cls)el.classList.add(cls);}
+    };
+    set('.food-sales-total',money(sales));
+    set('.food-profit-total',money(profit),profit>0?'profit-positive':profit<0?'profit-negative':'');
+  };
+  window.renderMenuItems=function(date){
+    const c=document.getElementById('menuItems');
+    if(!c)return;
+    const record=syncFoodFromRecipes(date||document.getElementById('menuDate')?.value||todayString());
+    c.innerHTML='';
+    if(!record.foodItems.length){
+      c.innerHTML='<div class="menu-empty">No recipes saved for this date yet. Save a recipe in Recipe of the Day to see it here.</div>';
+      return;
+    }
+    record.foodItems.forEach(function(item){
+      const costServing=perServing(item);
+      const qty=Math.max(0,Math.floor(n(item.servingsSold)));
+      const sales=n(item.sellingPrice)*qty;
+      const profit=sales-costServing*qty;
+      const card=document.createElement('div');
+      card.className='menu-item'+(stage4IsFoodSoldOut(record,item.id)?' stage4-food-sold-out':'');
+      card.dataset.foodId=item.id;
+      card.innerHTML=
+        '<div class="menu-top"><div class="menu-name">'+escapeHtml(item.recipeName||'Unnamed Recipe')+'</div>'+
+        '<div class="menu-actions"><button type="button" class="btn btn-danger btn-small" onclick="deleteStage4Food(this)">Delete</button>'+
+        '<button type="button" class="btn btn-secondary btn-small" onclick="editStage4Food(this)">Edit</button></div></div>'+
+        '<div class="menu-summary-grid-6 kk-auto-food-grid">'+
+          stage4Box('Recipe Cost',money(item.recipeCost))+
+          stage4Box('Cost / Serving',money(costServing))+
+          '<div class="form-group kk-food-price-field"><label>Selling Price / Serving</label><input class="food-sale-price" type="number" min="0" step="0.01" inputmode="decimal" value="'+n(item.sellingPrice)+'" onchange="updateStage4SellingPrice(this)" aria-label="Selling price per serving"></div>'+
+          '<div class="kk-premium-cell"><span>Servings Sold</span><div class="kk-premium-sold-control">'+
+          '<button type="button" class="btn btn-secondary btn-small" onclick="changeStage4SoldQuantity(this,-1)" aria-label="Decrease servings sold">−</button>'+
+          '<div class="kk-premium-sold-value"><strong>'+qty+'</strong></div>'+
+          '<button type="button" class="btn btn-secondary btn-small" onclick="changeStage4SoldQuantity(this,1)" aria-label="Increase servings sold">+</button></div></div>'+
+          '<div class="kk-premium-cell"><span>Total Sales</span><strong class="food-sales-total">'+money(sales)+'</strong></div>'+
+          '<div class="kk-premium-cell"><span>Profit</span><strong class="food-profit-total '+(profit>0?'profit-positive':profit<0?'profit-negative':'')+'">'+money(profit)+'</strong></div>'+
+        '</div>';
+      c.appendChild(card);
+    });
+  };
+  window.renderDailyOtherItems=function(date){
+    const c=document.getElementById('dailyOtherItemsList');
+    if(!c)return;
+    const record=stage4TodayRecord(date||document.getElementById('menuDate')?.value||todayString());
+    c.innerHTML='';
+    if(!record.otherItems.length){c.innerHTML='<div class="menu-empty">No other items sold.</div>';return;}
+    record.otherItems.forEach(function(item){
+      const master=otherItems.find(function(x){return String(x.id)===String(item.otherItemId);});
+      const purchase=n(item.purchasePrice!==undefined?item.purchasePrice:(master&&(master.purchasePrice!==undefined?master.purchasePrice:master.unitCost)));
+      const unit=String(item.unit||(master&&master.unit)||'');
+      const unitCost=n(item.unitCost!==undefined?item.unitCost:purchase);
+      const qty=Math.max(0,Math.floor(n(item.quantitySold)));
+      const sales=n(item.sellingPrice)*qty;
+      const profit=sales-unitCost*qty;
+      const card=document.createElement('div');
+      card.className='menu-item';
+      card.dataset.otherId=item.id;
+      card.innerHTML=
+        '<div class="menu-top"><div class="menu-name">'+escapeHtml(item.name||'Other Item')+'</div><div class="menu-actions"><button type="button" class="btn btn-danger btn-small" onclick="deleteDailyOtherItem(this)">Delete</button></div></div>'+
+        '<div class="daily-other-grid kk-auto-other-grid">'+
+          '<div class="kk-premium-cell"><span>Purchase Price</span><strong>'+money(purchase)+'</strong></div>'+
+          '<div class="form-group"><label>Selling Price</label><input class="other-sale-price" type="number" min="0" step="0.01" inputmode="decimal" value="'+n(item.sellingPrice)+'" onchange="updateDailyOtherItem(this)"></div>'+
+          '<div class="kk-premium-cell"><span>Unit</span><strong>'+escapeHtml(unit||'—')+'</strong></div>'+
+          '<div class="kk-premium-cell"><span>Qty Sold</span><div class="kk-premium-sold-control"><button type="button" class="btn btn-secondary btn-small" onclick="changeDailyOtherSoldQuantity(this,-1)" aria-label="Decrease quantity sold">−</button><div class="kk-premium-sold-value"><strong>'+qty+'</strong></div><button type="button" class="btn btn-secondary btn-small" onclick="changeDailyOtherSoldQuantity(this,1)" aria-label="Increase quantity sold">+</button></div></div>'+
+          '<div class="kk-premium-cell"><span>Total Sales</span><strong class="other-sales-total">'+money(sales)+'</strong></div>'+
+          '<div class="kk-premium-cell"><span>Profit</span><strong class="other-profit-total '+(profit>0?'profit-positive':profit<0?'profit-negative':'')+'">'+money(profit)+'</strong></div>'+
+        '</div>';
+      c.appendChild(card);
+    });
+  };
+  window.updateDailyOtherItem=function(input){
+    const card=input.closest('.menu-item');
+    if(!card)return;
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    const item=record.otherItems.find(function(x){return String(x.id)===String(card.dataset.otherId);});
+    if(!item)return;
+    item.sellingPrice=Math.max(0,n(input.value));
+    saveAllData();
+    const qty=Math.max(0,Math.floor(n(item.quantitySold)));
+    const sales=n(item.sellingPrice)*qty;
+    const cost=n(item.unitCost)*qty;
+    const profit=sales-cost;
+    const set=function(sel,val,cls){const el=card.querySelector(sel);if(el){el.textContent=val;el.classList.remove('profit-positive','profit-negative');if(cls)el.classList.add(cls);}};
+    set('.other-sales-total',money(sales));
+    set('.other-profit-total',money(profit),profit>0?'profit-positive':profit<0?'profit-negative':'');
+    calculateCombinedSales(date);
+  };
+  window.calculateCombinedSales=function(date){
+    const record=stage4TodayRecord(date||document.getElementById('menuDate')?.value||todayString());
+    let foodSales=0,foodCost=0,otherSales=0,otherCost=0;
+    record.foodItems.forEach(function(item){
+      const qty=Math.max(0,Math.floor(n(item.servingsSold)));
+      foodSales+=n(item.sellingPrice)*qty;
+      if(qty>0)foodCost+=perServing(item)*qty;
+    });
+    record.otherItems.forEach(function(item){
+      const qty=Math.max(0,Math.floor(n(item.quantitySold)));
+      otherSales+=n(item.sellingPrice)*qty;
+      otherCost+=n(item.unitCost)*qty;
+    });
+    record.foodSales=foodSales;record.otherSales=otherSales;
+    record.totalSales=foodSales+otherSales;record.foodCost=foodCost;record.otherCost=otherCost;
+    record.totalCost=foodCost+otherCost;record.grossProfit=record.totalSales-record.totalCost;record.profit=record.grossProfit;
+    const set=function(id,value){const el=document.getElementById(id);if(el)el.textContent=value;};
+    set('combinedFoodSales',money(foodSales));set('combinedOtherSales',money(otherSales));
+    set('combinedTotalSales',money(record.totalSales));set('combinedTotalCost',money(record.totalCost));
+    set('combinedGrossProfit',money(record.grossProfit));
+    set('combinedProfitPercent',(record.totalSales?record.grossProfit/record.totalSales*100:0).toFixed(2)+'%');
+    saveAllData();
+    if(typeof updateDashboard==='function')updateDashboard();
+  };
+  const style=document.createElement('style');
+  style.id='kk-auto-menu-layout';
+  style.textContent=`
+    .kk-auto-food-grid{grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch}
+    .kk-food-price-field{margin:0;min-width:0;padding:9px 6px;border:1px solid var(--line);border-radius:11px;background:#fff}
+    .kk-food-price-field label{font-size:10px;text-align:center}
+    .kk-food-price-field input{min-height:38px;padding:7px 4px;text-align:center;font-size:14px}
+    .kk-premium-cell{min-width:0;padding:10px 6px;border:1px solid var(--line);border-radius:11px;background:#fff;text-align:center}
+    .kk-premium-cell>span{display:block;margin-bottom:4px;color:var(--muted);font-size:10px;font-weight:750}
+    .kk-premium-cell>strong{display:block;color:var(--navy);font-size:14px;font-weight:900;overflow-wrap:anywhere}
+    .kk-premium-sold-control{display:flex;align-items:center;justify-content:center;gap:4px}
+    .kk-premium-sold-control .btn{min-width:30px;min-height:34px;padding:5px 8px}
+    .kk-premium-sold-value{min-width:22px;text-align:center}
+    .kk-premium-sold-value strong{font-size:15px;color:var(--navy)}
+    .kk-auto-other-grid{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:10px}
+    @media(max-width:420px){.kk-auto-food-grid,.kk-auto-other-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.kk-food-price-field label{font-size:10px}.kk-premium-cell{padding:9px 4px}.kk-premium-cell>strong{font-size:13px}.kk-premium-sold-control{gap:2px}.kk-premium-sold-control .btn{min-width:27px;padding:4px 6px}}
+  `;
+  if(!document.getElementById(style.id))document.head.appendChild(style);
+})();
