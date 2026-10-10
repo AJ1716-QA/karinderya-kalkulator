@@ -442,15 +442,10 @@ function showScreen(screenId) {
         updateDashboard();
     }
 
-    /* Always refresh cloud ingredients before opening Recipe Cost.
-       This guarantees newly saved ingredients are immediately available
-       in the recipe ingredient dropdown. */
-    if (screenId === "recipeScreen" && currentUserId) {
-        renderIngredientList().then(function(){
-            refreshRecipeIngredientDropdowns();
-            calculateRecipeTotal();
-        });
-    }
+    /* Recipe screen performs one awaited Supabase refresh in
+       loadRecipeScreen(). Avoid a second concurrent refresh here:
+       renderIngredientList() uses request IDs, so parallel requests can
+       invalidate one another and leave the recipe dropdown temporarily empty. */
 
     if (screenId === "ingredientScreen") {
         populateMasterIngredientSelect();
@@ -552,10 +547,17 @@ async function saveIngredient(editId) {
         showMessage("ingredientMessage", "Please enter a valid ingredient, purchase price and quantity.", "error"); return;
     }
     const unitCost = purchasePrice / quantity;
-    const duplicate = ingredientPrices.find(x => x.name.toLowerCase() === name.toLowerCase() && String(x.id) !== String(editId || ""));
+    const normalizedName = name.trim().toLocaleLowerCase();
+    const duplicate = ingredientPrices.find(x => String(x.name || "").trim().toLocaleLowerCase() === normalizedName && String(x.id) !== String(editId || ""));
     if (duplicate) { showMessage("ingredientMessage", "This ingredient is already in your saved list. Edit the existing item instead.", "error"); return; }
     const userId = await getCurrentUserId();
     if (!userId) return;
+    /* Recheck the current cloud list, not only the local cache. This catches
+       duplicates saved from another session/device before inserting. */
+    const check = await supabaseClient.from("ingredients").select("id,name").eq("user_id", userId);
+    if (check.error) { console.error(check.error); showMessage("ingredientMessage", "Unable to verify duplicates. Please try again.", "error"); return; }
+    const cloudDuplicate = (check.data || []).find(x => String(x.name || "").trim().toLocaleLowerCase() === normalizedName && String(x.id) !== String(editId || ""));
+    if (cloudDuplicate) { await renderIngredientList(); showMessage("ingredientMessage", "This ingredient is already in your saved list. Edit the existing item instead.", "error"); return; }
     let error;
     if (editId) {
         ({error} = await supabaseClient.from("ingredients").update({name,purchase_price:purchasePrice,quantity,unit,unit_cost:unitCost}).eq("id",Number(editId)).eq("user_id",userId));
@@ -631,8 +633,14 @@ async function saveOtherItem(editId){
     if(selected==="__custom__")name=document.getElementById("customOtherItemName").value.trim();
     const purchasePrice=numberValue(document.getElementById("otherPurchasePrice").value), quantity=numberValue(document.getElementById("otherQuantity").value), unit=document.getElementById("otherUnit").value.trim(), sellingPrice=numberValue(document.getElementById("otherSellingPrice").value);
     if(!name||purchasePrice<=0||quantity<=0||sellingPrice<=0){showMessage("otherItemMessage","Please enter valid other item details.","error");return;}
-    const duplicate=otherItems.find(x=>x.name.toLowerCase()===name.toLowerCase()&&String(x.id)!==String(editId||"")); if(duplicate){showMessage("otherItemMessage","This item is already saved. Edit the existing item instead.","error");return;}
+    const normalizedName=name.trim().toLocaleLowerCase();
+    const duplicate=otherItems.find(x=>String(x.name||"").trim().toLocaleLowerCase()===normalizedName&&String(x.id)!==String(editId||"")); if(duplicate){showMessage("otherItemMessage","This item is already saved. Edit the existing item instead.","error");return;}
     const unitCost=purchasePrice/quantity,userId=await getCurrentUserId(); if(!userId)return;
+    /* Recheck Supabase so stale local data cannot allow a duplicate item. */
+    const check=await supabaseClient.from("other_items").select("id,name").eq("user_id",userId);
+    if(check.error){console.error(check.error);showMessage("otherItemMessage","Unable to verify duplicates. Please try again.","error");return;}
+    const cloudDuplicate=(check.data||[]).find(x=>String(x.name||"").trim().toLocaleLowerCase()===normalizedName&&String(x.id)!==String(editId||""));
+    if(cloudDuplicate){await renderOtherItemList();showMessage("otherItemMessage","This item is already saved. Edit the existing item instead.","error");return;}
     let error;
     if(editId)({error}=await supabaseClient.from("other_items").update({name,purchase_price:purchasePrice,quantity,unit,unit_cost:unitCost,selling_price:sellingPrice}).eq("id",Number(editId)).eq("user_id",userId));
     else ({error}=await supabaseClient.from("other_items").insert({user_id:userId,name,purchase_price:purchasePrice,quantity,unit,unit_cost:unitCost,selling_price:sellingPrice}));
@@ -676,6 +684,12 @@ async function loadRecipeScreen() {
         addRecipeIngredient();
     }
 
+    /* Rebuild each ingredient dropdown only after the cloud master list
+       has finished loading. Keep existing selections, remove ingredients
+       already selected in another row, and recalculate the live recipe cost. */
+    refreshRecipeIngredientDropdowns();
+    calculateRecipeTotal();
+
     loadSavedRecipes();
 }
 
@@ -686,18 +700,43 @@ function addRecipeIngredient(){
     if(!c)return;
     const row=document.createElement("div");
     row.className="recipe-ingredient-row";
-    row.innerHTML='<div><select class="recipe-ingredient-select" aria-label="Ingredient" onchange="calculateRecipeTotal();refreshRecipeIngredientDropdowns()"><option value="">Select ingredient...</option></select></div><div><input type="number" class="recipe-amount" aria-label="Amount" min="0" step="0.001" placeholder="Amount" oninput="calculateRecipeTotal()"></div><div><select class="recipe-unit" aria-label="Unit" onchange="calculateRecipeTotal()"><option value="kg">kg</option><option value="g">g</option><option value="mg">mg</option><option value="liter">liter</option><option value="ml">ml</option><option value="cup">cup</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option><option value="fl_oz">fl oz</option><option value="pint">pint</option><option value="quart">quart</option><option value="gallon">gallon</option><option value="piece">piece</option><option value="dozen">dozen</option><option value="pinch">pinch</option><option value="dash">dash</option><option value="handful">handful</option><option value="bunch">bunch</option><option value="clove">clove</option><option value="stalk">stalk</option><option value="leaf">leaf</option><option value="pack">pack</option><option value="can">can</option><option value="bottle">bottle</option><option value="slice">slice</option></select></div><button type="button" class="btn btn-danger btn-small" aria-label="Remove ingredient" onclick="removeRecipeIngredient(this)">×</button>';
+    row.innerHTML='<div><input type="search" class="recipe-ingredient-search" aria-label="Search ingredients" placeholder="Search ingredient..." oninput="filterRecipeIngredientDropdown(this)" style="width:100%;box-sizing:border-box;margin-bottom:5px"><select class="recipe-ingredient-select" aria-label="Ingredient" onchange="handleRecipeIngredientChange(this)"><option value="">Select ingredient...</option></select></div><div><input type="number" class="recipe-amount" aria-label="Amount" min="0" step="0.001" placeholder="Amount" oninput="calculateRecipeTotal()"></div><div><select class="recipe-unit" aria-label="Unit" onchange="calculateRecipeTotal()"><option value="kg">kg</option><option value="g">g</option><option value="mg">mg</option><option value="liter">liter</option><option value="ml">ml</option><option value="cup">cup</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option><option value="fl_oz">fl oz</option><option value="pint">pint</option><option value="quart">quart</option><option value="gallon">gallon</option><option value="piece">piece</option><option value="dozen">dozen</option><option value="pinch">pinch</option><option value="dash">dash</option><option value="handful">handful</option><option value="bunch">bunch</option><option value="clove">clove</option><option value="stalk">stalk</option><option value="leaf">leaf</option><option value="pack">pack</option><option value="can">can</option><option value="bottle">bottle</option><option value="slice">slice</option></select></div><button type="button" class="btn btn-danger btn-small" aria-label="Remove ingredient" onclick="removeRecipeIngredient(this)">×</button>';
     c.appendChild(row);
     populateRecipeIngredientSelect(row);
 }
 function populateRecipeIngredientSelect(row){
-    const select=row.querySelector(".recipe-ingredient-select"),current=String(select.value||""),used=getRecipeSelectedIngredientIds().filter(function(id){return id!==current;});
+    const select=row.querySelector(".recipe-ingredient-select");
+    if(!select)return;
+    const current=String(select.value||"");
+    const search=String(row.querySelector(".recipe-ingredient-search")?.value||"").trim().toLocaleLowerCase();
+    const used=getRecipeSelectedIngredientIds().filter(function(id){return id!==current;});
     select.innerHTML='<option value="">Select ingredient...</option>';
     ingredientPrices.forEach(function(item){
-        if(used.includes(String(item.id)))return;
-        const o=document.createElement("option");o.value=item.id;o.textContent=item.name;select.appendChild(o);
+        const id=String(item.id),name=String(item.name||"");
+        if(used.includes(id))return;
+        /* Keep the currently selected item visible while filtering. */
+        if(search&&id!==current&&!name.toLocaleLowerCase().includes(search))return;
+        const o=document.createElement("option");o.value=id;o.textContent=name;select.appendChild(o);
     });
     if(current)select.value=current;
+}
+function handleRecipeIngredientChange(select){
+    const row=select?.closest(".recipe-ingredient-row");
+    if(!row)return;
+    const ingredient=ingredientPrices.find(function(item){return String(item.id)===String(select.value);});
+    const unitSelect=row.querySelector(".recipe-unit");
+    if(ingredient&&unitSelect){
+        const storedUnit=String(ingredient.unit||"");
+        if(Array.from(unitSelect.options).some(function(option){return option.value===storedUnit;})){
+            unitSelect.value=storedUnit;
+        }
+    }
+    refreshRecipeIngredientDropdowns();
+    calculateRecipeTotal();
+}
+function filterRecipeIngredientDropdown(input){
+    const row=input?.closest(".recipe-ingredient-row");
+    if(row)populateRecipeIngredientSelect(row);
 }
 function refreshRecipeIngredientDropdowns(){document.querySelectorAll(".recipe-ingredient-row").forEach(function(row){populateRecipeIngredientSelect(row);});}
 function removeRecipeIngredient(button){const row=button.closest(".recipe-ingredient-row");if(row)row.remove();if(!document.querySelector("#recipeIngredients .recipe-ingredient-row"))addRecipeIngredient();calculateRecipeTotal();refreshRecipeIngredientDropdowns();}
@@ -719,7 +758,7 @@ function convertAmount(amount,fromUnit,toUnit){
     amount=numberValue(amount);
     if(fromUnit===toUnit)return amount;
     const from=getUnitDimension(fromUnit),to=getUnitDimension(toUnit);
-    if(from.type!==to.type)return null;
+    if(from.type!==to.type || from.type==="other")return null;
     return amount*from.factor/to.factor;
 }
 function calculateIngredientCost(ingredient,amount,recipeUnit){
@@ -777,6 +816,7 @@ function saveRecipe() {
 
     const ingredients = [];
     let totalCost = 0;
+    let incompatibleUnit = false;
 
     rows.forEach(function(row) {
         const ingredientId=row.querySelector(".recipe-ingredient-select").value;
@@ -785,10 +825,14 @@ function saveRecipe() {
         const ingredient=ingredientPrices.find(function(item){return String(item.id)===String(ingredientId);});
         if(!ingredient||amount<=0)return;
         const cost=calculateIngredientCost(ingredient,amount,unit);
-        if(cost<=0)return;
+        if(cost<=0){incompatibleUnit=true;return;}
         totalCost+=cost;
         ingredients.push({ingredientId:String(ingredient.id),ingredientName:ingredient.name,amount:amount,unit:unit,cost:cost});
     });
+    if (incompatibleUnit) {
+        showMessage("recipeMessage", "One or more ingredients use incompatible units. Check each ingredient's purchase unit and recipe unit before saving; weight, volume, and piece units cannot be mixed automatically.", "error");
+        return;
+    }
     if (ingredients.length === 0) {
 
         showMessage(
@@ -4047,26 +4091,49 @@ document.getElementById("signupBtn").addEventListener("click", async function ()
 });
 
 document.getElementById("loginBtn").addEventListener("click", async function () {
+    const button = this;
+    const message = document.getElementById("authMessage");
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
 
-    const { data, error } =
-        await supabaseClient.auth.signInWithPassword({
+    if (!email || !password) {
+        message.textContent = "Please enter your email and password.";
+        message.className = "message error";
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Signing in...";
+    message.textContent = "";
+    message.className = "message";
+
+    try {
+        const { error } = await supabaseClient.auth.signInWithPassword({
             email: email,
             password: password
         });
 
-    if (error) {
-        document.getElementById("authMessage").textContent =
-            error.message;
-        return;
+        if (error) {
+            message.textContent = error.message;
+            message.className = "message error";
+            return;
+        }
+
+        await updateAppAccess();
+        message.textContent = hasLifetimeAccess
+            ? "Login successful."
+            : "Your account is signed in, but lifetime access is not active yet. Please complete payment and wait for manual verification.";
+        message.className = hasLifetimeAccess ? "message success" : "message info";
+    } catch (err) {
+        console.error("Login failed:", err);
+        message.textContent = err && err.message
+            ? err.message
+            : "Unable to sign in right now. Please check your connection and try again.";
+        message.className = "message error";
+    } finally {
+        button.disabled = false;
+        button.textContent = "Log In";
     }
-
-    await updateAppAccess();
-
-    document.getElementById("authMessage").textContent = hasLifetimeAccess
-        ? "Login successful."
-        : "Your account is signed in, but lifetime access is not active yet. Please complete GCash payment and wait for manual verification.";
 });
 
 
@@ -4210,7 +4277,20 @@ const { data, error } = await supabaseClient.functions.invoke(
 }
 
 async function updateAppAccess(forceCheck) {
-    if (entitlementCheckInProgress) return;
+    /* A login click and Supabase's auth-state callback can fire together.
+       Wait for the active access check instead of returning early with stale
+       hasLifetimeAccess state. Forced activation checks run again afterward. */
+    if (entitlementCheckInProgress) {
+        await new Promise(function(resolve) {
+            function waitForAccessCheck() {
+                if (!entitlementCheckInProgress) resolve();
+                else setTimeout(waitForAccessCheck, 25);
+            }
+            waitForAccessCheck();
+        });
+        if (!forceCheck) return hasLifetimeAccess;
+        if (entitlementCheckInProgress) return updateAppAccess(true);
+    }
     entitlementCheckInProgress = true;
     try {
         const authScreen = document.getElementById("authScreen");
@@ -5218,6 +5298,28 @@ async function saveOtherItem(editId) {
     const userId = await getCurrentUserId();
     if (!userId) {
         showMessage("otherItemMessage", "Please log in again before saving an Other Item.", "error");
+        return;
+    }
+
+    /* Recheck the user's current cloud list; the in-memory list can be stale
+       when the same account is open in another tab or on another device. */
+    const duplicateCheck = await supabaseClient
+        .from("other_items")
+        .select("id,name")
+        .eq("user_id", userId);
+    if (duplicateCheck.error) {
+        console.error("Unable to verify duplicate Other Items:", duplicateCheck.error);
+        showMessage("otherItemMessage", "Unable to verify duplicate items. Please try again.", "error");
+        return;
+    }
+    const normalizedName = name.trim().toLocaleLowerCase();
+    const cloudDuplicate = (duplicateCheck.data || []).find(function(item) {
+        return String(item.name || "").trim().toLocaleLowerCase() === normalizedName &&
+               String(item.id) !== String(editId || "");
+    });
+    if (cloudDuplicate) {
+        await renderOtherItemList();
+        showMessage("otherItemMessage", "This item is already saved. Edit the existing item instead.", "error");
         return;
     }
 
@@ -8349,7 +8451,7 @@ function styles(){
   }
   window.calculateProfit=function(){return calculate(true);};
   window.saveProfitRecord=function(){return saveRecord('✓ Profit record saved successfully.');};
-  window.loadProfitCalculator=function(){var old=document.getElementById('profitDate');build((old&&old.value)||D());};
+  window.loadProfitCalculator=function(){var current=document.getElementById('kkdpProfitDate');var legacy=document.getElementById('profitDate');build((current&&current.value)||(legacy&&legacy.value)||D());};
   window.loadProfitForDate=window.loadProfitCalculator;
   function init(){if(document.getElementById('profitScreen'))setTimeout(function(){window.loadProfitCalculator();},0);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
