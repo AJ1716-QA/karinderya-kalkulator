@@ -337,13 +337,20 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 <section class="screen" id="recordsScreen">
 <button class="btn btn-secondary back-button" onclick="showScreen('homeScreen')" type="button">← Back</button>
 <div class="section-title">Saved Records</div>
+<div class="card" id="performanceRecordsCard">
+<div class="record-section-title">Business Performance</div>
+<div class="form-grid">
+<div class="form-group"><label for="performancePeriod">Graph Period</label><select id="performancePeriod"><option value="daily">Daily</option><option value="monthly">Monthly</option></select></div>
+<div class="form-group"><label for="performanceMetric">Financial Metric</label><select id="performanceMetric"><option value="sales">Sales</option><option value="capex">CAPEX</option><option value="opex">OPEX</option><option value="profit">Profit</option></select></div>
+</div><div id="performanceGraph" role="img" aria-label="Business performance graph"></div><div id="performanceTable"></div>
+<div class="small-text">Graphs use finalized saved Sales Monitoring and Financial Data records. Months without saved records are not estimated.</div></div>
 <div class="card"><div class="record-section-title">Daily Sales Records</div><div id="savedSalesList"></div></div><div id="monthlyRecords"></div>
 <div class="card"><div class="record-section-title">Profit Calculator Records</div><div id="savedProfitList"></div></div>
 </section>
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=20261010c"></script>
+<script src="script.js?v=20261010d"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const btn = document.getElementById("headerMenuBtn");
