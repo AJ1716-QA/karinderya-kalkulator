@@ -340,7 +340,9 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 <div class="card" id="performanceRecordsCard">
 <div class="record-section-title">Business Performance</div>
 <div class="form-grid"><div class="form-group"><label for="performancePeriod">Graph Period</label><select id="performancePeriod"><option value="daily">Daily</option><option value="monthly">Monthly</option></select></div></div>
-<div class="form-grid" style="margin:10px 0"><div class="form-group"><label for="performanceMetricsSelect">Metrics to Display</label><select id="performanceMetricsSelect"><option value="sales,capex,opex,profit">All Metrics</option><option value="sales">Sales Only</option><option value="capex">CAPEX Only</option><option value="opex">OPEX Only</option><option value="profit">Profit Only</option><option value="sales,profit">Sales + Profit</option><option value="sales,capex">Sales + CAPEX</option><option value="sales,opex">Sales + OPEX</option><option value="capex,opex">CAPEX + OPEX</option><option value="capex,profit">CAPEX + Profit</option><option value="opex,profit">OPEX + Profit</option><option value="sales,capex,opex">Sales + CAPEX + OPEX</option><option value="sales,capex,profit">Sales + CAPEX + Profit</option><option value="sales,opex,profit">Sales + OPEX + Profit</option><option value="capex,opex,profit">CAPEX + OPEX + Profit</option></select></div></div><div id="performanceGraph" role="img" aria-label="Business performance graph"></div><div id="performanceTable"></div>
+<div id="performanceMetrics" style="display:flex;flex-wrap:wrap;gap:8px 14px;margin:12px 0"><label style="display:inline-flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" value="sales" checked> Sales</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" value="profit" checked> Profit</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" value="capex" checked> CAPEX</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" value="opex" checked> OPEX</label></div>
+<div id="performanceDateRange" style="margin:8px 0 14px"><div id="performanceDailyRange" class="form-grid"><div class="form-group"><label for="performanceStartDate">From Date</label><input id="performanceStartDate" type="date"></div><div class="form-group"><label for="performanceEndDate">To Date</label><input id="performanceEndDate" type="date"></div></div><div id="performanceMonthlyRange" class="form-grid" style="display:none"><div class="form-group"><label for="performanceStartMonth">From Month</label><select id="performanceStartMonth"></select></div><div class="form-group"><label for="performanceEndMonth">To Month</label><select id="performanceEndMonth"></select></div></div></div>
+<div id="performanceGraph" role="img" aria-label="Business performance graph"></div><div id="performanceTable"></div>
 <div class="small-text">Graphs use finalized saved Sales Monitoring and Financial Data records. Months without saved records are not estimated.</div></div>
 <div class="card"><div class="record-section-title">Daily Sales Records</div><div id="savedSalesList"></div></div><div id="monthlyRecords"></div>
 <div class="card"><div class="record-section-title">Profit Calculator Records</div><div id="savedProfitList"></div></div>
@@ -348,7 +350,7 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=20261010f"></script>
+<script src="script.js?v=20261010g"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const btn = document.getElementById("headerMenuBtn");
