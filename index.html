@@ -270,6 +270,9 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
  .performance-comparison-table .performance-value-cell{font-size:8px;letter-spacing:-.45px}
  .performance-comparison-table th{font-size:9px;letter-spacing:-.3px}
 }
+
+/* Accessible password reveal control for login and sign-up. */
+.auth-password-control{display:flex;align-items:stretch;gap:8px;width:100%}.auth-password-control input{flex:1;width:0;min-width:0}.auth-password-toggle{flex:0 0 auto;min-width:66px;padding:0 12px;border:1px solid #cbd8e2;border-radius:11px;background:#edf4f8;color:#123b63;font-size:13px;font-weight:800;touch-action:manipulation}.auth-password-toggle:focus-visible{outline:3px solid rgba(36,119,179,.35);outline-offset:2px}
 </style>
 
 
@@ -281,7 +284,7 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 <div class="section-title" style="text-align:center;">Karinderya Kalkulator</div>
 <div class="small-text" style="text-align:center;margin-bottom:14px;">Please log in to continue.</div>
 <div class="form-group"><label>Email</label><input autocomplete="email" id="authEmail" type="email"/></div>
-<div class="form-group"><label>Password</label><input autocomplete="current-password" id="authPassword" type="password"/></div>
+<div class="form-group auth-password-group"><label for="authPassword">Password</label><div class="auth-password-control"><input autocomplete="current-password" id="authPassword" type="password"/><button aria-label="Show password" aria-pressed="false" class="auth-password-toggle" id="toggleAuthPassword" type="button">Show</button></div></div>
 <div class="button-row">
 <button class="btn btn-primary" id="loginBtn" type="button">Log In</button>
 <button class="btn btn-secondary" id="signupBtn" type="button">Sign Up</button>
@@ -434,7 +437,7 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=20261010o"></script>
+<script src="script.js?v=20261010p"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const btn = document.getElementById("headerMenuBtn");
