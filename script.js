@@ -9513,3 +9513,62 @@ window.deleteDailyOtherItem=function(button){
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch);else watch();
   }
 })();
+
+
+/* EMPLOYEE ROW WIDTH + FINANCIAL EMPHASIS + TRANSPO LABEL */
+(function(){
+  function apply(){
+    var root=document.getElementById('profitScreen');
+    if(!root)return;
+    var style=document.getElementById('kkEmployeeFinancialEmphasisFix')||document.createElement('style');
+    style.id='kkEmployeeFinancialEmphasisFix';
+    style.textContent=
+      /* Financial summary: 2 x 2, large and prominent values */
+      '#profitScreen .kkdp-final-summary{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}'+
+      '#profitScreen .kkdp-final-summary>.kkdp-card{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;min-width:0!important;min-height:116px!important;box-sizing:border-box!important;padding:15px 8px!important;text-align:center!important;border:1px solid #c9d8e9!important;border-radius:15px!important;background:linear-gradient(155deg,#fff 0%,#edf4fc 100%)!important;box-shadow:0 4px 13px rgba(15,35,65,.09)!important;gap:10px!important}'+
+      '#profitScreen .kkdp-final-summary .kkdp-label{display:block!important;width:100%!important;text-align:center!important;font-size:14px!important;font-weight:800!important;line-height:1.3!important;color:#334d6b!important;white-space:normal!important;overflow-wrap:anywhere!important}'+
+      '#profitScreen .kkdp-final-summary .kkdp-value{display:block!important;width:100%!important;text-align:center!important;font-size:clamp(22px,5.5vw,30px)!important;font-weight:900!important;line-height:1.15!important;letter-spacing:-.3px!important;color:#0c2b50!important;font-variant-numeric:tabular-nums!important;overflow-wrap:anywhere!important;margin:0!important}'+
+      '#profitScreen #kkdpSummaryProfitCard{border:2px solid #9ebce0!important;background:linear-gradient(155deg,#f8fbff,#e5f0ff)!important}'+
+      '#profitScreen #kkdpSummaryProfitCard.kkdp-profit-positive .kkdp-value{color:#087443!important}'+
+      '#profitScreen #kkdpSummaryProfitCard.kkdp-profit-negative .kkdp-value{color:#b42335!important}'+
+      /* Employee area must not use native table sizing for the input rows */
+      '#profitScreen .kkdp-employees{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow:visible!important}'+
+      '#profitScreen .kkdp-employee-header{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;flex-wrap:wrap!important;width:100%!important;gap:10px!important;margin-bottom:12px!important}'+
+      '#profitScreen .kkdp-employee-title{flex:1 1 130px!important;min-width:0!important;font-size:15px!important;font-weight:850!important;line-height:1.3!important}'+
+      '#profitScreen #kkdpAddEmployee{flex:0 0 auto!important;width:auto!important;max-width:100%!important;white-space:nowrap!important}'+
+      '#profitScreen .kkdp-employee-table{display:block!important;width:100%!important;max-width:100%!important;table-layout:fixed!important;border:0!important;border-collapse:collapse!important;overflow:visible!important}'+
+      '#profitScreen .kkdp-employee-table thead,#profitScreen .kkdp-employee-table tbody{display:block!important;width:100%!important;max-width:100%!important}'+
+      '#profitScreen .kkdp-employee-table thead tr,#profitScreen #kkdpEmployeeBody tr[data-id]{display:grid!important;grid-template-columns:minmax(0,2fr) minmax(82px,1fr) 36px!important;column-gap:8px!important;align-items:center!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;margin:0!important}'+
+      '#profitScreen .kkdp-employee-table thead tr{padding:0 0 5px!important}'+
+      '#profitScreen .kkdp-employee-table thead th{display:block!important;min-width:0!important;width:auto!important;box-sizing:border-box!important;padding:5px 3px!important;text-align:left!important;font-size:12px!important;font-weight:850!important;line-height:1.25!important;white-space:normal!important;color:#52647a!important}'+
+      '#profitScreen .kkdp-employee-table thead th:nth-child(3){display:none!important}'+
+      '#profitScreen #kkdpEmployeeBody tr[data-id]{padding:7px 0!important;border-bottom:1px solid #e2e8f0!important}'+
+      '#profitScreen #kkdpEmployeeBody tr[data-id]>td{display:block!important;width:auto!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;margin:0!important;padding:0!important;border:0!important;overflow:visible!important}'+
+      '#profitScreen #kkdpEmployeeBody tr[data-id]>td:nth-child(3){display:none!important}'+
+      '#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-name,#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-rate{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;margin:0!important;padding:11px 9px!important;border:1px solid #c6d5e6!important;border-radius:9px!important;background:#fff!important;color:#142f4d!important;font-size:14px!important;font-weight:650!important;line-height:1.25!important}'+
+      '#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-name{text-align:left!important}'+
+      '#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-rate{text-align:right!important;font-variant-numeric:tabular-nums!important}'+
+      '#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-delete-employee{display:flex!important;align-items:center!important;justify-content:center!important;width:36px!important;height:36px!important;min-width:36px!important;max-width:36px!important;box-sizing:border-box!important;margin:0!important;padding:0!important;border-radius:9px!important;font-size:0!important;line-height:1!important;background:#fff1f2!important;color:#be123c!important;border:1px solid #fecdd3!important}'+
+      '#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-delete-employee:before{content:"×";font-size:23px!important;line-height:1!important;font-weight:500!important}'+
+      '@media(max-width:430px){#profitScreen .kkdp-final-summary{gap:7px!important}#profitScreen .kkdp-final-summary>.kkdp-card{min-height:105px!important;padding:12px 5px!important;gap:8px!important}#profitScreen .kkdp-final-summary .kkdp-label{font-size:12px!important}#profitScreen .kkdp-final-summary .kkdp-value{font-size:clamp(21px,6vw,26px)!important}#profitScreen .kkdp-employee-header{gap:8px!important}#profitScreen .kkdp-employee-title{font-size:14px!important}#profitScreen #kkdpAddEmployee{font-size:12px!important;padding:8px 9px!important}#profitScreen .kkdp-employee-table thead tr,#profitScreen #kkdpEmployeeBody tr[data-id]{grid-template-columns:minmax(0,1fr) minmax(72px,.55fr) 32px!important;column-gap:5px!important}#profitScreen .kkdp-employee-table thead th{font-size:11px!important;padding-left:2px!important}#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-name,#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-rate{font-size:12px!important;padding:10px 5px!important}#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-delete-employee{width:32px!important;height:32px!important;min-width:32px!important;max-width:32px!important}}';
+    if(!style.parentNode)document.head.appendChild(style);
+    /* Use the shorter label only for display; saved data keys remain unchanged. */
+    var transport=document.querySelector('#profitScreen #kkdpTransportation');
+    var transportCard=transport&&transport.closest('.kkdp-opex-card');
+    var transportLabel=transportCard&&transportCard.querySelector('.kkdp-opex-name');
+    if(transportLabel)transportLabel.textContent='Transpo';
+    root.querySelectorAll('#kkdpEmployeeBody tr[data-id]').forEach(function(row){
+      var present=row.querySelector('.kkdp-emp-present');if(present)present.checked=true;
+      var del=row.querySelector('.kkdp-delete-employee');if(del){del.setAttribute('aria-label','Delete employee');del.setAttribute('title','Delete employee');}
+    });
+  }
+  var base=window.loadProfitCalculator;
+  if(typeof base==='function'&&!base.__kkEmployeeFinancialEmphasisFix){
+    var wrapped=function(){var result=base.apply(this,arguments);apply();return result;};
+    wrapped.__kkEmployeeFinancialEmphasisFix=true;
+    window.loadProfitCalculator=wrapped;
+    window.loadProfitForDate=wrapped;
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
+  document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('#kkdpAddEmployee'))setTimeout(apply,0);});
+})();
