@@ -9456,7 +9456,11 @@ window.deleteDailyOtherItem=function(button){
 (function(){
   function cleanDailyLabels(){
     document.querySelectorAll('#profitScreen .kkdp-opex-daily, #profitScreen #kkdpGasDaily').forEach(function(node){
-      if(node.textContent) node.textContent=node.textContent.replace(/^\\s*Daily(?:\\s+Consumption)?:\\s*/i,'').trim();
+      var current = node.textContent || '';
+      var cleaned = current.replace(/^\s*Daily(?:\s+Consumption)?:\s*/i, '').trim();
+      // MutationObserver watches this subtree. Do not rewrite unchanged text,
+      // or the observer can repeatedly trigger itself and freeze the page.
+      if (cleaned !== current) node.textContent = cleaned;
     });
   }
   function apply(){
