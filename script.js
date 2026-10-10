@@ -9212,3 +9212,145 @@ window.deleteDailyOtherItem=function(button){
     };
     overlay.addEventListener('click',function(event){if(event.target===overlay)overlay.remove();});
 };
+
+
+/* DAILY EXPENSES LAYOUT — PER-EXPENSE DAILY ALLOCATION */
+(function(){
+  var kkBaseLoadProfit=window.loadProfitCalculator;
+  var kkBaseCalculateProfit=window.calculateProfit;
+  var kkBaseSaveProfit=window.saveProfitRecord;
+  var kkExpenseRows=[
+    {id:'kkdpRent',label:'Rent',div:'kkdpRentDays',daily:'kkdpRentDaily',key:'monthlyRent',defaultDays:26},
+    {id:'kkdpElectricity',label:'Electricity',div:'kkdpElectricityDays',daily:'kkdpElectricityDaily',key:'electricityMonthly',defaultDays:26},
+    {id:'kkdpWater',label:'Water',div:'kkdpWaterDays',daily:'kkdpWaterDaily',key:'waterMonthly',defaultDays:26},
+    {id:'kkdpWifi',label:'WiFi',div:'kkdpWifiDays',daily:'kkdpWifiDaily',key:'wifiMonthly',defaultDays:26},
+    {id:'kkdpGasAmount',label:'Gas / LPG',div:'kkdpGasDays',daily:'kkdpGasDaily',key:'gasAmount',defaultDays:1},
+    {id:'kkdpOther',label:'Other',div:'kkdpOtherDays',daily:'kkdpOtherDaily',key:'other',defaultDays:1},
+    {id:'kkdpTransportation',label:'Transportation',div:'kkdpTransportationDays',daily:'kkdpTransportationDaily',key:'transportation',defaultDays:1}
+  ];
+  function num(v){var n=Number(v);return Number.isFinite(n)&&n>0?n:0;}
+  function money(v){return '₱'+(Number(v)||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function el(id){return document.getElementById(id);}
+  function setupDailyExpenseLayout(){
+    var root=el('profitScreen'); if(!root||!el('kkdpRent'))return;
+    var style=el('kkdpExpenseRowStyle')||document.createElement('style');style.id='kkdpExpenseRowStyle';
+    style.textContent=
+      '.kkdp-final-summary{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}'+
+      '.kkdp-sales-row,.kkdp-capex-row{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important}'+
+      '.kkdp-sales-row .kkdp-card,.kkdp-capex-row .kkdp-card{padding:9px 4px!important;min-width:0}'+
+      '.kkdp-opex-grid{display:flex!important;flex-direction:column!important;gap:8px!important}'+
+      '.kkdp-opex-card.kkdp-expense-row{display:grid!important;grid-template-columns:minmax(70px,1.1fr) minmax(65px,1fr) minmax(65px,1fr) minmax(72px,1fr)!important;align-items:center;gap:6px;padding:10px 7px!important}'+
+      '.kkdp-expense-row .kkdp-opex-name{font-weight:700;line-height:1.2}'+
+      '.kkdp-expense-row .kkdp-opex-type,.kkdp-expense-row .kkdp-field-label{display:none!important}'+
+      '.kkdp-expense-row input{width:100%;min-width:0;box-sizing:border-box;padding:8px 5px!important}'+
+      '.kkdp-expense-row .kkdp-opex-daily{font-weight:700;font-size:12px;text-align:right;overflow-wrap:anywhere}'+
+      '.kkdp-expense-row .kkdp-labor-value{font-weight:700}'+
+      '.kkdp-expense-row .kkdp-divisor-wrap:before{content:"Days / No.";display:block;font-size:10px;color:#64748b;margin-bottom:3px}'+
+      '.kkdp-expense-row .kkdp-amount-wrap:before{content:"Amount (₱)";display:block;font-size:10px;color:#64748b;margin-bottom:3px}'+
+      '.kkdp-expense-row .kkdp-daily-wrap:before{content:"Daily Expense";display:block;font-size:10px;color:#64748b;margin-bottom:3px}'+
+      '.kkdp-opex-grid>.kkdp-opex-card:first-child{display:none!important}'+
+      '.kkdp-labor-total-separate{margin:10px 0;padding:12px;border:1px solid #cbd5e1;border-radius:10px;display:flex;justify-content:space-between;gap:12px;font-weight:800}'+
+      '@media(max-width:430px){.kkdp-sales-row,.kkdp-capex-row{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important}.kkdp-sales-row .kkdp-label,.kkdp-capex-row .kkdp-label{font-size:10px!important;min-height:32px}.kkdp-sales-row .kkdp-value,.kkdp-capex-row .kkdp-value{font-size:11px!important}.kkdp-opex-card.kkdp-expense-row{grid-template-columns:minmax(60px,1fr) minmax(55px,1fr) minmax(55px,1fr) minmax(68px,1fr)!important;gap:4px;padding:8px 4px!important}.kkdp-expense-row input{font-size:12px;padding:7px 3px!important}.kkdp-expense-row .kkdp-opex-name{font-size:11px}.kkdp-expense-row .kkdp-opex-daily{font-size:10px}}';
+    if(!style.parentNode)document.head.appendChild(style);
+    var titles=Array.from(root.querySelectorAll('.kkdp-section-title'));
+    titles.forEach(function(t){
+      var next=t.nextElementSibling;
+      if(!next)return;
+      if(t.textContent.trim()==='SALES')next.classList.add('kkdp-sales-row');
+      if(t.textContent.trim()==='CAPEX')next.classList.add('kkdp-capex-row');
+    });
+    var grid=el('kkdpFinalOpexGrid')||root.querySelector('.kkdp-opex-grid');if(!grid)return;
+    kkExpenseRows.forEach(function(cfg){
+      var input=el(cfg.id);if(!input)return;
+      var card=input.closest('.kkdp-opex-card');if(!card)return;
+      card.classList.add('kkdp-expense-row');
+      var oldLabel=card.querySelector('.kkdp-opex-name');
+      if(oldLabel)oldLabel.textContent=cfg.label;
+      var daily=el(cfg.daily);
+      if(!daily){daily=document.createElement('div');daily.id=cfg.daily;daily.className='kkdp-opex-daily';}
+      var amountWrap=document.createElement('div');amountWrap.className='kkdp-amount-wrap';
+      var divisorWrap=document.createElement('div');divisorWrap.className='kkdp-divisor-wrap';
+      var dailyWrap=document.createElement('div');dailyWrap.className='kkdp-daily-wrap';
+      input.parentNode.insertBefore(amountWrap,input);amountWrap.appendChild(input);
+      var divisor=el(cfg.div);
+      if(!divisor){
+        divisor=document.createElement('input');divisor.id=cfg.div;divisor.type='number';divisor.min='1';divisor.step='1';divisor.inputMode='numeric';
+        var saved=window.profitRecords&&window.profitRecords.find(function(r){return r.date===(el('kkdpProfitDate')||{}).value;});
+        divisor.value=(saved&&saved.opex&&saved.opex[cfg.div])||cfg.defaultDays;
+      }
+      divisorWrap.appendChild(divisor);dailyWrap.appendChild(daily);
+      card.appendChild(divisorWrap);card.appendChild(dailyWrap);
+    });
+    var laborCard=grid.querySelector('.kkdp-opex-card:has(#kkdpLaborDaily)');
+    if(laborCard)laborCard.style.display='none';
+    var employees=el('kkdpEmployeeBody');
+    if(employees){
+      var section=employees.closest('.kkdp-employees');
+      if(section&&!el('kkdpLaborSeparateTotal')){
+        var total=document.createElement('div');total.id='kkdpLaborSeparateTotal';total.className='kkdp-labor-total-separate';
+        total.innerHTML='<span>Total Labor Cost</span><strong id="kkdpLaborSeparateValue">₱0.00</strong>';
+        section.appendChild(total);
+      }
+    }
+    var op=el('kkdpOperatingDays');if(op&&op.closest('.kkdp-opex-card'))op.closest('.kkdp-opex-card').style.display='none';
+    var inputs=root.querySelectorAll('.kkdp-expense-row input');
+    inputs.forEach(function(input){input.addEventListener('input',function(){kkRecalculateDailyExpenses();});});
+    var empBody=el('kkdpEmployeeBody');
+    if(empBody)empBody.addEventListener('input',kkRecalculateDailyExpenses);
+    if(empBody)empBody.addEventListener('change',kkRecalculateDailyExpenses);
+    var calc=el('kkdpCalculate');if(calc)calc.onclick=function(){kkRecalculateDailyExpenses(true);};
+    var save=el('kkdpSave');if(save)save.onclick=function(){kkSaveDailyExpenseRecord();};
+    kkRecalculateDailyExpenses();
+  }
+  function kkRecalculateDailyExpenses(showMessage){
+    if(!el('kkdpRent'))return null;
+    var base=kkBaseCalculateProfit?kkBaseCalculateProfit():null;
+    var daily={},total=0;
+    kkExpenseRows.forEach(function(cfg){
+      var amount=num(el(cfg.id)&&el(cfg.id).value);
+      var divisor=Math.max(1,Math.floor(num(el(cfg.div)&&el(cfg.div).value)||cfg.defaultDays));
+      daily[cfg.key]=amount/divisor;total+=daily[cfg.key];
+      var out=el(cfg.daily);if(out)out.textContent='₱'+daily[cfg.key].toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    });
+    var laborTotal=0;
+    document.querySelectorAll('#kkdpEmployeeBody tr[data-id]').forEach(function(row){
+      var rate=num(row.querySelector('.kkdp-emp-rate')&&row.querySelector('.kkdp-emp-rate').value);
+      var present=!!(row.querySelector('.kkdp-emp-present')&&row.querySelector('.kkdp-emp-present').checked);
+      if(present)laborTotal+=rate;
+    });
+    daily.labor=laborTotal;total+=laborTotal;
+    var laborOut=el('kkdpLaborSeparateValue');if(laborOut)laborOut.textContent=money(laborTotal);
+    var sales=(base&&Number(base.totalSales))||0;
+    var capex=(base&&Number(base.totalCapitalCost))||0;
+    var profit=sales-capex-total;
+    var opexOut=el('kkdpSummaryOpex');if(opexOut)opexOut.textContent=money(total);
+    var profitOut=el('kkdpSummaryProfit');if(profitOut)profitOut.textContent=money(profit);
+    var card=el('kkdpSummaryProfitCard');if(card){card.classList.toggle('kkdp-profit-positive',profit>0);card.classList.toggle('kkdp-profit-negative',profit<0);}
+    if(showMessage&&el('kkdpMessage'))el('kkdpMessage').innerHTML='<div class="message success">✓ Profit calculated successfully.</div>';
+    return {base:base,daily:daily,total:total,profit:profit};
+  }
+  function kkSaveDailyExpenseRecord(){
+    var result=kkRecalculateDailyExpenses(true);
+    if(kkBaseSaveProfit)kkBaseSaveProfit();
+    if(!result)return;
+    var date=(el('kkdpProfitDate')&&el('kkdpProfitDate').value)||'';
+    var records=window.profitRecords;
+    if(!Array.isArray(records))return;
+    var rec=records.find(function(r){return String(r.date)===String(date);});if(!rec)return;
+    rec.totalExpenses=result.total;rec.netProfit=result.profit;
+    rec.expenses=Object.assign({},rec.expenses||{},result.daily);
+    rec.opex=Object.assign({},rec.opex||{});
+    kkExpenseRows.forEach(function(cfg){rec.opex[cfg.key]=num(el(cfg.id)&&el(cfg.id).value);rec.opex[cfg.div]=Math.max(1,Math.floor(num(el(cfg.div)&&el(cfg.div).value)||cfg.defaultDays));});
+    rec.opex.labor=result.daily.labor;
+    if(typeof saveAllData==='function')saveAllData();
+    if(typeof updateDashboard==='function')updateDashboard();
+  }
+  window.calculateProfit=function(){return kkRecalculateDailyExpenses(true);};
+  window.saveProfitRecord=kkSaveDailyExpenseRecord;
+  window.loadProfitCalculator=function(){
+    if(kkBaseLoadProfit)kkBaseLoadProfit();
+    setupDailyExpenseLayout();
+  };
+  window.loadProfitForDate=window.loadProfitCalculator;
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){if(el('profitScreen')&&el('profitScreen').offsetParent!==null)setupDailyExpenseLayout();});
+})(); 
