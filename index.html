@@ -246,6 +246,30 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
   #profitScreen #kkdpLaborSeparateValue{font-size:10px!important;font-weight:500!important;letter-spacing:-.35px!important}
   #profitScreen .kkdp-expense-row input{font-size:11px!important;font-weight:500!important;padding-left:3px!important;padding-right:3px!important}
 }
+
+/* Business Performance comparison table: keep each date and its values on one compact row on phones */
+.performance-comparison-table-wrap{width:100%;max-width:100%;overflow-x:hidden}
+.performance-comparison-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+.performance-comparison-table th,.performance-comparison-table td{padding:8px 5px;border-bottom:1px solid #edf1f4;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.performance-comparison-table th{font-weight:750;color:#34495d;border-bottom-color:#dce5ec;text-align:right}
+.performance-comparison-table th:first-child,.performance-comparison-table .performance-date-cell{text-align:left}
+.performance-comparison-table .performance-date-col{width:25%}
+.performance-comparison-table .performance-date-cell{font-weight:600;color:#34495d}
+.performance-comparison-table .performance-value-cell{text-align:right;font-weight:600;letter-spacing:-.2px}
+@media(max-width:430px){
+ .performance-comparison-table{font-size:10px}
+ .performance-comparison-table th,.performance-comparison-table td{padding:7px 2px}
+ .performance-comparison-table .performance-date-col{width:25%}
+ .performance-comparison-table .performance-value-cell{font-size:9px;letter-spacing:-.4px;font-weight:500}
+ .performance-comparison-table th{font-size:10px;letter-spacing:-.2px}
+}
+@media(max-width:360px){
+ .performance-comparison-table{font-size:9px}
+ .performance-comparison-table th,.performance-comparison-table td{padding:6px 1px}
+ .performance-comparison-table .performance-date-col{width:26%}
+ .performance-comparison-table .performance-value-cell{font-size:8px;letter-spacing:-.45px}
+ .performance-comparison-table th{font-size:9px;letter-spacing:-.3px}
+}
 </style>
 
 
@@ -410,7 +434,7 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=20261010n"></script>
+<script src="script.js?v=20261010o"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const btn = document.getElementById("headerMenuBtn");
