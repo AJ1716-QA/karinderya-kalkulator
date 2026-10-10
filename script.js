@@ -442,15 +442,10 @@ function showScreen(screenId) {
         updateDashboard();
     }
 
-    /* Always refresh cloud ingredients before opening Recipe Cost.
-       This guarantees newly saved ingredients are immediately available
-       in the recipe ingredient dropdown. */
-    if (screenId === "recipeScreen" && currentUserId) {
-        renderIngredientList().then(function(){
-            refreshRecipeIngredientDropdowns();
-            calculateRecipeTotal();
-        });
-    }
+    /* Recipe screen performs one awaited Supabase refresh in
+       loadRecipeScreen(). Avoid a second concurrent refresh here:
+       renderIngredientList() uses request IDs, so parallel requests can
+       invalidate one another and leave the recipe dropdown temporarily empty. */
 
     if (screenId === "ingredientScreen") {
         populateMasterIngredientSelect();
