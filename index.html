@@ -125,7 +125,7 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 .ingredient-save-row{display:flex;width:100%}.ingredient-save-row .btn{width:100%;flex:1}
 @media(max-width:360px){.ingredient-entry-grid{gap:7px}.ingredient-entry-grid label{font-size:11px}.ingredient-entry-grid input,.ingredient-entry-grid select{padding-left:7px;padding-right:7px;font-size:13px}}
 
-/* Other Items form: item dropdown on row one; purchase, quantity and unit on row two; selling price and save action below. */
+/* Other Items form: item dropdown on row one; purchase price, quantity and unit on row two; selling price and save action below. */
 .other-item-entry-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .other-item-entry-grid .other-name-field,.other-item-entry-grid .other-selling-field{grid-column:1/-1}
 .other-item-entry-grid .form-group{min-width:0}
@@ -134,6 +134,29 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 .other-item-save-row{display:flex;width:100%}.other-item-save-row .btn{width:100%;flex:1}
 @media(max-width:360px){.other-item-entry-grid{gap:7px}.other-item-entry-grid label{font-size:11px}.other-item-entry-grid input,.other-item-entry-grid select{padding-left:7px;padding-right:7px;font-size:13px}}
 
+
+/* Mobile alignment: dashboard cards share consistent internal spacing and stretch evenly. */
+.dashboard-grid{align-items:stretch}
+.dashboard-card{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;min-width:0;height:100%;text-align:left}
+.dashboard-card .icon{flex:0 0 auto}
+.dashboard-card strong{display:block;width:100%;min-width:0;overflow-wrap:anywhere}
+.dashboard-card span{display:block;width:100%;min-width:0;overflow-wrap:anywhere}
+.summary-grid{align-items:stretch}
+.summary-box{display:flex;flex-direction:column;justify-content:center;min-width:0}
+.summary-box span,.summary-box strong{width:100%;overflow-wrap:anywhere}
+@media(max-width:600px){
+  .dashboard-grid{grid-auto-rows:1fr;gap:10px}
+  .dashboard-card{min-height:124px;padding:13px}
+  .dashboard-card strong{font-size:14px}
+  .dashboard-card span{font-size:12px}
+}
+@media(max-width:360px){
+  .dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:1fr;gap:8px}
+  .dashboard-card{min-height:120px;padding:10px}
+  .dashboard-card strong{font-size:13px;line-height:1.3}
+  .dashboard-card span{font-size:11px;line-height:1.35}
+  .summary-box{padding-left:3px;padding-right:3px}
+}
 </style>
 
 
@@ -240,7 +263,7 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 <div class="form-grid other-item-entry-grid">
 <div class="form-group other-name-field"><label>Item Name</label><input id="otherItemName" placeholder="Select item..." type="text"/></div>
 <div class="form-group other-price-field"><label>Purchase Price</label><input id="otherPurchasePrice" inputmode="decimal" min="0" step="0.01" type="number"/></div>
-<div class="form-group other-quantity-field"><label>Quantity Purchased</label><input id="otherQuantity" inputmode="decimal" min="0" step="0.001" type="number"/></div>
+<div class="form-group other-quantity-field"><label>Quantity</label><input id="otherQuantity" inputmode="decimal" min="0" step="0.001" type="number"/></div>
 <div class="form-group other-unit-field"><label>Unit</label><input id="otherUnit" placeholder="bottle" type="text"/></div>
 <div class="form-group other-selling-field"><label>Selling Price</label><input id="otherSellingPrice" inputmode="decimal" min="0" step="0.01" type="number"/></div>
 </div>
