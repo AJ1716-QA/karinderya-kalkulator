@@ -8704,3 +8704,62 @@ function calculateCombinedSales(date){
   `;
   if(!document.getElementById(style.id))document.head.appendChild(style);
 })();
+
+
+/* ANDROID/PWA BACK NAVIGATION: follow the app's screen history when the device Back button fires.
+   This wraps the final showScreen implementation so existing screen-specific
+   refresh wrappers continue to run. A popstate transition never pushes a
+   second history entry. */
+(function () {
+  if (window.__kkBackNavigationInstalled) return;
+  window.__kkBackNavigationInstalled = true;
+
+  var navigatingFromPopState = false;
+  var originalShowScreenForBack = window.showScreen || showScreen;
+
+  function activeScreenId() {
+    var active = document.querySelector(".screen.active");
+    return active ? active.id : "";
+  }
+
+  function screenExists(id) {
+    return typeof id === "string" && !!id && !!document.getElementById(id);
+  }
+
+  /* Establish an app-owned history entry without changing the URL. */
+  var initialScreen = activeScreenId() || "homeScreen";
+  try {
+    window.history.replaceState({ kkAppScreen: initialScreen }, "", window.location.href);
+  } catch (e) {
+    /* Navigation still works in browsers that restrict history state. */
+  }
+
+  window.showScreen = showScreen = function (screenId) {
+    var previousScreen = activeScreenId();
+    if (!navigatingFromPopState && screenExists(screenId) && previousScreen !== screenId) {
+      try {
+        window.history.pushState({ kkAppScreen: screenId }, "", window.location.href);
+      } catch (e) {
+        /* Keep normal in-app navigation available if history is restricted. */
+      }
+    }
+    return originalShowScreenForBack(screenId);
+  };
+
+  window.addEventListener("popstate", function (event) {
+    var destination = event && event.state && event.state.kkAppScreen;
+    if (!screenExists(destination)) {
+      /* If the previous browser entry is outside app screen history, return
+         to the dashboard rather than leaving the user stranded in a module. */
+      destination = screenExists("homeScreen") ? "homeScreen" : activeScreenId();
+    }
+    if (!screenExists(destination) || destination === activeScreenId()) return;
+
+    navigatingFromPopState = true;
+    try {
+      window.showScreen(destination);
+    } finally {
+      navigatingFromPopState = false;
+    }
+  });
+})();
