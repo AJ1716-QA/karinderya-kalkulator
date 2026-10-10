@@ -3978,8 +3978,23 @@ const menuDate =
             targetInput.value = targetFoodCost;
         }
 
-        // Verify lifetime access before loading any account data.
-        await updateAppAccess();
+        // Show the login screen immediately. Access verification runs in the
+        // background so a slow Supabase request cannot block initial startup.
+        const authScreen = document.getElementById("authScreen");
+        const appContainer = document.getElementById("appContent");
+        if (authScreen) authScreen.style.display = "block";
+        if (appContainer) appContainer.style.display = "none";
+
+        Promise.resolve().then(function() {
+            return updateAppAccess();
+        }).catch(function(error) {
+            console.error("Startup access check failed:", error);
+            const message = document.getElementById("authMessage");
+            if (message) {
+                message.textContent = "Unable to check your session right now. Please refresh and try again.";
+                message.className = "message error";
+            }
+        });
     }
 );
 
