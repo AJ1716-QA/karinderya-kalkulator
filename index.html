@@ -228,6 +228,24 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
  #performanceMetrics label{font-size:10px!important;gap:5px!important}
  #performanceMetrics input[type=checkbox]{flex-basis:15px;width:15px;height:15px}
 }
+
+/* Mobile Saved Records + Financial Data number fit */
+@media(max-width:430px){
+  #profitScreen .kkdp-sales-row .kkdp-value,
+  #profitScreen .kkdp-capex-row .kkdp-value{font-size:12px!important;font-weight:600!important;letter-spacing:-.2px!important}
+  #profitScreen .kkdp-expense-row .kkdp-opex-daily,
+  #profitScreen .kkdp-expense-row .kkdp-labor-value,
+  #profitScreen #kkdpLaborSeparateValue{font-size:11px!important;font-weight:500!important;letter-spacing:-.25px!important}
+  #profitScreen .kkdp-expense-row input{font-size:12px!important;font-weight:500!important}
+}
+@media(max-width:360px){
+  #profitScreen .kkdp-sales-row .kkdp-value,
+  #profitScreen .kkdp-capex-row .kkdp-value{font-size:11px!important;font-weight:500!important}
+  #profitScreen .kkdp-expense-row .kkdp-opex-daily,
+  #profitScreen .kkdp-expense-row .kkdp-labor-value,
+  #profitScreen #kkdpLaborSeparateValue{font-size:10px!important;font-weight:500!important;letter-spacing:-.35px!important}
+  #profitScreen .kkdp-expense-row input{font-size:11px!important;font-weight:500!important;padding-left:3px!important;padding-right:3px!important}
+}
 </style>
 
 
@@ -385,14 +403,14 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 </div>
 <div id="performanceDateRange" style="margin:8px 0 14px"><div id="performanceDailyRange" class="form-grid"><div class="form-group"><label for="performanceStartDate">From Date</label><input id="performanceStartDate" type="date"></div><div class="form-group"><label for="performanceEndDate">To Date</label><input id="performanceEndDate" type="date"></div></div><div id="performanceMonthlyRange" class="form-grid" style="display:none"><div class="form-group"><label for="performanceStartMonth">From Month</label><select id="performanceStartMonth"></select></div><div class="form-group"><label for="performanceEndMonth">To Month</label><select id="performanceEndMonth"></select></div></div></div>
 <div id="performanceGraph" role="img" aria-label="Business performance graph"></div><div id="performanceTable"></div>
-<div class="small-text">Graphs use finalized saved Sales Monitoring and Financial Data records. Months without saved records are not estimated.</div></div>
+</div>
 <div class="card"><div class="record-section-title">Daily Sales Records</div><div id="savedSalesList"></div></div><div id="monthlyRecords"></div>
 <div class="card"><div class="record-section-title">Profit Calculator Records</div><div id="savedProfitList"></div></div>
 </section>
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=20261010m"></script>
+<script src="script.js?v=20261010n"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const btn = document.getElementById("headerMenuBtn");
