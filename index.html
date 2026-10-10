@@ -230,6 +230,7 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 <div class="form-group recipe-date-field"><label>Recipe Date</label><input id="recipeDate" onchange="calculateRecipeTotal(); loadSavedRecipes()" type="date"/></div>
 <div class="form-group recipe-name-field"><label>Recipe Name</label><input id="recipeName" placeholder="Example: Adobo" type="text"/></div>
 </div>
+<div class="form-group"><label>Servings per Recipe</label><input id="recipeServings" type="number" min="1" step="1" inputmode="numeric" value="1" placeholder="How many servings does this recipe make?"/></div>
 <div class="form-group"><label>Ingredients</label><div id="recipeIngredients"></div></div>
 <div class="recipe-ingredient-actions"><button class="btn btn-secondary" onclick="addRecipeIngredient()" type="button">+ Add Ingredient</button><button class="btn btn-danger" onclick="removeRecipeIngredient()" type="button">Delete Ingredient</button></div>
 <div class="recipe-cost-save-row"><div class="recipe-total">Recipe Cost: <span id="recipeTotalCost">₱0.00</span></div><button class="btn btn-primary" onclick="saveRecipe()" type="button">Save Recipe</button></div>
@@ -242,18 +243,10 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 <div class="section-title">Today's Menu &amp; Sales</div>
 <div class="card">
 <div class="form-group"><label>Date</label><input id="menuDate" onchange="loadMenuOfDay()" type="date"/></div>
-<div class="menu-entry-card">
-<div class="menu-entry-title">Add Food Menu</div>
-<div class="form-group"><label>Select Recipe</label><select id="menuRecipeSelect" onchange="selectMenuRecipe()"><option value="">-- Select Recipe --</option></select></div>
-<div id="menuRecipeEntry" style="display:none">
-<div class="form-group"><label>Recipe Cost</label><div class="readonly-value" id="selectedMenuRecipeCost">₱0.00</div></div>
-<div class="form-group"><label>Selling Price / Serving</label><input autocomplete="off" class="mobile-large-input" id="menuSellingPrice" inputmode="decimal" min="0" oninput="calculateMenuEntryForm()" placeholder="Enter selling price" step="0.01" type="number"/></div>
-<div class="menu-add-note">After adding the food, enter and adjust <strong>Servings Sold</strong> directly on its saved card below. You can update it anytime during the day.</div>
-<div class="button-row"><button class="btn btn-primary" onclick="addFoodMenuSale()" type="button">Add Food</button></div>
-</div></div>
+<div class="small-text">Food menus are populated automatically from recipes saved for this date in Recipe of the Day. Set the selling price per serving on each card, then update servings sold as sales happen.</div>
 <div class="message" id="menuMessage"></div>
 </div>
-<div class="card"><div class="section-title" style="font-size:18px">Food Sales</div><div id="menuItems"><div class="menu-empty">No food sales added yet.</div></div></div>
+<div class="card"><div class="section-title" style="font-size:18px">Food Menu</div><div id="menuItems"><div class="menu-empty">No recipes saved for this date yet. Save a recipe in Recipe of the Day to see it here.</div></div></div>
 <div class="card">
 <div class="section-title" style="font-size:18px">Other Items Sold</div>
 <div class="form-group"><label>Add Other Item</label><select id="dailyOtherItemSelect" onchange="addDailyOtherItemFromSelect()"><option value="">-- Select Other Item --</option></select></div>
@@ -348,7 +341,7 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=20261010c"></script>
+<script src="script.js?v=20261010d"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const btn = document.getElementById("headerMenuBtn");
