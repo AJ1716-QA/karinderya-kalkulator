@@ -3,7 +3,17 @@ function kkOnReady(callback) {
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", callback, { once: true });
     } else {
-        callback();
+        // The app script is inserted dynamically after its CDN dependency.
+        // Defer startup until this entire file has finished evaluating.
+        setTimeout(callback, 0);
+    }
+}
+
+function kkOnLoad(callback) {
+    if (document.readyState === "complete") {
+        setTimeout(callback, 0);
+    } else {
+        window.addEventListener("load", callback, { once: true });
     }
 }
 
@@ -4013,7 +4023,7 @@ const menuDate =
    Authentication code below remains unchanged.
 ========================================================= */
 
-window.addEventListener("load", function() {
+kkOnLoad(function() {
     const addMenuButton = document.getElementById("addMenuItemBtn");
     if (addMenuButton) {
         addMenuButton.type = "button";
@@ -4042,7 +4052,7 @@ window.addEventListener("load", function() {
 
 if ("serviceWorker" in navigator) {
 
-    window.addEventListener("load", function() {
+    kkOnLoad(function() {
 
         navigator.serviceWorker
             .register("./service-worker.js")
