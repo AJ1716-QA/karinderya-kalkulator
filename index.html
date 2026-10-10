@@ -188,6 +188,17 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
  .recipe-cost-save-row .recipe-total{padding:10px;font-size:12px}
  .recipe-cost-save-row .btn{padding:9px;font-size:13px}
 }
+
+/* Elegant metric selectors in Saved Records */
+#performanceMetrics{display:flex;flex-wrap:wrap;gap:9px 10px!important;margin:14px 0!important}
+#performanceMetrics label{display:inline-flex;align-items:center;gap:8px!important;min-height:40px;padding:8px 12px;border:1px solid #d7e1eb;border-radius:12px;background:#f7faff;color:#263b50;font-size:14px!important;font-weight:600;cursor:pointer;transition:background .16s ease,border-color .16s ease,box-shadow .16s ease}
+#performanceMetrics label:hover{border-color:#8caecb;background:#eef5fb}
+#performanceMetrics input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:0 0 19px;width:19px;height:19px;margin:0;border:1.8px solid #9aabba;border-radius:6px;background:#fff;display:inline-grid;place-content:center;cursor:pointer;transition:background .16s ease,border-color .16s ease,box-shadow .16s ease}
+#performanceMetrics input[type=checkbox]::before{content:"";width:9px;height:5px;border:solid #fff;border-width:0 0 2px 2px;transform:rotate(-45deg) scale(0);transform-origin:center;transition:transform .12s ease}
+#performanceMetrics input[type=checkbox]:checked{background:#174a73;border-color:#174a73;box-shadow:0 1px 3px rgba(23,74,115,.22)}
+#performanceMetrics input[type=checkbox]:checked::before{transform:rotate(-45deg) scale(1)}
+#performanceMetrics input[type=checkbox]:focus-visible{outline:3px solid rgba(36,119,179,.24);outline-offset:2px}
+@media(max-width:420px){#performanceMetrics{gap:7px!important}#performanceMetrics label{min-height:38px;padding:7px 10px;font-size:13px!important}}
 </style>
 
 
