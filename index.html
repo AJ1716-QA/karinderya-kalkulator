@@ -199,6 +199,15 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 #performanceMetrics input[type=checkbox]:checked::before{transform:rotate(-45deg) scale(1)}
 #performanceMetrics input[type=checkbox]:focus-visible{outline:3px solid rgba(36,119,179,.24);outline-offset:2px}
 @media(max-width:420px){#performanceMetrics{gap:7px!important}#performanceMetrics label{min-height:38px;padding:7px 10px;font-size:13px!important}}
+
+/* Keep Graph Period dropdown aligned with the metric selector cards */
+#performanceRecordsCard > .form-grid:first-of-type{display:inline-flex;vertical-align:middle;align-items:center;width:170px;max-width:100%;margin:12px 10px 12px 0;gap:0}
+#performanceRecordsCard > .form-grid:first-of-type .form-group{width:100%;min-width:0;margin:0}
+#performanceRecordsCard > .form-grid:first-of-type label{white-space:nowrap;margin-bottom:6px}
+#performanceRecordsCard > .form-grid:first-of-type select{width:100%;min-height:40px}
+#performanceMetrics{display:inline-flex!important;vertical-align:middle;align-items:center;max-width:100%}
+@media(max-width:520px){#performanceRecordsCard > .form-grid:first-of-type{width:145px;margin-right:8px}#performanceMetrics{gap:7px!important}}
+@media(max-width:380px){#performanceRecordsCard > .form-grid:first-of-type{width:100%;margin:10px 0 4px}#performanceMetrics{display:flex!important;width:100%}}
 </style>
 
 
