@@ -700,7 +700,7 @@ function addRecipeIngredient(){
     if(!c)return;
     const row=document.createElement("div");
     row.className="recipe-ingredient-row";
-    row.innerHTML='<div><input type="search" class="recipe-ingredient-search" aria-label="Search ingredients" placeholder="Search ingredient..." oninput="filterRecipeIngredientDropdown(this)" style="width:100%;box-sizing:border-box;margin-bottom:5px"><select class="recipe-ingredient-select" aria-label="Ingredient" onchange="calculateRecipeTotal();refreshRecipeIngredientDropdowns()"><option value="">Select ingredient...</option></select></div><div><input type="number" class="recipe-amount" aria-label="Amount" min="0" step="0.001" placeholder="Amount" oninput="calculateRecipeTotal()"></div><div><select class="recipe-unit" aria-label="Unit" onchange="calculateRecipeTotal()"><option value="kg">kg</option><option value="g">g</option><option value="mg">mg</option><option value="liter">liter</option><option value="ml">ml</option><option value="cup">cup</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option><option value="fl_oz">fl oz</option><option value="pint">pint</option><option value="quart">quart</option><option value="gallon">gallon</option><option value="piece">piece</option><option value="dozen">dozen</option><option value="pinch">pinch</option><option value="dash">dash</option><option value="handful">handful</option><option value="bunch">bunch</option><option value="clove">clove</option><option value="stalk">stalk</option><option value="leaf">leaf</option><option value="pack">pack</option><option value="can">can</option><option value="bottle">bottle</option><option value="slice">slice</option></select></div><button type="button" class="btn btn-danger btn-small" aria-label="Remove ingredient" onclick="removeRecipeIngredient(this)">×</button>';
+    row.innerHTML='<div><input type="search" class="recipe-ingredient-search" aria-label="Search ingredients" placeholder="Search ingredient..." oninput="filterRecipeIngredientDropdown(this)" style="width:100%;box-sizing:border-box;margin-bottom:5px"><select class="recipe-ingredient-select" aria-label="Ingredient" onchange="handleRecipeIngredientChange(this)"><option value="">Select ingredient...</option></select></div><div><input type="number" class="recipe-amount" aria-label="Amount" min="0" step="0.001" placeholder="Amount" oninput="calculateRecipeTotal()"></div><div><select class="recipe-unit" aria-label="Unit" onchange="calculateRecipeTotal()"><option value="kg">kg</option><option value="g">g</option><option value="mg">mg</option><option value="liter">liter</option><option value="ml">ml</option><option value="cup">cup</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option><option value="fl_oz">fl oz</option><option value="pint">pint</option><option value="quart">quart</option><option value="gallon">gallon</option><option value="piece">piece</option><option value="dozen">dozen</option><option value="pinch">pinch</option><option value="dash">dash</option><option value="handful">handful</option><option value="bunch">bunch</option><option value="clove">clove</option><option value="stalk">stalk</option><option value="leaf">leaf</option><option value="pack">pack</option><option value="can">can</option><option value="bottle">bottle</option><option value="slice">slice</option></select></div><button type="button" class="btn btn-danger btn-small" aria-label="Remove ingredient" onclick="removeRecipeIngredient(this)">×</button>';
     c.appendChild(row);
     populateRecipeIngredientSelect(row);
 }
@@ -719,6 +719,20 @@ function populateRecipeIngredientSelect(row){
         const o=document.createElement("option");o.value=id;o.textContent=name;select.appendChild(o);
     });
     if(current)select.value=current;
+}
+function handleRecipeIngredientChange(select){
+    const row=select?.closest(".recipe-ingredient-row");
+    if(!row)return;
+    const ingredient=ingredientPrices.find(function(item){return String(item.id)===String(select.value);});
+    const unitSelect=row.querySelector(".recipe-unit");
+    if(ingredient&&unitSelect){
+        const storedUnit=String(ingredient.unit||"");
+        if(Array.from(unitSelect.options).some(function(option){return option.value===storedUnit;})){
+            unitSelect.value=storedUnit;
+        }
+    }
+    refreshRecipeIngredientDropdowns();
+    calculateRecipeTotal();
 }
 function filterRecipeIngredientDropdown(input){
     const row=input?.closest(".recipe-ingredient-row");
