@@ -8849,3 +8849,90 @@ function calculateCombinedSales(date){
  '@media(max-width:768px){#dailyOtherItemsList .kk-auto-other-grid{gap:6px}#dailyOtherItemsList .kk-other-sold-field{padding:8px 4px}#dailyOtherItemsList .kk-other-sold-field label{font-size:10px;min-height:34px}#dailyOtherItemsList .kk-other-sold-field input,#dailyOtherItemsList .kk-other-sold-field select{font-size:12px;padding:5px 2px}}';
  if(!document.getElementById(style.id))document.head.appendChild(style);
 })();
+
+/* SIMPLE OTHER ITEMS SOLD UI — dropdown-selected master items with Edit/Delete */
+
+/* SIMPLE OTHER ITEMS SOLD UI — dropdown-selected master items with Edit/Delete */
+function renderDailyOtherItems(date){
+    const container=document.getElementById('dailyOtherItemsList');
+    if(!container)return;
+    const record=stage4TodayRecord(date);
+    container.innerHTML='';
+    if(!record.otherItems.length){
+        container.innerHTML='<div class="menu-empty">No other items sold. Select an item from the dropdown above to add it.</div>';
+        return;
+    }
+    record.otherItems.forEach(function(item){
+        const sales=numberValue(item.sellingPrice)*numberValue(item.quantitySold);
+        const card=document.createElement('div');
+        card.className='menu-item daily-other-simple-card';
+        card.dataset.otherId=String(item.id);
+        card.innerHTML=
+            '<div class="menu-top"><div class="menu-name">'+escapeHtml(item.name)+'</div>'+
+            '<div class="menu-actions">'+
+            '<button type="button" class="btn btn-secondary btn-small" onclick="editDailyOtherItem(this)">Edit</button>'+
+            '<button type="button" class="btn btn-danger btn-small" onclick="deleteDailyOtherItem(this)">Delete</button>'+
+            '</div></div>'+
+            '<div class="daily-other-grid">'+
+            '<div class="menu-summary-box"><span>Selling Price</span><strong>'+money(item.sellingPrice)+'</strong></div>'+
+            '<div class="menu-summary-box"><span>Number Sold</span><strong>'+numberValue(item.quantitySold)+'</strong></div>'+
+            '<div class="menu-summary-box"><span>Total Sales</span><strong>'+money(sales)+'</strong></div>'+
+            '</div>';
+        container.appendChild(card);
+    });
+}
+function editDailyOtherItem(button){
+    const card=button.closest('.daily-other-simple-card');
+    if(!card)return;
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    const item=record.otherItems.find(function(x){return String(x.id)===String(card.dataset.otherId);});
+    if(!item)return;
+    card.innerHTML=
+        '<div class="menu-name">'+escapeHtml(item.name)+'</div>'+
+        '<div class="daily-other-grid">'+
+        '<div class="form-group"><label>Selling Price</label><input class="other-sale-price" type="number" min="0" step="0.01" inputmode="decimal" value="'+numberValue(item.sellingPrice)+'"></div>'+
+        '<div class="form-group"><label>Number Sold</label><input class="other-sale-qty" type="number" min="0" step="1" inputmode="numeric" value="'+numberValue(item.quantitySold)+'"></div>'+
+        '</div>'+
+        '<div class="menu-actions" style="margin-top:10px">'+
+        '<button type="button" class="btn btn-primary btn-small" onclick="saveDailyOtherItemEdit(this)">Save</button>'+
+        '<button type="button" class="btn btn-secondary btn-small" onclick="cancelDailyOtherItemEdit()">Cancel</button>'+
+        '</div>';
+}
+function saveDailyOtherItemEdit(button){
+    const card=button.closest('.daily-other-simple-card');
+    if(!card)return;
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    const item=record.otherItems.find(function(x){return String(x.id)===String(card.dataset.otherId);});
+    if(!item)return;
+    const price=numberValue(card.querySelector('.other-sale-price').value);
+    const qty=numberValue(card.querySelector('.other-sale-qty').value);
+    if(price<=0||qty<0||!Number.isFinite(price)||!Number.isFinite(qty)){
+        showMessage('menuMessage','Enter a selling price greater than zero and a valid number sold.','error');
+        return;
+    }
+    item.sellingPrice=price;
+    item.quantitySold=Math.floor(qty);
+    saveAllData();
+    renderDailyOtherItemDropdown(date);
+    renderDailyOtherItems(date);
+    calculateCombinedSales(date);
+}
+function cancelDailyOtherItemEdit(){
+    const date=document.getElementById('menuDate').value||todayString();
+    renderDailyOtherItems(date);
+}
+function deleteDailyOtherItem(button){
+    const card=button.closest('.daily-other-simple-card')||button.closest('.menu-item');
+    if(!card)return;
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    const item=record.otherItems.find(function(x){return String(x.id)===String(card.dataset.otherId);});
+    if(item&&!confirm('Remove '+item.name+' from today\'s sales?'))return;
+    record.otherItems=record.otherItems.filter(function(x){return String(x.id)!==String(card.dataset.otherId);});
+    saveAllData();
+    renderDailyOtherItemDropdown(date);
+    renderDailyOtherItems(date);
+    calculateCombinedSales(date);
+}
