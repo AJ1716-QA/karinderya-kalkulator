@@ -4254,7 +4254,20 @@ const { data, error } = await supabaseClient.functions.invoke(
 }
 
 async function updateAppAccess(forceCheck) {
-    if (entitlementCheckInProgress) return;
+    /* A login click and Supabase's auth-state callback can fire together.
+       Wait for the active access check instead of returning early with stale
+       hasLifetimeAccess state. Forced activation checks run again afterward. */
+    if (entitlementCheckInProgress) {
+        await new Promise(function(resolve) {
+            function waitForAccessCheck() {
+                if (!entitlementCheckInProgress) resolve();
+                else setTimeout(waitForAccessCheck, 25);
+            }
+            waitForAccessCheck();
+        });
+        if (!forceCheck) return hasLifetimeAccess;
+        if (entitlementCheckInProgress) return updateAppAccess(true);
+    }
     entitlementCheckInProgress = true;
     try {
         const authScreen = document.getElementById("authScreen");
