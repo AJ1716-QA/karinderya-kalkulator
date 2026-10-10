@@ -200,15 +200,34 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 #performanceMetrics input[type=checkbox]:focus-visible{outline:3px solid rgba(36,119,179,.24);outline-offset:2px}
 @media(max-width:420px){#performanceMetrics{gap:7px!important}#performanceMetrics label{min-height:38px;padding:7px 10px;font-size:13px!important}}
 
-/* Align Graph Period and metric checkboxes in one reliable flex row */
-#performanceControlRow{display:flex;align-items:center;flex-wrap:wrap;gap:10px 12px;width:100%;margin:12px 0 14px}
-#performanceControlRow > .form-grid{display:flex!important;flex:0 0 170px;width:170px;max-width:100%;margin:0;padding:0;gap:0}
+/* Saved Records: Graph Period + four metric checkboxes always stay on one row */
+#performanceControlRow{display:flex;flex-wrap:nowrap;align-items:flex-end;gap:8px;width:100%;margin:12px 0 14px;min-width:0}
+#performanceControlRow > .form-grid{display:flex!important;flex:0 0 150px;width:150px;max-width:150px;min-width:0;margin:0;padding:0;gap:0}
 #performanceControlRow > .form-grid .form-group{width:100%;min-width:0;margin:0}
-#performanceControlRow > .form-grid label{white-space:nowrap;margin-bottom:6px}
-#performanceControlRow > .form-grid select{width:100%;min-height:40px}
-#performanceMetrics{display:flex!important;flex:1 1 300px;align-items:center;flex-wrap:wrap;gap:9px 10px!important;max-width:100%;margin:0!important}
-@media(max-width:520px){#performanceControlRow{gap:8px}#performanceControlRow > .form-grid{flex-basis:145px;width:145px}#performanceMetrics{flex:1 1 240px;gap:7px!important}}
-@media(max-width:380px){#performanceControlRow{display:flex;flex-direction:column;align-items:stretch}#performanceControlRow > .form-grid{flex:0 0 auto;width:100%}#performanceMetrics{width:100%;flex:0 0 auto}}
+#performanceControlRow > .form-grid label{white-space:nowrap;margin-bottom:6px;font-size:13px}
+#performanceControlRow > .form-grid select{width:100%;min-width:0;min-height:40px;padding:7px 24px 7px 8px}
+#performanceMetrics{display:flex!important;flex:1 1 auto;min-width:0;align-items:center;flex-wrap:nowrap;gap:6px!important;max-width:none;margin:0!important}
+#performanceMetrics label{flex:1 1 0;min-width:0;justify-content:center;gap:5px!important;padding:7px 5px;white-space:nowrap}
+#performanceMetrics input[type=checkbox]{flex:0 0 17px;width:17px;height:17px}
+@media(max-width:520px){
+ #performanceControlRow{gap:5px}
+ #performanceControlRow > .form-grid{flex:0 0 100px;width:100px;max-width:100px}
+ #performanceControlRow > .form-grid label{font-size:11px;margin-bottom:5px}
+ #performanceControlRow > .form-grid select{min-height:38px;padding:6px 18px 6px 5px;font-size:12px}
+ #performanceMetrics{gap:3px!important}
+ #performanceMetrics label{min-height:38px;padding:5px 2px;gap:3px!important;font-size:11px!important}
+ #performanceMetrics input[type=checkbox]{flex-basis:14px;width:14px;height:14px;border-radius:4px}
+ #performanceMetrics input[type=checkbox]::before{width:7px;height:4px}
+}
+@media(max-width:360px){
+ #performanceControlRow{gap:3px}
+ #performanceControlRow > .form-grid{flex-basis:88px;width:88px;max-width:88px}
+ #performanceControlRow > .form-grid label{font-size:10px}
+ #performanceControlRow > .form-grid select{font-size:11px;padding-left:4px;padding-right:15px}
+ #performanceMetrics{gap:2px!important}
+ #performanceMetrics label{font-size:10px!important;padding-left:1px;padding-right:1px;gap:2px!important}
+ #performanceMetrics input[type=checkbox]{flex-basis:12px;width:12px;height:12px}
+}
 </style>
 
 
@@ -373,7 +392,7 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=20261010k"></script>
+<script src="script.js?v=20261010l"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const btn = document.getElementById("headerMenuBtn");
