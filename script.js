@@ -9411,3 +9411,42 @@ window.deleteDailyOtherItem=function(button){
     if(e.target&&e.target.classList&&e.target.classList.contains('kkdp-emp-rate'))applyPremiumPolish();
   });
 })();
+
+/* DAILY EXPENSES ALIGNMENT UPDATE */
+(function(){
+ function apply(){
+  var root=document.getElementById('profitScreen');if(!root)return;
+  var style=document.getElementById('kkDailyExpenseAlignmentV2')||document.createElement('style');
+  style.id='kkDailyExpenseAlignmentV2';
+  style.textContent=
+   '#profitScreen .kkdp-sales-row,#profitScreen .kkdp-capex-row{align-items:stretch!important;gap:8px!important}'+
+   '#profitScreen .kkdp-sales-row>.kkdp-card,#profitScreen .kkdp-capex-row>.kkdp-card{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important;min-width:0!important;min-height:112px!important;height:100%!important;box-sizing:border-box!important;padding:12px 7px!important;border:1px solid #d7e2ef!important;border-radius:14px!important;background:linear-gradient(155deg,#fff,#f2f6fb)!important;box-shadow:0 4px 12px rgba(15,35,65,.07)!important;gap:9px!important}'+
+   '#profitScreen .kkdp-sales-row .kkdp-label,#profitScreen .kkdp-capex-row .kkdp-label{display:block!important;width:100%!important;text-align:center!important;white-space:normal!important;overflow-wrap:anywhere!important;font-size:12px!important;font-weight:750!important;line-height:1.3!important;color:#344b65!important;min-height:32px!important}'+
+   '#profitScreen .kkdp-sales-row .kkdp-value,#profitScreen .kkdp-capex-row .kkdp-value{display:block!important;width:100%!important;text-align:center!important;font-size:17px!important;font-weight:850!important;line-height:1.25!important;color:#102b4e!important;overflow-wrap:anywhere!important;margin:0!important;padding:0!important}'+
+   '#profitScreen .kkdp-capex-row input{width:100%!important;max-width:140px!important;text-align:center!important;box-sizing:border-box!important;font-size:14px!important;font-weight:700!important;border:1px solid #cbd7e5!important;border-radius:9px!important;padding:9px 5px!important}'+
+   '#profitScreen .kkdp-expense-row{align-items:center!important;min-height:78px!important;padding:12px 10px!important;gap:8px!important}'+
+   '#profitScreen .kkdp-expense-row .kkdp-opex-name{align-self:center!important;font-size:14px!important;font-weight:800!important;line-height:1.3!important;color:#163452!important;overflow-wrap:anywhere!important}'+
+   '#profitScreen .kkdp-expense-row .kkdp-amount-wrap,#profitScreen .kkdp-expense-row .kkdp-divisor-wrap,#profitScreen .kkdp-expense-row .kkdp-daily-wrap{align-self:center!important;min-width:0!important;text-align:center!important}'+
+   '#profitScreen .kkdp-expense-row .kkdp-amount-wrap:before{display:block!important;text-align:center!important;font-size:11px!important;font-weight:750!important;color:#52647a!important;margin:0 0 5px!important;content:"Amount (₱)"!important}'+
+   '#profitScreen .kkdp-expense-row .kkdp-divisor-wrap:before{display:block!important;text-align:center!important;font-size:11px!important;font-weight:750!important;color:#52647a!important;margin:0 0 5px!important;content:"Days / No."!important}'+
+   '#profitScreen .kkdp-expense-row .kkdp-daily-wrap:before{display:block!important;text-align:center!important;font-size:11px!important;font-weight:750!important;color:#52647a!important;margin:0 0 5px!important;content:"Daily Expense"!important}'+
+   '#profitScreen .kkdp-expense-row .kkdp-opex-daily{display:block!important;width:100%!important;text-align:center!important;font-size:14px!important;font-weight:850!important;line-height:1.3!important;color:#102b4e!important;overflow-wrap:anywhere!important}'+
+   '#profitScreen .kkdp-expense-row input{min-width:0!important;width:100%!important;box-sizing:border-box!important;text-align:center!important;font-size:14px!important;font-weight:650!important;padding:9px 5px!important;border:1px solid #cbd7e5!important;border-radius:9px!important}'+
+   '#profitScreen #kkdpEmployeeBody tr[data-id]{display:grid!important;grid-template-columns:minmax(0,2fr) minmax(0,1fr) 40px!important;align-items:center!important;gap:8px!important;width:100%!important;padding:7px 0!important;border-bottom:1px solid #e2e8f0!important}'+
+   '#profitScreen #kkdpEmployeeBody tr[data-id]>td{display:block!important;min-width:0!important;width:100%!important;padding:0!important;border:0!important}'+
+   '#profitScreen #kkdpEmployeeBody tr[data-id]>td:nth-child(3){display:none!important}'+
+   '#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-name,#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-rate{display:block!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;font-size:14px!important;font-weight:650!important;padding:10px 8px!important;border:1px solid #cbd7e5!important;border-radius:9px!important;background:#fff!important;color:#142f4d!important}'+
+   '#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-delete-employee{width:36px!important;height:36px!important;min-width:36px!important;padding:0!important;border-radius:10px!important;font-size:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#fff1f2!important;color:#be123c!important;border:1px solid #fecdd3!important}'+
+   '#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-delete-employee:before{content:"×";font-size:23px!important;line-height:1!important;font-weight:500!important}'+
+   '#profitScreen .kkdp-employees table thead th{font-size:12px!important;font-weight:800!important;color:#40546c!important;text-align:left!important}'+
+   '#profitScreen .kkdp-employees table thead th:nth-child(3){display:none!important}'+
+   '@media(max-width:430px){#profitScreen .kkdp-sales-row,#profitScreen .kkdp-capex-row{gap:5px!important}#profitScreen .kkdp-sales-row>.kkdp-card,#profitScreen .kkdp-capex-row>.kkdp-card{min-height:105px!important;padding:9px 4px!important;gap:7px!important}#profitScreen .kkdp-sales-row .kkdp-label,#profitScreen .kkdp-capex-row .kkdp-label{font-size:11px!important;min-height:30px!important}#profitScreen .kkdp-sales-row .kkdp-value,#profitScreen .kkdp-capex-row .kkdp-value{font-size:14px!important}#profitScreen .kkdp-expense-row{grid-template-columns:minmax(58px,1fr) minmax(55px,1fr) minmax(55px,1fr) minmax(68px,1fr)!important;gap:5px!important;padding:9px 5px!important}#profitScreen .kkdp-expense-row .kkdp-opex-name{font-size:12px!important}#profitScreen .kkdp-expense-row input{font-size:12px!important;padding:8px 3px!important}#profitScreen .kkdp-expense-row .kkdp-opex-daily{font-size:12px!important}#profitScreen #kkdpEmployeeBody tr[data-id]{grid-template-columns:minmax(0,2fr) minmax(0,1fr) 36px!important;gap:6px!important}#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-name,#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-rate{font-size:13px!important;padding:9px 5px!important}}';
+  if(!style.parentNode)document.head.appendChild(style);
+  var labels={kkdpFoodSales:'Food',kkdpOtherSales:'Other Item',kkdpFoodCount:'Food Sold',kkdpOtherCount:'Item Sold'};
+  Object.keys(labels).forEach(function(id){var v=document.getElementById(id);var card=v&&v.closest('.kkdp-card');var l=card&&card.querySelector('.kkdp-label');if(l)l.textContent=labels[id];});
+  document.querySelectorAll('#profitScreen #kkdpEmployeeBody tr[data-id]').forEach(function(row){var c=row.querySelector('.kkdp-emp-present');if(c)c.checked=true;var d=row.querySelector('.kkdp-delete-employee');if(d){d.setAttribute('aria-label','Delete employee');d.setAttribute('title','Delete employee');}});
+ }
+ var base=window.loadProfitCalculator;
+ if(typeof base==='function'&&!base.__kkDailyExpenseAlignmentV2){var wrapped=function(){var result=base.apply(this,arguments);apply();return result;};wrapped.__kkDailyExpenseAlignmentV2=true;window.loadProfitCalculator=wrapped;window.loadProfitForDate=wrapped;}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
+})();
