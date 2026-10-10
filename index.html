@@ -166,8 +166,10 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 .recipe-date-name-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.65fr);gap:10px;align-items:start}
 .recipe-date-name-grid .form-group{min-width:0}
 .recipe-date-name-grid input{width:100%;min-width:0}
-.recipe-ingredient-row{grid-template-columns:minmax(0,1.35fr) minmax(0,.65fr) minmax(0,.8fr) 36px;gap:7px;align-items:end}
+.recipe-ingredient-row{grid-template-columns:minmax(0,1.35fr) minmax(0,.65fr) minmax(0,.8fr);gap:7px;align-items:end}
 .recipe-ingredient-row>div{min-width:0}
+/* Ingredient rows use only Ingredient, Amount, and Unit; hide any stale per-row delete control. */
+.recipe-ingredient-row button{display:none!important}
 
 .recipe-ingredient-row .recipe-ingredient-select,.recipe-ingredient-row .recipe-unit{min-height:44px;padding:8px 6px;font-size:14px}
 .recipe-cost-save-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,.8fr);gap:10px;align-items:stretch;margin-top:12px}
@@ -177,7 +179,7 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
  .recipe-date-name-grid{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:7px}
  .recipe-date-name-grid label{font-size:12px}
  .recipe-date-name-grid input{padding:10px 7px;font-size:14px}
- .recipe-ingredient-row{grid-template-columns:minmax(0,1.2fr) minmax(0,.6fr) minmax(0,.7fr) 30px;gap:4px}
+ .recipe-ingredient-row{grid-template-columns:minmax(0,1.2fr) minmax(0,.6fr) minmax(0,.7fr);gap:4px}
  .recipe-ingredient-row .recipe-ingredient-select,.recipe-ingredient-row .recipe-unit{padding:7px 3px;font-size:12px}
  .recipe-cost-save-row{grid-template-columns:minmax(0,1fr) minmax(110px,.8fr);gap:7px}
  .recipe-cost-save-row .recipe-total{padding:10px;font-size:12px}
@@ -346,7 +348,7 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js"></script>
+<script src="script.js?v=20261010b"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const btn = document.getElementById("headerMenuBtn");
