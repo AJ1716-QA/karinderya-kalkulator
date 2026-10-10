@@ -9578,3 +9578,84 @@ window.deleteDailyOtherItem=function(button){
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch);else watch();
   }
 })();
+
+
+
+/* ================================================================
+   MOBILE REFRESH RESTORE + PASSWORD VISIBILITY
+   Keep the last in-app screen when the browser refreshes the PWA.
+   This stores only a screen ID in sessionStorage, never user data.
+================================================================ */
+(function () {
+    "use strict";
+    var SCREEN_KEY = "kk_last_active_screen";
+    var restoredThisLoad = false;
+
+    function rememberScreen(screenId) {
+        try {
+            var screen = document.getElementById(screenId);
+            if (screen && screen.classList.contains("screen")) {
+                sessionStorage.setItem(SCREEN_KEY, screenId);
+            }
+        } catch (e) {}
+    }
+
+    if (typeof window.showScreen === "function") {
+        var originalShowScreen = window.showScreen;
+        window.showScreen = function (screenId) {
+            var result = originalShowScreen.apply(this, arguments);
+            rememberScreen(screenId);
+            return result;
+        };
+    }
+
+    function restoreScreenAfterAccessCheck() {
+        if (restoredThisLoad || !hasLifetimeAccess) return;
+        var app = document.getElementById("appContent");
+        if (!app || app.style.display === "none") return;
+        var saved = "";
+        try { saved = sessionStorage.getItem(SCREEN_KEY) || ""; } catch (e) {}
+        var target = saved && document.getElementById(saved);
+        if (target && target.classList.contains("screen")) {
+            restoredThisLoad = true;
+            if (saved !== "homeScreen" && typeof window.showScreen === "function") {
+                window.showScreen(saved);
+            } else {
+                restoredThisLoad = true;
+                if (typeof window.showScreen === "function") window.showScreen("homeScreen");
+            }
+        } else {
+            restoredThisLoad = true;
+            if (typeof window.showScreen === "function") window.showScreen("homeScreen");
+        }
+    }
+
+    if (typeof window.updateAppAccess === "function") {
+        var originalUpdateAppAccess = window.updateAppAccess;
+        window.updateAppAccess = async function () {
+            var result = await originalUpdateAppAccess.apply(this, arguments);
+            restoreScreenAfterAccessCheck();
+            return result;
+        };
+    }
+
+    var passwordInput = document.getElementById("authPassword");
+    var toggle = document.getElementById("toggleAuthPassword");
+    if (passwordInput && toggle) {
+        toggle.addEventListener("click", function () {
+            var show = passwordInput.type === "password";
+            passwordInput.type = show ? "text" : "password";
+            toggle.textContent = show ? "Hide" : "Show";
+            toggle.setAttribute("aria-label", show ? "Hide password" : "Show password");
+            toggle.setAttribute("aria-pressed", show ? "true" : "false");
+            passwordInput.focus();
+        });
+    }
+
+    var logout = document.getElementById("logoutBtn");
+    if (logout) {
+        logout.addEventListener("click", function () {
+            try { sessionStorage.removeItem(SCREEN_KEY); } catch (e) {}
+        });
+    }
+})();
