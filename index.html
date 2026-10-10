@@ -125,6 +125,15 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 .ingredient-save-row{display:flex;width:100%}.ingredient-save-row .btn{width:100%;flex:1}
 @media(max-width:360px){.ingredient-entry-grid{gap:7px}.ingredient-entry-grid label{font-size:11px}.ingredient-entry-grid input,.ingredient-entry-grid select{padding-left:7px;padding-right:7px;font-size:13px}}
 
+/* Other Items form: item dropdown on row one; purchase, quantity and unit on row two; selling price and save action below. */
+.other-item-entry-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.other-item-entry-grid .other-name-field,.other-item-entry-grid .other-selling-field{grid-column:1/-1}
+.other-item-entry-grid .form-group{min-width:0}
+.other-item-entry-grid input,.other-item-entry-grid select{width:100%;min-width:0;box-sizing:border-box}
+.other-item-entry-grid label{font-size:13px;line-height:1.25}
+.other-item-save-row{display:flex;width:100%}.other-item-save-row .btn{width:100%;flex:1}
+@media(max-width:360px){.other-item-entry-grid{gap:7px}.other-item-entry-grid label{font-size:11px}.other-item-entry-grid input,.other-item-entry-grid select{padding-left:7px;padding-right:7px;font-size:13px}}
+
 </style>
 
 
@@ -228,14 +237,14 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 <div class="card">
 <div class="section-title" style="font-size:17px">Add Other Item</div>
 <div class="small-text" style="margin-bottom:12px">Add only the resale items you actually sell in your store.</div>
-<div class="form-grid">
-<div class="form-group"><label>Item Name</label><input id="otherItemName" placeholder="Example: Sprite" type="text"/></div>
-<div class="form-group"><label>Purchase Price</label><input id="otherPurchasePrice" inputmode="decimal" min="0" step="0.01" type="number"/></div>
-<div class="form-group"><label>Quantity Purchased</label><input id="otherQuantity" inputmode="decimal" min="0" step="0.001" type="number"/></div>
-<div class="form-group"><label>Unit</label><input id="otherUnit" placeholder="bottle" type="text"/></div>
-<div class="form-group"><label>Selling Price</label><input id="otherSellingPrice" inputmode="decimal" min="0" step="0.01" type="number"/></div>
+<div class="form-grid other-item-entry-grid">
+<div class="form-group other-name-field"><label>Item Name</label><input id="otherItemName" placeholder="Select item..." type="text"/></div>
+<div class="form-group other-price-field"><label>Purchase Price</label><input id="otherPurchasePrice" inputmode="decimal" min="0" step="0.01" type="number"/></div>
+<div class="form-group other-quantity-field"><label>Quantity Purchased</label><input id="otherQuantity" inputmode="decimal" min="0" step="0.001" type="number"/></div>
+<div class="form-group other-unit-field"><label>Unit</label><input id="otherUnit" placeholder="bottle" type="text"/></div>
+<div class="form-group other-selling-field"><label>Selling Price</label><input id="otherSellingPrice" inputmode="decimal" min="0" step="0.01" type="number"/></div>
 </div>
-<div class="button-row"><button class="btn btn-primary" onclick="saveOtherItem()" type="button">Save Other Item</button></div><div class="message" id="otherItemMessage"></div>
+<div class="button-row other-item-save-row"><button class="btn btn-primary" onclick="saveOtherItem()" type="button">Save Other Item</button></div><div class="message" id="otherItemMessage"></div>
 </div>
 <div class="card"><div class="section-title" style="font-size:17px">Saved Other Items</div><div id="otherItemList"></div></div>
 </section>
