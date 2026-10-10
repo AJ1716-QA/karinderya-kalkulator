@@ -547,10 +547,17 @@ async function saveIngredient(editId) {
         showMessage("ingredientMessage", "Please enter a valid ingredient, purchase price and quantity.", "error"); return;
     }
     const unitCost = purchasePrice / quantity;
-    const duplicate = ingredientPrices.find(x => x.name.toLowerCase() === name.toLowerCase() && String(x.id) !== String(editId || ""));
+    const normalizedName = name.trim().toLocaleLowerCase();
+    const duplicate = ingredientPrices.find(x => String(x.name || "").trim().toLocaleLowerCase() === normalizedName && String(x.id) !== String(editId || ""));
     if (duplicate) { showMessage("ingredientMessage", "This ingredient is already in your saved list. Edit the existing item instead.", "error"); return; }
     const userId = await getCurrentUserId();
     if (!userId) return;
+    /* Recheck the current cloud list, not only the local cache. This catches
+       duplicates saved from another session/device before inserting. */
+    const check = await supabaseClient.from("ingredients").select("id,name").eq("user_id", userId);
+    if (check.error) { console.error(check.error); showMessage("ingredientMessage", "Unable to verify duplicates. Please try again.", "error"); return; }
+    const cloudDuplicate = (check.data || []).find(x => String(x.name || "").trim().toLocaleLowerCase() === normalizedName && String(x.id) !== String(editId || ""));
+    if (cloudDuplicate) { await renderIngredientList(); showMessage("ingredientMessage", "This ingredient is already in your saved list. Edit the existing item instead.", "error"); return; }
     let error;
     if (editId) {
         ({error} = await supabaseClient.from("ingredients").update({name,purchase_price:purchasePrice,quantity,unit,unit_cost:unitCost}).eq("id",Number(editId)).eq("user_id",userId));
@@ -626,8 +633,14 @@ async function saveOtherItem(editId){
     if(selected==="__custom__")name=document.getElementById("customOtherItemName").value.trim();
     const purchasePrice=numberValue(document.getElementById("otherPurchasePrice").value), quantity=numberValue(document.getElementById("otherQuantity").value), unit=document.getElementById("otherUnit").value.trim(), sellingPrice=numberValue(document.getElementById("otherSellingPrice").value);
     if(!name||purchasePrice<=0||quantity<=0||sellingPrice<=0){showMessage("otherItemMessage","Please enter valid other item details.","error");return;}
-    const duplicate=otherItems.find(x=>x.name.toLowerCase()===name.toLowerCase()&&String(x.id)!==String(editId||"")); if(duplicate){showMessage("otherItemMessage","This item is already saved. Edit the existing item instead.","error");return;}
+    const normalizedName=name.trim().toLocaleLowerCase();
+    const duplicate=otherItems.find(x=>String(x.name||"").trim().toLocaleLowerCase()===normalizedName&&String(x.id)!==String(editId||"")); if(duplicate){showMessage("otherItemMessage","This item is already saved. Edit the existing item instead.","error");return;}
     const unitCost=purchasePrice/quantity,userId=await getCurrentUserId(); if(!userId)return;
+    /* Recheck Supabase so stale local data cannot allow a duplicate item. */
+    const check=await supabaseClient.from("other_items").select("id,name").eq("user_id",userId);
+    if(check.error){console.error(check.error);showMessage("otherItemMessage","Unable to verify duplicates. Please try again.","error");return;}
+    const cloudDuplicate=(check.data||[]).find(x=>String(x.name||"").trim().toLocaleLowerCase()===normalizedName&&String(x.id)!==String(editId||""));
+    if(cloudDuplicate){await renderOtherItemList();showMessage("otherItemMessage","This item is already saved. Edit the existing item instead.","error");return;}
     let error;
     if(editId)({error}=await supabaseClient.from("other_items").update({name,purchase_price:purchasePrice,quantity,unit,unit_cost:unitCost,selling_price:sellingPrice}).eq("id",Number(editId)).eq("user_id",userId));
     else ({error}=await supabaseClient.from("other_items").insert({user_id:userId,name,purchase_price:purchasePrice,quantity,unit,unit_cost:unitCost,selling_price:sellingPrice}));
