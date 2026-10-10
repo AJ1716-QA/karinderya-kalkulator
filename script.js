@@ -4091,26 +4091,49 @@ document.getElementById("signupBtn").addEventListener("click", async function ()
 });
 
 document.getElementById("loginBtn").addEventListener("click", async function () {
+    const button = this;
+    const message = document.getElementById("authMessage");
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
 
-    const { data, error } =
-        await supabaseClient.auth.signInWithPassword({
+    if (!email || !password) {
+        message.textContent = "Please enter your email and password.";
+        message.className = "message error";
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Signing in...";
+    message.textContent = "";
+    message.className = "message";
+
+    try {
+        const { error } = await supabaseClient.auth.signInWithPassword({
             email: email,
             password: password
         });
 
-    if (error) {
-        document.getElementById("authMessage").textContent =
-            error.message;
-        return;
+        if (error) {
+            message.textContent = error.message;
+            message.className = "message error";
+            return;
+        }
+
+        await updateAppAccess();
+        message.textContent = hasLifetimeAccess
+            ? "Login successful."
+            : "Your account is signed in, but lifetime access is not active yet. Please complete payment and wait for manual verification.";
+        message.className = hasLifetimeAccess ? "message success" : "message info";
+    } catch (err) {
+        console.error("Login failed:", err);
+        message.textContent = err && err.message
+            ? err.message
+            : "Unable to sign in right now. Please check your connection and try again.";
+        message.className = "message error";
+    } finally {
+        button.disabled = false;
+        button.textContent = "Log In";
     }
-
-    await updateAppAccess();
-
-    document.getElementById("authMessage").textContent = hasLifetimeAccess
-        ? "Login successful."
-        : "Your account is signed in, but lifetime access is not active yet. Please complete GCash payment and wait for manual verification.";
 });
 
 
