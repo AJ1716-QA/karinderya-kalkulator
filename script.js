@@ -8700,7 +8700,7 @@ function calculateCombinedSales(date){
     .kk-premium-sold-value{min-width:22px;text-align:center}
     .kk-premium-sold-value strong{font-size:15px;color:var(--navy)}
     .kk-auto-other-grid{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:10px}
-    @media(max-width:420px){.kk-auto-food-grid,.kk-auto-other-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.kk-food-price-field label{font-size:10px}.kk-premium-cell{padding:9px 4px}.kk-premium-cell>strong{font-size:13px}.kk-premium-sold-control{gap:2px}.kk-premium-sold-control .btn{min-width:27px;padding:4px 6px}}
+    @media(max-width:420px){.kk-auto-food-grid,.kk-auto-other-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.kk-food-price-field label{font-size:10px}.kk-premium-cell{padding:9px 4px}.kk-premium-cell>strong{font-size:13px}.kk-premium-sold-control{gap:2px}.kk-premium-sold-control .btn{min-width:27px;padding:4px 6px}}
   `;
   if(!document.getElementById(style.id))document.head.appendChild(style);
 })();
