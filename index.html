@@ -158,6 +158,10 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
   .summary-box{padding-left:3px;padding-right:3px}
 }
 
+/* Keep Add Ingredient and Delete Ingredient together on one row. */
+.recipe-ingredient-actions{display:flex;gap:8px;align-items:stretch;margin-top:10px}
+.recipe-ingredient-actions .btn{flex:1;min-width:0;min-height:44px}
+@media(max-width:360px){.recipe-ingredient-actions{gap:6px}.recipe-ingredient-actions .btn{padding:9px 7px;font-size:13px}}
 /* Recipe form layout: date and wider recipe name share a row; cost and save share a row. */
 .recipe-date-name-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.65fr);gap:10px;align-items:start}
 .recipe-date-name-grid .form-group{min-width:0}
@@ -225,7 +229,7 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 <div class="form-group recipe-name-field"><label>Recipe Name</label><input id="recipeName" placeholder="Example: Adobo" type="text"/></div>
 </div>
 <div class="form-group"><label>Ingredients</label><div id="recipeIngredients"></div></div>
-<button class="btn btn-secondary" onclick="addRecipeIngredient()" type="button">+ Add Ingredient</button>
+<div class="recipe-ingredient-actions"><button class="btn btn-secondary" onclick="addRecipeIngredient()" type="button">+ Add Ingredient</button><button class="btn btn-danger" onclick="removeRecipeIngredient()" type="button">Delete Ingredient</button></div>
 <div class="recipe-cost-save-row"><div class="recipe-total">Recipe Cost: <span id="recipeTotalCost">₱0.00</span></div><button class="btn btn-primary" onclick="saveRecipe()" type="button">Save Recipe</button></div>
 <div class="message" id="recipeMessage"></div>
 </div>
