@@ -8540,7 +8540,7 @@ function calculateCombinedSales(date){
       if(item.targetSellingPrice===undefined || item.targetSellingPrice===null){
         item.targetSellingPrice=n(item.sellingPrice)*item.servingsPerRecipe;
       }
-      item.sellingPrice=n(item.targetSellingPrice)/item.servingsPerRecipe;
+      item.sellingPrice=n(item.sellingPrice)||0;
       item.costPerServing=item.recipeCost/item.servingsPerRecipe;
     });
     return record;
@@ -8563,8 +8563,12 @@ function calculateCombinedSales(date){
     const record=stage4TodayRecord(date);
     const item=record.foodItems.find(function(x){return String(x.id)===String(card.dataset.foodId);});
     if(!item)return;
-    item.targetSellingPrice=Math.max(0,n(input.value));
-    item.sellingPrice=item.targetSellingPrice/Math.max(1,n(item.servingsPerRecipe));
+    const field=input.dataset.priceField;
+    if(field==='target'){
+      item.targetSellingPrice=Math.max(0,n(input.value));
+    }else{
+      item.sellingPrice=Math.max(0,n(input.value));
+    }
     saveAllData();
     renderMenuItems(date);
     calculateCombinedSales(date);
@@ -8583,7 +8587,6 @@ function calculateCombinedSales(date){
       if(item.targetSellingPrice===undefined || item.targetSellingPrice===null){
         item.targetSellingPrice=n(item.sellingPrice)*servingsPerRecipe;
       }
-      item.sellingPrice=n(item.targetSellingPrice)/servingsPerRecipe;
       const qty=Math.max(0,Math.floor(n(item.servingsSold)));
       const sales=n(item.sellingPrice)*qty;
       const profit=sales-perServing(item)*qty;
@@ -8596,8 +8599,10 @@ function calculateCombinedSales(date){
         '<button type="button" class="btn btn-secondary btn-small" onclick="editStage4Food(this)">Edit</button></div></div>'+
         '<div class="menu-summary-grid-6 kk-auto-food-grid">'+
           stage4Box('Recipe Cost',money(item.recipeCost))+
-          '<div class="form-group kk-food-price-field"><label>Target Selling Price (Whole Recipe)</label><input class="food-sale-price" type="number" min="0" step="0.01" inputmode="decimal" value="'+n(item.targetSellingPrice)+'" onchange="updateStage4SellingPrice(this)" aria-label="Target selling price for the whole recipe"></div>'+
-          stage4Box('Selling Price / Serving',money(item.sellingPrice))+
+          '<div class="form-group kk-food-price-field"><label>Selling Price / Serving</label><input class="food-sale-price" data-price-field="serving" type="number" min="0" step="0.01" inputmode="decimal" value="'+n(item.sellingPrice)+'" onchange="updateStage4SellingPrice(this)" aria-label="Selling price per serving">'+
+          '</div>'+
+          '<div class="form-group kk-food-price-field"><label>Target Selling Price</label><input class="food-target-price" data-price-field="target" type="number" min="0" step="0.01" inputmode="decimal" value="'+n(item.targetSellingPrice)+'" onchange="updateStage4SellingPrice(this)" aria-label="Target selling price">'+
+          '</div>'+
           '<div class="kk-premium-cell"><span>Servings Sold</span><div class="kk-premium-sold-control">'+
           '<button type="button" class="btn btn-secondary btn-small" onclick="changeStage4SoldQuantity(this,-1)" aria-label="Decrease servings sold">−</button>'+
           '<div class="kk-premium-sold-value"><strong>'+qty+'</strong></div>'+
