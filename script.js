@@ -3682,10 +3682,11 @@ function getMonthName(dateString) {
 function renderPerformanceDashboard() {
   var graph=document.getElementById("performanceGraph"),table=document.getElementById("performanceTable");
   var ps=document.getElementById("performancePeriod"),wrap=document.getElementById("performanceMetrics");
-  if(!graph||!table||!ps||!wrap)return;
-  var selector=document.getElementById("performanceMetricsSelect");
-  var selected=selector&&selector.value?selector.value.split(",").filter(Boolean):["sales","capex","opex","profit"];
-  if(!selected.length){graph.innerHTML='<div class="menu-empty">Select at least one metric to compare.</div>';table.innerHTML="";return;}
+  var rangeWrap=document.getElementById("performanceDateRange");
+  if(!graph||!table||!ps||!wrap||!rangeWrap)return;
+  var selected=Array.from(wrap.querySelectorAll('input[type="checkbox"]:checked')).map(function(x){return x.value;});
+  var startDate=document.getElementById("performanceStartDate"),endDate=document.getElementById("performanceEndDate");
+  var startMonth=document.getElementById("performanceStartMonth"),endMonth=document.getElementById("performanceEndMonth");
   var sales=new Map(),profits=new Map();
   (Array.isArray(dailySalesRecords)?dailySalesRecords:[]).forEach(function(r){if(r&&r.date)sales.set(String(r.date),r);});
   (Array.isArray(profitRecords)?profitRecords:[]).forEach(function(r){if(r&&r.date)profits.set(String(r.date),r);});
@@ -3693,19 +3694,39 @@ function renderPerformanceDashboard() {
   var labels={sales:"Sales",capex:"CAPEX",opex:"OPEX",profit:"Profit"};
   function expense(r){if(!r)return 0;if(r.totalExpenses!=null)return Number(r.totalExpenses)||0;if(r.dailyOpex&&r.dailyOpex.total!=null)return Number(r.dailyOpex.total)||0;var e=r.expenses||{};return ["rent","gas","electricity","water","wifi","labor","other","transportation"].reduce(function(a,k){return a+(Number(e[k])||0);},0);}
   function value(d,m){var s=sales.get(d),p=profits.get(d);if(m==="sales")return Number((s&&s.totalSales)??(p&&p.totalSales)??0)||0;if(m==="capex")return Number((p&&(p.totalCapitalCost??p.totalCost))??(s&&s.totalCost)??0)||0;if(m==="opex")return expense(p);return Number((p&&p.netProfit)??(s&&(s.netProfit??s.profit??s.grossProfit))??0)||0;}
+  var months=Array.from(new Set(dates.map(function(d){return d.slice(0,7);}))).sort();
+  function monthName(key){var p=key.split("-");return new Date(+p[0],+p[1]-1,1).toLocaleString("en-US",{month:"long",year:"numeric"});}
+  function fillMonthSelect(el,chosen){if(!el)return;var previous=el.value;el.innerHTML="";months.forEach(function(m){var o=document.createElement("option");o.value=m;o.textContent=monthName(m);el.appendChild(o);});if(months.indexOf(previous)>=0)el.value=previous;else if(chosen&&months.indexOf(chosen)>=0)el.value=chosen;else if(months.length)el.value=months[months.length-1];}
+  if(!rangeWrap.dataset.initialized){
+    rangeWrap.dataset.initialized="1";
+    var minDate=dates[0]||new Date().toISOString().slice(0,10),maxDate=dates[dates.length-1]||minDate;
+    startDate.min=minDate;startDate.max=maxDate;endDate.min=minDate;endDate.max=maxDate;startDate.value=minDate;endDate.value=maxDate;
+    fillMonthSelect(startMonth,months[0]);fillMonthSelect(endMonth,months[months.length-1]);
+    ps.addEventListener("change",renderPerformanceDashboard);
+    wrap.addEventListener("change",renderPerformanceDashboard);
+    [startDate,endDate,startMonth,endMonth].forEach(function(el){el.addEventListener("change",renderPerformanceDashboard);});
+  }else{
+    fillMonthSelect(startMonth,months[0]);fillMonthSelect(endMonth,months[months.length-1]);
+    if(dates.length){startDate.min=dates[0];startDate.max=dates[dates.length-1];endDate.min=dates[0];endDate.max=dates[dates.length-1];}
+  }
+  var isDaily=ps.value==="daily";
+  document.getElementById("performanceDailyRange").style.display=isDaily?"grid":"none";
+  document.getElementById("performanceMonthlyRange").style.display=isDaily?"none":"grid";
+  rangeWrap.style.display="block";
+  if(!selected.length){graph.innerHTML='<div class="menu-empty">Select at least one metric to compare.</div>';table.innerHTML="";return;}
+  var filteredDates=dates.filter(function(d){if(isDaily)return (!startDate.value||d>=startDate.value)&&(!endDate.value||d<=endDate.value);var m=d.slice(0,7);return (!startMonth.value||m>=startMonth.value)&&(!endMonth.value||m<=endMonth.value);});
   var rows=[];
-  if(ps.value==="daily")rows=dates.map(function(d){return {full:d,label:d.slice(5),key:d,values:selected.map(function(m){return value(d,m);})};});
-  else{var months=new Map();dates.forEach(function(d){var k=d.slice(0,7);if(!months.has(k))months.set(k,{});selected.forEach(function(m){months.get(k)[m]=(months.get(k)[m]||0)+value(d,m);});});rows=Array.from(months.entries()).sort(function(a,b){return a[0].localeCompare(b[0]);}).map(function(e){var p=e[0].split("-");return {full:e[0],label:new Date(+p[0],+p[1]-1,1).toLocaleString("en-US",{month:"short",year:"2-digit"}),key:e[0],values:selected.map(function(m){return e[1][m]||0;})};});}
-  if(!rows.length){graph.innerHTML='<div class="menu-empty">No finalized records available to graph yet.</div>';table.innerHTML="";return;}
-  var view=rows.slice(-12),max=Math.max(1,...view.reduce(function(a,r){return a.concat(r.values.map(Math.abs));},[])),W=640,H=280,L=48,R=12,T=18,B=48,cw=W-L-R,ch=H-T-B,slot=cw/view.length,bw=Math.max(3,Math.min(24,slot*.72/selected.length));
-  var svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Comparison graph" style="display:block;max-width:100%;height:auto">';
+  if(isDaily)rows=filteredDates.map(function(d){return {full:d,label:d.slice(5),key:d,values:selected.map(function(m){return value(d,m);})};});
+  else{var monthMap=new Map();filteredDates.forEach(function(d){var k=d.slice(0,7);if(!monthMap.has(k))monthMap.set(k,{});selected.forEach(function(m){monthMap.get(k)[m]=(monthMap.get(k)[m]||0)+value(d,m);});});rows=Array.from(monthMap.entries()).sort(function(a,b){return a[0].localeCompare(b[0]);}).map(function(e){var p=e[0].split("-");return {full:monthName(e[0]),label:new Date(+p[0],+p[1]-1,1).toLocaleString("en-US",{month:"short",year:"2-digit"}),key:e[0],values:selected.map(function(m){return e[1][m]||0;})};});}
+  if(!rows.length){graph.innerHTML='<div class="menu-empty">No finalized records found for the selected date range.</div>';table.innerHTML="";return;}
+  var view=rows,max=Math.max(1,...view.reduce(function(a,r){return a.concat(r.values.map(Math.abs));},[])),W=640,H=280,L=48,R=12,T=18,B=48,cw=W-L-R,ch=H-T-B,slot=cw/view.length,bw=Math.max(3,Math.min(24,slot*.72/selected.length));
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Business performance comparison graph" style="display:block;max-width:100%;height:auto">';
   for(var i=0;i<=4;i++){var y=T+ch*i/4,v=max*(1-i/4);svg+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="#dce5ec"/><text x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end" fill="#68798a" font-size="10">'+(v>=1000?(v/1000).toFixed(1)+"k":Math.round(v))+'</text>';}
   var colors={sales:"#2477b3",capex:"#7956a8",opex:"#d28b25",profit:"#16834a"};
-  view.forEach(function(r,i){selected.forEach(function(m,j){var v=r.values[j],x=L+slot*i+slot/2+(j-(selected.length-1)/2)*bw-bw/2,h=Math.max(v===0?0:2,Math.abs(v)/max*ch),y=v>=0?T+ch-h:T+ch;svg+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+h+'" rx="2" fill="'+colors[m]+'"><title>'+r.full+' · '+labels[m]+': '+money(v)+'</title></rect>';});svg+='<text x="'+(L+slot*i+slot/2)+'" y="'+(H-27)+'" text-anchor="middle" fill="#526579" font-size="'+(view.length>8?9:10)+'">'+r.label+'</text>';});
+  view.forEach(function(r,i){selected.forEach(function(m,j){var v=r.values[j],x=L+slot*i+slot/2+(j-(selected.length-1)/2)*bw-bw/2,h=Math.max(v===0?0:2,Math.abs(v)/max*ch),y=v>=0?T+ch-h:T+ch;svg+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+h+'" rx="2" fill="'+colors[m]+'"><title>'+r.full+' · '+labels[m]+': '+money(v)+'</title></rect>';});svg+='<text x="'+(L+slot*i+slot/2)+'" y="'+(H-27)+'" text-anchor="middle" fill="#526579" font-size="'+(view.length>18?8:view.length>10?9:10)+'">'+r.label+'</text>';});
   svg+='</svg><div style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 12px">'+selected.map(function(m){return '<span style="font-size:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+colors[m]+';margin-right:4px"></span>'+labels[m]+'</span>';}).join("")+'</div>';graph.innerHTML=svg;
-  var html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:8px 5px;border-bottom:1px solid #dce5ec">'+(ps.value==="daily"?"Date":"Month")+'</th>'+selected.map(function(m){return '<th style="text-align:right;padding:8px 5px;border-bottom:1px solid #dce5ec">'+labels[m]+'</th>';}).join("")+'</tr></thead><tbody>';
-  view.slice().reverse().forEach(function(r){html+='<tr><td style="padding:8px 5px;border-bottom:1px solid #edf1f4">'+r.full+'</td>'+r.values.map(function(v){return '<td style="text-align:right;padding:8px 5px;border-bottom:1px solid #edf1f4;font-weight:700">'+money(v)+'</td>';}).join("")+'</tr>';});table.innerHTML=html+'</tbody></table></div>';
-  if(!ps.dataset.bound){ps.addEventListener("change",renderPerformanceDashboard);if(selector)selector.addEventListener("change",renderPerformanceDashboard);ps.dataset.bound="1";}
+  var tableHtml='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:8px 5px;border-bottom:1px solid #dce5ec">'+(isDaily?"Date":"Month")+'</th>'+selected.map(function(m){return '<th style="text-align:right;padding:8px 5px;border-bottom:1px solid #dce5ec">'+labels[m]+'</th>';}).join("")+'</tr></thead><tbody>';
+  view.slice().reverse().forEach(function(r){tableHtml+='<tr><td style="padding:8px 5px;border-bottom:1px solid #edf1f4">'+r.full+'</td>'+r.values.map(function(v){return '<td style="text-align:right;padding:8px 5px;border-bottom:1px solid #edf1f4;font-weight:700">'+money(v)+'</td>';}).join("")+'</tr>';});table.innerHTML=tableHtml+'</tbody></table></div>';
 }
 function renderMonthlyRecords() {
 
