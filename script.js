@@ -1,3 +1,12 @@
+/* Run initialization correctly even when this script is loaded dynamically after DOMContentLoaded. */
+function kkOnReady(callback) {
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", callback, { once: true });
+    } else {
+        callback();
+    }
+}
+
 /* ================================================================
    COMPATIBILITY FIX — AUTH SCREEN VISIBILITY
    The provided index.html declares #authScreen { display:grid!important }.
@@ -3936,8 +3945,7 @@ async function initializeUserData() {
 }
 
 
-document.addEventListener(
-    "DOMContentLoaded",
+kkOnReady(
     async function() {
 
         populateMasterIngredientSelect();
@@ -5528,7 +5536,7 @@ showScreen = function(screenId) {
 };
 
 /* Make sure the replacement controls are ready when the page is loaded. */
-document.addEventListener("DOMContentLoaded", function() {
+kkOnReady( function() {
     if (document.getElementById("otherItemScreen")) {
         setupOtherItemForm();
     }
@@ -6386,7 +6394,7 @@ document.addEventListener("DOMContentLoaded", function() {
         };
 
         if(document.readyState === "loading"){
-            document.addEventListener("DOMContentLoaded", refresh, {once:true});
+            kkOnReady( refresh, {once:true});
         }else{
             setTimeout(refresh, 0);
         }
@@ -7360,7 +7368,7 @@ document.addEventListener("DOMContentLoaded", function() {
     function refreshPremiumProfit(){
         if(document.getElementById('profitScreen'))window.loadProfitCalculator();
     }
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refreshPremiumProfit,{once:true});
+    if(document.readyState==='loading')kkOnReady(refreshPremiumProfit,{once:true});
     else setTimeout(refreshPremiumProfit,0);
 })();
 
@@ -7637,7 +7645,7 @@ document.addEventListener("DOMContentLoaded", function() {
     };
 
     function refresh(){addStyles();if(document.getElementById('profitScreen'))setTimeout(()=>window.loadProfitCalculator(),0);}
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
+    if(document.readyState==='loading')kkOnReady(refresh,{once:true});else refresh();
 })();
 
 /* ================================================================
@@ -8079,7 +8087,7 @@ document.addEventListener("DOMContentLoaded", function() {
         addStyles();
         if(document.getElementById('profitScreen'))setTimeout(function(){window.loadProfitCalculator();},0);
     }
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
+    if(document.readyState==='loading')kkOnReady(refresh,{once:true});else refresh();
 })();
 
 
@@ -8317,7 +8325,7 @@ function styles(){
   window.loadProfitForDate = window.loadProfitCalculator;
 
   function init(){if(document.getElementById('profitScreen'))setTimeout(function(){window.loadProfitCalculator();},0);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+  if(document.readyState==='loading')kkOnReady(init,{once:true});else init();
 })();
 
 
@@ -8516,7 +8524,7 @@ function styles(){
   window.loadProfitCalculator=function(){var current=document.getElementById('kkdpProfitDate');var legacy=document.getElementById('profitDate');build((current&&current.value)||(legacy&&legacy.value)||D());};
   window.loadProfitForDate=window.loadProfitCalculator;
   function init(){if(document.getElementById('profitScreen'))setTimeout(function(){window.loadProfitCalculator();},0);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+  if(document.readyState==='loading')kkOnReady(init,{once:true});else init();
 })();
 
 /* FINAL NAVIGATION FIX: always render the agreed redesigned Profit Calculator
@@ -9412,7 +9420,7 @@ window.deleteDailyOtherItem=function(button){
     setupDailyExpenseLayout();
   };
   window.loadProfitForDate=window.loadProfitCalculator;
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){if(el('profitScreen')&&el('profitScreen').offsetParent!==null)setupDailyExpenseLayout();});
+  if(document.readyState==='loading')kkOnReady(function(){if(el('profitScreen')&&el('profitScreen').offsetParent!==null)setupDailyExpenseLayout();});
 })(); 
 
 
@@ -9464,7 +9472,7 @@ window.deleteDailyOtherItem=function(button){
     window.loadProfitCalculator=wrapped;
     window.loadProfitForDate=wrapped;
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',applyPremiumPolish);
+  if(document.readyState==='loading')kkOnReady(applyPremiumPolish);
   else applyPremiumPolish();
   document.addEventListener('input',function(e){
     if(e.target&&e.target.classList&&e.target.classList.contains('kkdp-emp-rate'))applyPremiumPolish();
@@ -9507,7 +9515,7 @@ window.deleteDailyOtherItem=function(button){
  }
  var base=window.loadProfitCalculator;
  if(typeof base==='function'&&!base.__kkDailyExpenseAlignmentV2){var wrapped=function(){var result=base.apply(this,arguments);apply();return result;};wrapped.__kkDailyExpenseAlignmentV2=true;window.loadProfitCalculator=wrapped;window.loadProfitForDate=wrapped;}
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
+ if(document.readyState==='loading')kkOnReady(apply);else apply();
 })();
 
 
@@ -9564,12 +9572,12 @@ window.deleteDailyOtherItem=function(button){
     window.loadProfitCalculator=wrapped;
     window.loadProfitForDate=wrapped;
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
+  if(document.readyState==='loading')kkOnReady(apply);else apply();
   document.addEventListener('input',function(e){if(e.target&&e.target.closest&&e.target.closest('#profitScreen'))cleanDailyLabels();});
   if(typeof MutationObserver!=='undefined'){
     var observer=new MutationObserver(function(){cleanDailyLabels();});
     var watch=function(){var root=document.getElementById('profitScreen');if(root)observer.observe(root,{childList:true,subtree:true,characterData:true});};
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch);else watch();
+    if(document.readyState==='loading')kkOnReady(watch);else watch();
   }
 })();
 
@@ -9628,6 +9636,6 @@ window.deleteDailyOtherItem=function(button){
     window.loadProfitCalculator=wrapped;
     window.loadProfitForDate=wrapped;
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
+  if(document.readyState==='loading')kkOnReady(apply);else apply();
   document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('#kkdpAddEmployee'))setTimeout(apply,0);});
 })();
