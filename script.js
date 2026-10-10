@@ -8775,8 +8775,8 @@ function calculateCombinedSales(date){
  const opts=selected=>units.map(u=>'<option value="'+u+'" '+(String(selected||"piece").toLowerCase()===u?"selected":"")+'>'+u.charAt(0).toUpperCase()+u.slice(1)+'</option>').join("");
  const getItem=card=>stage4TodayRecord(dateNow()).otherItems.find(x=>String(x.id)===String(card.dataset.otherId));
  function normalize(item,master){
-   if(item.packSellingPrice===undefined)item.packSellingPrice=n(master&&master.sellingPrice!==undefined?master.sellingPrice:item.sellingPrice);
-   if(item.packUnitCost===undefined)item.packUnitCost=n(master&&master.unitCost!==undefined?master.unitCost:item.unitCost);
+   if(item.packSellingPrice===undefined)item.packSellingPrice=n(item.sellingPrice)*(n(item.unitFactor)>0?n(item.unitFactor):1);
+   if(item.packUnitCost===undefined)item.packUnitCost=n(item.unitCost)*(n(item.unitFactor)>0?n(item.unitFactor):1);
    if(item.unitFactor===undefined)item.unitFactor=1;
    if(!item.unit)item.unit=(master&&master.unit)||"piece";
    if(item.sellingPrice===undefined)item.sellingPrice=n(item.packSellingPrice)/Math.max(1,n(item.unitFactor));
