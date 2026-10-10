@@ -339,43 +339,8 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 </section>
 </div>
 </div>
-<script>
-(function () {
-  function loadAppScript() {
-    var app = document.createElement("script");
-    app.src = "script.js?v=20261010aa";
-    app.onerror = function () {
-      var message = document.getElementById("authMessage");
-      if (message) {
-        message.textContent = "The app script could not load. Please refresh the page.";
-        message.className = "message error";
-      }
-    };
-    document.body.appendChild(app);
-  }
-
-  function loadSupabaseFallback() {
-    var fallback = document.createElement("script");
-    fallback.src = "https://unpkg.com/@supabase/supabase-js@2";
-    fallback.onload = loadAppScript;
-    fallback.onerror = function () {
-      var message = document.getElementById("authMessage");
-      if (message) {
-        message.textContent = "The login service could not load. Check your internet connection, then refresh.";
-        message.className = "message error";
-      }
-      console.error("Supabase library failed to load from both CDNs.");
-    };
-    document.head.appendChild(fallback);
-  }
-
-  var primary = document.createElement("script");
-  primary.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-  primary.onload = loadAppScript;
-  primary.onerror = loadSupabaseFallback;
-  document.head.appendChild(primary);
-})();
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="script.js?v=20261010s"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const btn = document.getElementById("headerMenuBtn");
