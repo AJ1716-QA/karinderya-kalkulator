@@ -802,6 +802,7 @@ function saveRecipe() {
 
     const ingredients = [];
     let totalCost = 0;
+    let incompatibleUnit = false;
 
     rows.forEach(function(row) {
         const ingredientId=row.querySelector(".recipe-ingredient-select").value;
@@ -810,10 +811,14 @@ function saveRecipe() {
         const ingredient=ingredientPrices.find(function(item){return String(item.id)===String(ingredientId);});
         if(!ingredient||amount<=0)return;
         const cost=calculateIngredientCost(ingredient,amount,unit);
-        if(cost<=0)return;
+        if(cost<=0){incompatibleUnit=true;return;}
         totalCost+=cost;
         ingredients.push({ingredientId:String(ingredient.id),ingredientName:ingredient.name,amount:amount,unit:unit,cost:cost});
     });
+    if (incompatibleUnit) {
+        showMessage("recipeMessage", "One or more ingredients use incompatible units. Check each ingredient's purchase unit and recipe unit before saving; weight, volume, and piece units cannot be mixed automatically.", "error");
+        return;
+    }
     if (ingredients.length === 0) {
 
         showMessage(
