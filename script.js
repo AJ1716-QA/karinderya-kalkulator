@@ -8765,99 +8765,87 @@ function calculateCombinedSales(date){
 })();
 
 
-/* OTHER ITEM SOLD — align price fields and convert purchase-pack pricing to
-   individual sale units (e.g. dozen -> 12 cans/bottles). */
+/* OTHER ITEM SOLD — selectable sale units and package conversion. */
 (function(){
-  function kkOtherUnitFactor(unit){
-    const u=String(unit||"").trim().toLowerCase();
-    const factors={dozen:12, "half-dozen":6, tray:30, "30 eggs":30, "liter":1000, "litre":1000, "l":1000, kg:1000, kilogram:1000};
-    return factors[u]||1;
-  }
-  window.kkOtherUnitFactor=kkOtherUnitFactor;
-
-  const oldAdd=window.addDailyOtherItemFromSelect;
-  window.addDailyOtherItemFromSelect=function(){
-    const select=document.getElementById("dailyOtherItemSelect");
-    const id=String(select&&select.value||"");
-    if(!id)return;
-    const date=(document.getElementById("menuDate")&&document.getElementById("menuDate").value)||todayString();
-    const master=otherItems.find(function(x){return String(x.id)===id;});
-    if(!master)return;
-    const record=stage4TodayRecord(date);
-    if(record.otherItems.some(function(x){return String(x.otherItemId)===id;})){
-      showMessage("menuMessage","This other item is already added for today.","error");
-      renderDailyOtherItemDropdown(date);
-      return;
-    }
-    const factor=kkOtherUnitFactor(master.unit);
-    record.otherItems.push({
-      id:createSalesRowId(),
-      otherItemId:id,
-      name:master.name,
-      unit:factor>1 ? (String(master.unit).toLowerCase()==="dozen" ? "piece" : (String(master.unit).toLowerCase()==="tray" ? "piece" : (["liter","litre","l"].includes(String(master.unit).toLowerCase()) ? "ml" : "g"))) : (master.unit||"piece"),
-      purchaseUnit:master.unit||"",
-      purchasePrice:numberValue(master.purchasePrice),
-      purchaseQuantity:numberValue(master.quantity),
-      unitFactor:factor,
-      unitCost:numberValue(master.unitCost)/factor,
-      sellingPrice:numberValue(master.sellingPrice)/factor,
-      quantitySold:0
-    });
-    saveAllData();
-    loadMenuOfDay();
-  };
-
-  const previousRender=window.renderDailyOtherItems;
-  window.renderDailyOtherItems=function(date){
-    const c=document.getElementById("dailyOtherItemsList");
-    if(!c)return;
-    const record=stage4TodayRecord(date||(document.getElementById("menuDate")&&document.getElementById("menuDate").value)||todayString());
-    c.innerHTML="";
-    if(!record.otherItems.length){c.innerHTML='<div class="menu-empty">No other items sold.</div>';return;}
-    record.otherItems.forEach(function(item){
-      const master=otherItems.find(function(x){return String(x.id)===String(item.otherItemId);});
-      const factor=numberValue(item.unitFactor)||kkOtherUnitFactor(item.purchaseUnit||(master&&master.unit)||item.unit);
-      const purchase=numberValue(item.purchasePrice!==undefined?item.purchasePrice:(master&&master.purchasePrice));
-      /* Convert older saved daily rows once; newer rows already store per-sale-unit values. */
-      if(!numberValue(item.unitFactor)&&factor>1){
-        item.unitCost=numberValue(item.unitCost!==undefined?item.unitCost:(master&&master.unitCost))/factor;
-        item.sellingPrice=numberValue(item.sellingPrice!==undefined?item.sellingPrice:(master&&master.sellingPrice))/factor;
-        item.unitFactor=factor;
-        item.purchaseUnit=item.purchaseUnit||(master&&master.unit)||"";
-        item.purchasePrice=purchase;
-        item.unit=(String(item.purchaseUnit).toLowerCase()==="dozen"||String(item.purchaseUnit).toLowerCase()==="tray")?"piece":(["liter","litre","l"].includes(String(item.purchaseUnit).toLowerCase())?"ml":"g");
-        saveAllData();
-      }
-      const unitCost=numberValue(item.unitCost!==undefined?item.unitCost:(master&&master.unitCost));
-      const selling=numberValue(item.sellingPrice);
-      const qty=Math.max(0,Math.floor(numberValue(item.quantitySold)));
-      const sales=selling*qty, cost=unitCost*qty, profit=sales-cost;
-      const card=document.createElement("div");
-      card.className="menu-item";
-      card.dataset.otherId=item.id;
-      card.innerHTML=
-        '<div class="menu-top"><div class="menu-name">'+escapeHtml(item.name||"Other Item")+'</div><div class="menu-actions"><button type="button" class="btn btn-danger btn-small" onclick="deleteDailyOtherItem(this)">Delete</button></div></div>'+
-        '<div class="daily-other-grid kk-auto-other-grid">'+
-          '<div class="form-group kk-other-sold-field"><label>Purchase Price</label><input type="text" value="'+money(purchase)+'" readonly aria-label="Purchase price"></div>'+
-          '<div class="form-group kk-other-sold-field"><label>Selling Price / '+escapeHtml(item.unit||"unit")+'</label><input class="other-sale-price" type="number" min="0" step="0.01" inputmode="decimal" value="'+selling+'" onchange="updateDailyOtherItem(this)" aria-label="Selling price per sold unit"></div>'+
-          '<div class="form-group kk-other-sold-field"><label>Unit</label><input type="text" value="'+escapeHtml(item.unit||"piece")+'" readonly aria-label="Selling unit"></div>'+
-          '<div class="kk-premium-cell"><span>Qty Sold</span><div class="kk-premium-sold-control"><button type="button" class="btn btn-secondary btn-small" onclick="changeDailyOtherSoldQuantity(this,-1)" aria-label="Decrease quantity sold">−</button><div class="kk-premium-sold-value"><strong>'+qty+'</strong></div><button type="button" class="btn btn-secondary btn-small" onclick="changeDailyOtherSoldQuantity(this,1)" aria-label="Increase quantity sold">+</button></div></div>'+
-          '<div class="kk-premium-cell"><span>Total Sales</span><strong class="other-sales-total">'+money(sales)+'</strong></div>'+
-          '<div class="kk-premium-cell"><span>Profit</span><strong class="other-profit-total '+(profit>0?"profit-positive":profit<0?"profit-negative":"")+'">'+money(profit)+'</strong></div>'+
-        '</div>';
-      c.appendChild(card);
-    });
-  };
-
-  const style=document.createElement("style");
-  style.id="kk-other-sold-alignment-pricing";
-  style.textContent=`
-    #dailyOtherItemsList .kk-auto-other-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;align-items:stretch;gap:8px}
-    #dailyOtherItemsList .kk-other-sold-field{min-width:0;margin:0;padding:9px 7px;border:1px solid var(--line);border-radius:11px;background:#fff;display:flex;flex-direction:column;justify-content:flex-start}
-    #dailyOtherItemsList .kk-other-sold-field label{display:flex;align-items:center;justify-content:center;text-align:center;min-height:30px;line-height:1.2;font-size:11px;font-weight:750;margin-bottom:6px}
-    #dailyOtherItemsList .kk-other-sold-field input{box-sizing:border-box;width:100%;min-width:0;min-height:40px;height:40px;text-align:center;padding:6px 4px;font-size:14px;margin:0}
-    #dailyOtherItemsList .kk-other-sold-field input[readonly]{background:#f4f7fb;color:var(--navy);opacity:1}
-    @media(max-width:768px){#dailyOtherItemsList .kk-auto-other-grid{gap:6px}#dailyOtherItemsList .kk-other-sold-field{padding:8px 4px}#dailyOtherItemsList .kk-other-sold-field label{font-size:10px;min-height:34px}#dailyOtherItemsList .kk-other-sold-field input{font-size:12px;padding:5px 2px}}
-  `;
-  if(!document.getElementById(style.id))document.head.appendChild(style);
+ const units=["piece","bottle","can","sachet","cup","pack","box","tray","dozen","kg","g","liter","ml"];
+ const esc=v=>typeof escapeHtml==="function"?escapeHtml(String(v??"")):String(v??"");
+ const n=v=>typeof numberValue==="function"?numberValue(v):(Number(v)||0);
+ const money=v=>typeof formatCurrency==="function"?formatCurrency(v):"₱"+n(v).toFixed(2);
+ const dateNow=d=>d||(document.getElementById("menuDate")&&document.getElementById("menuDate").value)||todayString();
+ const opts=selected=>units.map(u=>'<option value="'+u+'" '+(String(selected||"piece").toLowerCase()===u?"selected":"")+'>'+u.charAt(0).toUpperCase()+u.slice(1)+'</option>').join("");
+ const getItem=card=>stage4TodayRecord(dateNow()).otherItems.find(x=>String(x.id)===String(card.dataset.otherId));
+ function normalize(item,master){
+   if(item.packSellingPrice===undefined)item.packSellingPrice=n(item.sellingPrice)*(n(item.unitFactor)>0?n(item.unitFactor):1);
+   if(item.packUnitCost===undefined)item.packUnitCost=n(item.unitCost)*(n(item.unitFactor)>0?n(item.unitFactor):1);
+   if(item.unitFactor===undefined)item.unitFactor=1;
+   if(!item.unit)item.unit=(master&&master.unit)||"piece";
+   if(item.sellingPrice===undefined)item.sellingPrice=n(item.packSellingPrice)/Math.max(1,n(item.unitFactor));
+   if(item.unitCost===undefined)item.unitCost=n(item.packUnitCost)/Math.max(1,n(item.unitFactor));
+ }
+ function convert(item,unit,factor){
+   item.unit=unit||"piece";item.unitFactor=Math.max(1,Math.floor(n(factor)||1));
+   item.sellingPrice=n(item.packSellingPrice)/item.unitFactor;
+   item.unitCost=n(item.packUnitCost)/item.unitFactor;
+ }
+ window.addDailyOtherItemFromSelect=function(){
+   const select=document.getElementById("dailyOtherItemSelect"),id=String(select&&select.value||"");if(!id)return;
+   const date=dateNow(),master=otherItems.find(x=>String(x.id)===id);if(!master)return;
+   const record=stage4TodayRecord(date);
+   if(record.otherItems.some(x=>String(x.otherItemId)===id)){showMessage("menuMessage","This other item is already added for today.","error");renderDailyOtherItemDropdown(date);return;}
+   record.otherItems.push({id:createSalesRowId(),otherItemId:id,name:master.name,unit:master.unit||"piece",purchaseUnit:master.unit||"",purchasePrice:n(master.purchasePrice),purchaseQuantity:n(master.quantity),packUnitCost:n(master.unitCost),packSellingPrice:n(master.sellingPrice),unitFactor:1,unitCost:n(master.unitCost),sellingPrice:n(master.sellingPrice),quantitySold:0});
+   saveAllData();loadMenuOfDay();
+ };
+ window.kkChangeOtherSaleUnit=function(select){
+   const card=select.closest(".menu-item");if(!card)return;const item=getItem(card);if(!item)return;
+   const master=otherItems.find(x=>String(x.id)===String(item.otherItemId));normalize(item,master);
+   convert(item,select.value,card.querySelector(".other-units-per-pack").value);
+   saveAllData();window.renderDailyOtherItems(dateNow());window.calculateCombinedSales(dateNow());
+ };
+ window.kkChangeOtherUnitsPerPack=function(input){
+   const card=input.closest(".menu-item");if(!card)return;const item=getItem(card);if(!item)return;
+   const master=otherItems.find(x=>String(x.id)===String(item.otherItemId));normalize(item,master);
+   const factor=Math.max(1,Math.floor(n(input.value)||1));input.value=String(factor);
+   convert(item,card.querySelector(".other-sale-unit").value,factor);
+   saveAllData();window.renderDailyOtherItems(dateNow());window.calculateCombinedSales(dateNow());
+ };
+ window.renderDailyOtherItems=function(date){
+   const c=document.getElementById("dailyOtherItemsList");if(!c)return;
+   const d=dateNow(date),record=stage4TodayRecord(d);c.innerHTML="";
+   if(!record.otherItems.length){c.innerHTML='<div class="menu-empty">No other items sold.</div>';return;}
+   record.otherItems.forEach(item=>{
+     const master=otherItems.find(x=>String(x.id)===String(item.otherItemId));normalize(item,master);
+     const purchase=n(item.purchasePrice!==undefined?item.purchasePrice:(master&&master.purchasePrice));
+     const qty=Math.max(0,Math.floor(n(item.quantitySold))),sales=n(item.sellingPrice)*qty,cost=n(item.unitCost)*qty,profit=sales-cost;
+     const card=document.createElement("div");card.className="menu-item";card.dataset.otherId=item.id;
+     card.innerHTML=
+      '<div class="menu-top"><div class="menu-name">'+esc(item.name||"Other Item")+'</div><div class="menu-actions"><button type="button" class="btn btn-danger btn-small" onclick="deleteDailyOtherItem(this)">Delete</button></div></div>'+
+      '<div class="daily-other-grid kk-auto-other-grid">'+
+      '<div class="form-group kk-other-sold-field"><label>Purchase Price / Pack</label><input type="text" value="'+esc(money(purchase))+'" readonly></div>'+
+      '<div class="form-group kk-other-sold-field"><label>Selling Price / '+esc(item.unit||"piece")+'</label><input class="other-sale-price" type="number" min="0" step="0.01" inputmode="decimal" value="'+n(item.sellingPrice).toFixed(2)+'" onchange="updateDailyOtherItem(this)"></div>'+
+      '<div class="form-group kk-other-sold-field"><label>Unit</label><select class="other-sale-unit" onchange="kkChangeOtherSaleUnit(this)">'+opts(item.unit)+'</select></div>'+
+      '<div class="form-group kk-other-sold-field"><label>Units per Pack</label><input class="other-units-per-pack" type="number" min="1" step="1" inputmode="numeric" value="'+Math.max(1,n(item.unitFactor)||1)+'" onchange="kkChangeOtherUnitsPerPack(this)"></div>'+
+      '<div class="kk-premium-cell"><span>Qty Sold</span><div class="kk-premium-sold-control"><button type="button" class="btn btn-secondary btn-small" onclick="changeDailyOtherSoldQuantity(this,-1)" aria-label="Decrease quantity sold">−</button><div class="kk-premium-sold-value"><strong>'+qty+'</strong></div><button type="button" class="btn btn-secondary btn-small" onclick="changeDailyOtherSoldQuantity(this,1)" aria-label="Increase quantity sold">+</button></div></div>'+
+      '<div class="kk-premium-cell"><span>Total Sales</span><strong class="other-sales-total">'+money(sales)+'</strong></div>'+
+      '<div class="kk-premium-cell"><span>Total Cost</span><strong class="other-cost-total">'+money(cost)+'</strong></div>'+
+      '<div class="kk-premium-cell"><span>Profit</span><strong class="other-profit-total '+(profit>0?"profit-positive":profit<0?"profit-negative":"")+'">'+money(profit)+'</strong></div></div>';
+     c.appendChild(card);
+   });
+   saveAllData();
+ };
+ window.updateDailyOtherItem=function(input){
+   const card=input.closest(".menu-item");if(!card)return;const item=getItem(card);if(!item)return;
+   item.sellingPrice=Math.max(0,n(input.value));saveAllData();
+   const qty=Math.max(0,Math.floor(n(item.quantitySold))),sales=n(item.sellingPrice)*qty,cost=n(item.unitCost)*qty,profit=sales-cost;
+   const set=(sel,val,cls)=>{const el=card.querySelector(sel);if(el){el.textContent=val;el.classList.remove("profit-positive","profit-negative");if(cls)el.classList.add(cls);}};
+   set(".other-sales-total",money(sales));set(".other-cost-total",money(cost));set(".other-profit-total",money(profit),profit>0?"profit-positive":profit<0?"profit-negative":"");
+   window.calculateCombinedSales(dateNow());
+ };
+ const style=document.createElement("style");style.id="kk-other-sold-selectable-units";
+ style.textContent='#dailyOtherItemsList .kk-auto-other-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;align-items:stretch;gap:8px}'+
+ '#dailyOtherItemsList .kk-other-sold-field{min-width:0;margin:0;padding:9px 7px;border:1px solid var(--line);border-radius:11px;background:#fff;display:flex;flex-direction:column;justify-content:flex-start}'+
+ '#dailyOtherItemsList .kk-other-sold-field label{display:flex;align-items:center;justify-content:center;text-align:center;min-height:30px;line-height:1.2;font-size:11px;font-weight:750;margin-bottom:6px}'+
+ '#dailyOtherItemsList .kk-other-sold-field input,#dailyOtherItemsList .kk-other-sold-field select{box-sizing:border-box;width:100%;min-width:0;min-height:40px;height:40px;text-align:center;padding:6px 4px;font-size:14px;margin:0}'+
+ '#dailyOtherItemsList .kk-other-sold-field input[readonly]{background:#f4f7fb;color:var(--navy);opacity:1}'+
+ '@media(max-width:768px){#dailyOtherItemsList .kk-auto-other-grid{gap:6px}#dailyOtherItemsList .kk-other-sold-field{padding:8px 4px}#dailyOtherItemsList .kk-other-sold-field label{font-size:10px;min-height:34px}#dailyOtherItemsList .kk-other-sold-field input,#dailyOtherItemsList .kk-other-sold-field select{font-size:12px;padding:5px 2px}}';
+ if(!document.getElementById(style.id))document.head.appendChild(style);
 })();
