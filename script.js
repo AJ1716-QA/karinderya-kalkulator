@@ -4353,9 +4353,28 @@ async function updateAppAccess(forceCheck) {
         if (appContainer) appContainer.style.display = "block";
         if (currentUserId !== userId || !userDataLoaded || forceCheck) {
             loadUserScopedData(userId);
-            await renderIngredientList();
-            await renderOtherItemList();
             updateDashboard();
+
+            /*
+             * Do not hold the login/access flow open while cloud master lists
+             * load. These requests can stall independently of authentication.
+             * Load them in the background and report failures without trapping
+             * the user on the login screen.
+             */
+            Promise.all([
+                kkWithTimeout(
+                    renderIngredientList(),
+                    10000,
+                    "Ingredients are taking too long to load. You can continue and retry later."
+                ),
+                kkWithTimeout(
+                    renderOtherItemList(),
+                    10000,
+                    "Other Items are taking too long to load. You can continue and retry later."
+                )
+            ]).catch(function(loadError) {
+                console.error("Background master-list loading failed:", loadError);
+            });
         }
     } catch (err) {
         console.error("Unable to verify paid access:", err);
