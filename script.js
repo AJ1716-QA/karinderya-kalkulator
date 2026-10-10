@@ -9143,3 +9143,25 @@ window.renderDailyOtherItems=function(date){
       '@media(max-width:380px){#dailyOtherItemsList .kk-other-sold-3x2-grid{gap:5px}#dailyOtherItemsList .kk-other-sold-tile{padding:8px 3px;min-height:72px}#dailyOtherItemsList .kk-other-sold-tile>span{font-size:10px}#dailyOtherItemsList .kk-other-sold-tile>strong{font-size:12px}#dailyOtherItemsList .kk-other-qty-control{gap:3px}#dailyOtherItemsList .kk-other-qty-control .btn{min-width:24px;padding:3px 5px}}';
     document.head.appendChild(style);
 })();
+
+
+/* FINAL UX CLEANUP — DELETE WITHOUT BROWSER CONFIRM */
+window.deleteDailyOtherItem=function(button){
+    const card=button.closest('.daily-other-simple-card')||button.closest('.menu-item');
+    if(!card)return;
+    const date=(document.getElementById('menuDate')&&document.getElementById('menuDate').value)||todayString();
+    const record=stage4TodayRecord(date);
+    record.otherItems=record.otherItems.filter(function(x){return String(x.id)!==String(card.dataset.otherId);});
+    saveAllData();
+    renderDailyOtherItemDropdown(date);
+    window.renderDailyOtherItems(date);
+    calculateCombinedSales(date);
+};
+/* Override renderer to remove the "Action" label above Delete. */
+const kkRenderOtherItemsWithoutActionLabel=window.renderDailyOtherItems;
+window.renderDailyOtherItems=function(date){
+    kkRenderOtherItemsWithoutActionLabel(date);
+    document.querySelectorAll('#dailyOtherItemsList .kk-other-delete-tile>span').forEach(function(label){
+        label.remove();
+    });
+};
