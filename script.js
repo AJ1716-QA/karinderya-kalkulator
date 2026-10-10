@@ -3683,7 +3683,8 @@ function renderPerformanceDashboard() {
   var graph=document.getElementById("performanceGraph"),table=document.getElementById("performanceTable");
   var ps=document.getElementById("performancePeriod"),wrap=document.getElementById("performanceMetrics");
   if(!graph||!table||!ps||!wrap)return;
-  var selected=Array.from(wrap.querySelectorAll('input[type="checkbox"]:checked')).map(function(x){return x.value;});
+  var selector=document.getElementById("performanceMetricsSelect");
+  var selected=selector&&selector.value?selector.value.split(",").filter(Boolean):["sales","capex","opex","profit"];
   if(!selected.length){graph.innerHTML='<div class="menu-empty">Select at least one metric to compare.</div>';table.innerHTML="";return;}
   var sales=new Map(),profits=new Map();
   (Array.isArray(dailySalesRecords)?dailySalesRecords:[]).forEach(function(r){if(r&&r.date)sales.set(String(r.date),r);});
@@ -3704,7 +3705,7 @@ function renderPerformanceDashboard() {
   svg+='</svg><div style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 12px">'+selected.map(function(m){return '<span style="font-size:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+colors[m]+';margin-right:4px"></span>'+labels[m]+'</span>';}).join("")+'</div>';graph.innerHTML=svg;
   var html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:8px 5px;border-bottom:1px solid #dce5ec">'+(ps.value==="daily"?"Date":"Month")+'</th>'+selected.map(function(m){return '<th style="text-align:right;padding:8px 5px;border-bottom:1px solid #dce5ec">'+labels[m]+'</th>';}).join("")+'</tr></thead><tbody>';
   view.slice().reverse().forEach(function(r){html+='<tr><td style="padding:8px 5px;border-bottom:1px solid #edf1f4">'+r.full+'</td>'+r.values.map(function(v){return '<td style="text-align:right;padding:8px 5px;border-bottom:1px solid #edf1f4;font-weight:700">'+money(v)+'</td>';}).join("")+'</tr>';});table.innerHTML=html+'</tbody></table></div>';
-  if(!ps.dataset.bound){ps.addEventListener("change",renderPerformanceDashboard);wrap.addEventListener("change",renderPerformanceDashboard);ps.dataset.bound="1";}
+  if(!ps.dataset.bound){ps.addEventListener("change",renderPerformanceDashboard);if(selector)selector.addEventListener("change",renderPerformanceDashboard);ps.dataset.bound="1";}
 }
 function renderMonthlyRecords() {
 
