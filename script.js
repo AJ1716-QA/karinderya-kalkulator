@@ -9275,7 +9275,7 @@ window.deleteDailyOtherItem=function(button){
       var divisor=el(cfg.div);
       if(!divisor){
         divisor=document.createElement('input');divisor.id=cfg.div;divisor.type='number';divisor.min='1';divisor.step='1';divisor.inputMode='numeric';
-        var saved=window.profitRecords&&window.profitRecords.find(function(r){return r.date===(el('kkdpProfitDate')||{}).value;});
+        var saved=profitRecords&&profitRecords.find(function(r){return r.date===(el('kkdpProfitDate')||{}).value;});
         divisor.value=(saved&&saved.opex&&saved.opex[cfg.div])||cfg.defaultDays;
       }
       divisorWrap.appendChild(divisor);dailyWrap.appendChild(daily);
@@ -9335,7 +9335,7 @@ window.deleteDailyOtherItem=function(button){
     if(kkBaseSaveProfit)kkBaseSaveProfit();
     if(!result)return;
     var date=(el('kkdpProfitDate')&&el('kkdpProfitDate').value)||'';
-    var records=window.profitRecords;
+    var records=profitRecords;
     if(!Array.isArray(records))return;
     var rec=records.find(function(r){return String(r.date)===String(date);});if(!rec)return;
     rec.totalExpenses=result.total;rec.netProfit=result.profit;
