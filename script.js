@@ -1,22 +1,3 @@
-/* Run initialization correctly even when this script is loaded dynamically after DOMContentLoaded. */
-function kkOnReady(callback) {
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", callback, { once: true });
-    } else {
-        // The app script is inserted dynamically after its CDN dependency.
-        // Defer startup until this entire file has finished evaluating.
-        setTimeout(callback, 0);
-    }
-}
-
-function kkOnLoad(callback) {
-    if (document.readyState === "complete") {
-        setTimeout(callback, 0);
-    } else {
-        window.addEventListener("load", callback, { once: true });
-    }
-}
-
 /* ================================================================
    COMPATIBILITY FIX — AUTH SCREEN VISIBILITY
    The provided index.html declares #authScreen { display:grid!important }.
@@ -64,19 +45,6 @@ const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
-
-/* Prevent the login/access UI from spinning forever when Supabase is unreachable. */
-function kkWithTimeout(promise, milliseconds, message) {
-    let timeoutId;
-    const timeout = new Promise(function(resolve, reject) {
-        timeoutId = setTimeout(function() {
-            reject(new Error(message || "The request timed out. Please check your connection and try again."));
-        }, milliseconds);
-    });
-    return Promise.race([promise, timeout]).finally(function() {
-        clearTimeout(timeoutId);
-    });
-}
 /* =========================================================
    KARINDERYA KALKULATOR
    MOBILE-FIRST BUSINESS CALCULATOR
@@ -3955,7 +3923,8 @@ async function initializeUserData() {
 }
 
 
-kkOnReady(
+document.addEventListener(
+    "DOMContentLoaded",
     async function() {
 
         populateMasterIngredientSelect();
@@ -3996,23 +3965,8 @@ const menuDate =
             targetInput.value = targetFoodCost;
         }
 
-        // Show the login screen immediately. Access verification runs in the
-        // background so a slow Supabase request cannot block initial startup.
-        const authScreen = document.getElementById("authScreen");
-        const appContainer = document.getElementById("appContent");
-        if (authScreen) authScreen.style.display = "block";
-        if (appContainer) appContainer.style.display = "none";
-
-        Promise.resolve().then(function() {
-            return updateAppAccess();
-        }).catch(function(error) {
-            console.error("Startup access check failed:", error);
-            const message = document.getElementById("authMessage");
-            if (message) {
-                message.textContent = "Unable to check your session right now. Please refresh and try again.";
-                message.className = "message error";
-            }
-        });
+        // Verify lifetime access before loading any account data.
+        await updateAppAccess();
     }
 );
 
@@ -4023,7 +3977,7 @@ const menuDate =
    Authentication code below remains unchanged.
 ========================================================= */
 
-kkOnLoad(function() {
+window.addEventListener("load", function() {
     const addMenuButton = document.getElementById("addMenuItemBtn");
     if (addMenuButton) {
         addMenuButton.type = "button";
@@ -4052,7 +4006,7 @@ kkOnLoad(function() {
 
 if ("serviceWorker" in navigator) {
 
-    kkOnLoad(function() {
+    window.addEventListener("load", function() {
 
         navigator.serviceWorker
             .register("./service-worker.js")
@@ -4157,14 +4111,10 @@ document.getElementById("loginBtn").addEventListener("click", async function () 
     message.className = "message";
 
     try {
-        const { error } = await kkWithTimeout(
-            supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: password
-            }),
-            15000,
-            "Login request timed out. Please check your internet connection and try again."
-        );
+        const { error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
 
         if (error) {
             message.textContent = error.message;
@@ -4250,15 +4200,11 @@ document.getElementById("logoutBtn").addEventListener("click", async function ()
 
 async function checkLifetimeEntitlement(userId) {
     if (!userId) return false;
-    const { data, error } = await kkWithTimeout(
-        supabaseClient
-            .from("user_entitlements")
-            .select("status, access_type")
-            .eq("user_id", userId)
-            .maybeSingle(),
-        12000,
-        "Lifetime access check timed out. Please check your connection and try again."
-    );
+    const { data, error } = await supabaseClient
+        .from("user_entitlements")
+        .select("status, access_type")
+        .eq("user_id", userId)
+        .maybeSingle();
     if (error) {
         console.error("Lifetime access check failed:", error.message);
         return false; // fail closed
@@ -4353,11 +4299,7 @@ async function updateAppAccess(forceCheck) {
         const authScreen = document.getElementById("authScreen");
         const appContainer = document.getElementById("appContent");
         const lock = ensureLifetimeLockScreen();
-        const { data, error } = await kkWithTimeout(
-            supabaseClient.auth.getSession(),
-            12000,
-            "Session check timed out. Please check your connection and try again."
-        );
+        const { data, error } = await supabaseClient.auth.getSession();
         const session = !error && data ? data.session : null;
 
         if (!session) {
@@ -4386,28 +4328,9 @@ async function updateAppAccess(forceCheck) {
         if (appContainer) appContainer.style.display = "block";
         if (currentUserId !== userId || !userDataLoaded || forceCheck) {
             loadUserScopedData(userId);
+            await renderIngredientList();
+            await renderOtherItemList();
             updateDashboard();
-
-            /*
-             * Do not hold the login/access flow open while cloud master lists
-             * load. These requests can stall independently of authentication.
-             * Load them in the background and report failures without trapping
-             * the user on the login screen.
-             */
-            Promise.all([
-                kkWithTimeout(
-                    renderIngredientList(),
-                    10000,
-                    "Ingredients are taking too long to load. You can continue and retry later."
-                ),
-                kkWithTimeout(
-                    renderOtherItemList(),
-                    10000,
-                    "Other Items are taking too long to load. You can continue and retry later."
-                )
-            ]).catch(function(loadError) {
-                console.error("Background master-list loading failed:", loadError);
-            });
         }
     } catch (err) {
         console.error("Unable to verify paid access:", err);
@@ -5546,7 +5469,7 @@ showScreen = function(screenId) {
 };
 
 /* Make sure the replacement controls are ready when the page is loaded. */
-kkOnReady( function() {
+document.addEventListener("DOMContentLoaded", function() {
     if (document.getElementById("otherItemScreen")) {
         setupOtherItemForm();
     }
@@ -6404,7 +6327,7 @@ kkOnReady( function() {
         };
 
         if(document.readyState === "loading"){
-            kkOnReady( refresh, {once:true});
+            document.addEventListener("DOMContentLoaded", refresh, {once:true});
         }else{
             setTimeout(refresh, 0);
         }
@@ -7378,7 +7301,7 @@ kkOnReady( function() {
     function refreshPremiumProfit(){
         if(document.getElementById('profitScreen'))window.loadProfitCalculator();
     }
-    if(document.readyState==='loading')kkOnReady(refreshPremiumProfit,{once:true});
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refreshPremiumProfit,{once:true});
     else setTimeout(refreshPremiumProfit,0);
 })();
 
@@ -7655,7 +7578,7 @@ kkOnReady( function() {
     };
 
     function refresh(){addStyles();if(document.getElementById('profitScreen'))setTimeout(()=>window.loadProfitCalculator(),0);}
-    if(document.readyState==='loading')kkOnReady(refresh,{once:true});else refresh();
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
 })();
 
 /* ================================================================
@@ -8097,7 +8020,7 @@ kkOnReady( function() {
         addStyles();
         if(document.getElementById('profitScreen'))setTimeout(function(){window.loadProfitCalculator();},0);
     }
-    if(document.readyState==='loading')kkOnReady(refresh,{once:true});else refresh();
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
 })();
 
 
@@ -8335,7 +8258,7 @@ function styles(){
   window.loadProfitForDate = window.loadProfitCalculator;
 
   function init(){if(document.getElementById('profitScreen'))setTimeout(function(){window.loadProfitCalculator();},0);}
-  if(document.readyState==='loading')kkOnReady(init,{once:true});else init();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 
 
@@ -8534,7 +8457,7 @@ function styles(){
   window.loadProfitCalculator=function(){var current=document.getElementById('kkdpProfitDate');var legacy=document.getElementById('profitDate');build((current&&current.value)||(legacy&&legacy.value)||D());};
   window.loadProfitForDate=window.loadProfitCalculator;
   function init(){if(document.getElementById('profitScreen'))setTimeout(function(){window.loadProfitCalculator();},0);}
-  if(document.readyState==='loading')kkOnReady(init,{once:true});else init();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 
 /* FINAL NAVIGATION FIX: always render the agreed redesigned Profit Calculator
@@ -9430,7 +9353,7 @@ window.deleteDailyOtherItem=function(button){
     setupDailyExpenseLayout();
   };
   window.loadProfitForDate=window.loadProfitCalculator;
-  if(document.readyState==='loading')kkOnReady(function(){if(el('profitScreen')&&el('profitScreen').offsetParent!==null)setupDailyExpenseLayout();});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){if(el('profitScreen')&&el('profitScreen').offsetParent!==null)setupDailyExpenseLayout();});
 })(); 
 
 
@@ -9482,7 +9405,7 @@ window.deleteDailyOtherItem=function(button){
     window.loadProfitCalculator=wrapped;
     window.loadProfitForDate=wrapped;
   }
-  if(document.readyState==='loading')kkOnReady(applyPremiumPolish);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',applyPremiumPolish);
   else applyPremiumPolish();
   document.addEventListener('input',function(e){
     if(e.target&&e.target.classList&&e.target.classList.contains('kkdp-emp-rate'))applyPremiumPolish();
@@ -9525,7 +9448,7 @@ window.deleteDailyOtherItem=function(button){
  }
  var base=window.loadProfitCalculator;
  if(typeof base==='function'&&!base.__kkDailyExpenseAlignmentV2){var wrapped=function(){var result=base.apply(this,arguments);apply();return result;};wrapped.__kkDailyExpenseAlignmentV2=true;window.loadProfitCalculator=wrapped;window.loadProfitForDate=wrapped;}
- if(document.readyState==='loading')kkOnReady(apply);else apply();
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
 })();
 
 
@@ -9582,70 +9505,11 @@ window.deleteDailyOtherItem=function(button){
     window.loadProfitCalculator=wrapped;
     window.loadProfitForDate=wrapped;
   }
-  if(document.readyState==='loading')kkOnReady(apply);else apply();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
   document.addEventListener('input',function(e){if(e.target&&e.target.closest&&e.target.closest('#profitScreen'))cleanDailyLabels();});
   if(typeof MutationObserver!=='undefined'){
     var observer=new MutationObserver(function(){cleanDailyLabels();});
     var watch=function(){var root=document.getElementById('profitScreen');if(root)observer.observe(root,{childList:true,subtree:true,characterData:true});};
-    if(document.readyState==='loading')kkOnReady(watch);else watch();
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch);else watch();
   }
-})();
-
-
-/* EMPLOYEE ROW WIDTH + FINANCIAL EMPHASIS + TRANSPO LABEL */
-(function(){
-  function apply(){
-    var root=document.getElementById('profitScreen');
-    if(!root)return;
-    var style=document.getElementById('kkEmployeeFinancialEmphasisFix')||document.createElement('style');
-    style.id='kkEmployeeFinancialEmphasisFix';
-    style.textContent=
-      /* Financial summary: 2 x 2, large and prominent values */
-      '#profitScreen .kkdp-final-summary{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}'+
-      '#profitScreen .kkdp-final-summary>.kkdp-card{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;min-width:0!important;min-height:116px!important;box-sizing:border-box!important;padding:15px 8px!important;text-align:center!important;border:1px solid #c9d8e9!important;border-radius:15px!important;background:linear-gradient(155deg,#fff 0%,#edf4fc 100%)!important;box-shadow:0 4px 13px rgba(15,35,65,.09)!important;gap:10px!important}'+
-      '#profitScreen .kkdp-final-summary .kkdp-label{display:block!important;width:100%!important;text-align:center!important;font-size:14px!important;font-weight:800!important;line-height:1.3!important;color:#334d6b!important;white-space:normal!important;overflow-wrap:anywhere!important}'+
-      '#profitScreen .kkdp-final-summary .kkdp-value{display:block!important;width:100%!important;text-align:center!important;font-size:clamp(22px,5.5vw,30px)!important;font-weight:900!important;line-height:1.15!important;letter-spacing:-.3px!important;color:#0c2b50!important;font-variant-numeric:tabular-nums!important;overflow-wrap:anywhere!important;margin:0!important}'+
-      '#profitScreen #kkdpSummaryProfitCard{border:2px solid #9ebce0!important;background:linear-gradient(155deg,#f8fbff,#e5f0ff)!important}'+
-      '#profitScreen #kkdpSummaryProfitCard.kkdp-profit-positive .kkdp-value{color:#087443!important}'+
-      '#profitScreen #kkdpSummaryProfitCard.kkdp-profit-negative .kkdp-value{color:#b42335!important}'+
-      /* Employee area must not use native table sizing for the input rows */
-      '#profitScreen .kkdp-employees{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow:visible!important}'+
-      '#profitScreen .kkdp-employee-header{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;flex-wrap:wrap!important;width:100%!important;gap:10px!important;margin-bottom:12px!important}'+
-      '#profitScreen .kkdp-employee-title{flex:1 1 130px!important;min-width:0!important;font-size:15px!important;font-weight:850!important;line-height:1.3!important}'+
-      '#profitScreen #kkdpAddEmployee{flex:0 0 auto!important;width:auto!important;max-width:100%!important;white-space:nowrap!important}'+
-      '#profitScreen .kkdp-employee-table{display:block!important;width:100%!important;max-width:100%!important;table-layout:fixed!important;border:0!important;border-collapse:collapse!important;overflow:visible!important}'+
-      '#profitScreen .kkdp-employee-table thead,#profitScreen .kkdp-employee-table tbody{display:block!important;width:100%!important;max-width:100%!important}'+
-      '#profitScreen .kkdp-employee-table thead tr,#profitScreen #kkdpEmployeeBody tr[data-id]{display:grid!important;grid-template-columns:minmax(0,2fr) minmax(82px,1fr) 36px!important;column-gap:8px!important;align-items:center!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;margin:0!important}'+
-      '#profitScreen .kkdp-employee-table thead tr{padding:0 0 5px!important}'+
-      '#profitScreen .kkdp-employee-table thead th{display:block!important;min-width:0!important;width:auto!important;box-sizing:border-box!important;padding:5px 3px!important;text-align:left!important;font-size:12px!important;font-weight:850!important;line-height:1.25!important;white-space:normal!important;color:#52647a!important}'+
-      '#profitScreen .kkdp-employee-table thead th:nth-child(3){display:none!important}'+
-      '#profitScreen #kkdpEmployeeBody tr[data-id]{padding:7px 0!important;border-bottom:1px solid #e2e8f0!important}'+
-      '#profitScreen #kkdpEmployeeBody tr[data-id]>td{display:block!important;width:auto!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;margin:0!important;padding:0!important;border:0!important;overflow:visible!important}'+
-      '#profitScreen #kkdpEmployeeBody tr[data-id]>td:nth-child(3){display:none!important}'+
-      '#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-name,#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-rate{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;margin:0!important;padding:11px 9px!important;border:1px solid #c6d5e6!important;border-radius:9px!important;background:#fff!important;color:#142f4d!important;font-size:14px!important;font-weight:650!important;line-height:1.25!important}'+
-      '#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-name{text-align:left!important}'+
-      '#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-rate{text-align:right!important;font-variant-numeric:tabular-nums!important}'+
-      '#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-delete-employee{display:flex!important;align-items:center!important;justify-content:center!important;width:36px!important;height:36px!important;min-width:36px!important;max-width:36px!important;box-sizing:border-box!important;margin:0!important;padding:0!important;border-radius:9px!important;font-size:0!important;line-height:1!important;background:#fff1f2!important;color:#be123c!important;border:1px solid #fecdd3!important}'+
-      '#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-delete-employee:before{content:"×";font-size:23px!important;line-height:1!important;font-weight:500!important}'+
-      '@media(max-width:430px){#profitScreen .kkdp-final-summary{gap:7px!important}#profitScreen .kkdp-final-summary>.kkdp-card{min-height:105px!important;padding:12px 5px!important;gap:8px!important}#profitScreen .kkdp-final-summary .kkdp-label{font-size:12px!important}#profitScreen .kkdp-final-summary .kkdp-value{font-size:clamp(21px,6vw,26px)!important}#profitScreen .kkdp-employee-header{gap:8px!important}#profitScreen .kkdp-employee-title{font-size:14px!important}#profitScreen #kkdpAddEmployee{font-size:12px!important;padding:8px 9px!important}#profitScreen .kkdp-employee-table thead tr,#profitScreen #kkdpEmployeeBody tr[data-id]{grid-template-columns:minmax(0,1fr) minmax(72px,.55fr) 32px!important;column-gap:5px!important}#profitScreen .kkdp-employee-table thead th{font-size:11px!important;padding-left:2px!important}#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-name,#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-emp-rate{font-size:12px!important;padding:10px 5px!important}#profitScreen #kkdpEmployeeBody tr[data-id] .kkdp-delete-employee{width:32px!important;height:32px!important;min-width:32px!important;max-width:32px!important}}';
-    if(!style.parentNode)document.head.appendChild(style);
-    /* Use the shorter label only for display; saved data keys remain unchanged. */
-    var transport=document.querySelector('#profitScreen #kkdpTransportation');
-    var transportCard=transport&&transport.closest('.kkdp-opex-card');
-    var transportLabel=transportCard&&transportCard.querySelector('.kkdp-opex-name');
-    if(transportLabel)transportLabel.textContent='Transpo';
-    root.querySelectorAll('#kkdpEmployeeBody tr[data-id]').forEach(function(row){
-      var present=row.querySelector('.kkdp-emp-present');if(present)present.checked=true;
-      var del=row.querySelector('.kkdp-delete-employee');if(del){del.setAttribute('aria-label','Delete employee');del.setAttribute('title','Delete employee');}
-    });
-  }
-  var base=window.loadProfitCalculator;
-  if(typeof base==='function'&&!base.__kkEmployeeFinancialEmphasisFix){
-    var wrapped=function(){var result=base.apply(this,arguments);apply();return result;};
-    wrapped.__kkEmployeeFinancialEmphasisFix=true;
-    window.loadProfitCalculator=wrapped;
-    window.loadProfitForDate=wrapped;
-  }
-  if(document.readyState==='loading')kkOnReady(apply);else apply();
-  document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('#kkdpAddEmployee'))setTimeout(apply,0);});
 })();
