@@ -116,6 +116,15 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 
+/* Ingredient form: name on its own row, then price/quantity/unit in one row. */
+.ingredient-entry-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ingredient-entry-grid .ingredient-name-field{grid-column:1/-1}
+.ingredient-entry-grid .form-group{min-width:0}
+.ingredient-entry-grid input,.ingredient-entry-grid select{width:100%;min-width:0;box-sizing:border-box}
+.ingredient-entry-grid label{font-size:13px;line-height:1.25}
+.ingredient-save-row{display:flex;width:100%}.ingredient-save-row .btn{width:100%;flex:1}
+@media(max-width:360px){.ingredient-entry-grid{gap:7px}.ingredient-entry-grid label{font-size:11px}.ingredient-entry-grid input,.ingredient-entry-grid select{padding-left:7px;padding-right:7px;font-size:13px}}
+
 </style>
 
 
@@ -203,13 +212,13 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 <div class="section-title">Ingredient Prices</div>
 <div class="card">
 <div class="section-title" style="font-size:17px">Ingredients</div>
-<div class="form-grid">
-<div class="form-group"><label>Ingredient</label><select id="ingredientName" onchange="handleCustomIngredient()"><option value="">Select ingredient...</option></select></div>
-<div class="form-group"><label>Purchase Price</label><input id="ingredientPurchasePrice" inputmode="decimal" min="0" step="0.01" type="number"/></div>
-<div class="form-group"><label>Quantity</label><input id="ingredientQuantity" inputmode="decimal" min="0" step="0.001" type="number"/></div>
-<div class="form-group"><label>Unit</label><select id="ingredientUnit"><option value="kg">kg</option><option value="g">g</option><option value="liter">liter</option><option value="ml">ml</option><option value="piece">piece</option><option value="pack">pack</option><option value="bottle">bottle</option><option value="can">can</option></select></div>
+<div class="form-grid ingredient-entry-grid">
+<div class="form-group ingredient-name-field"><label>Ingredient</label><select id="ingredientName" onchange="handleCustomIngredient()"><option value="">Select ingredient...</option></select></div>
+<div class="form-group ingredient-price-field"><label>Purchase Price</label><input id="ingredientPurchasePrice" inputmode="decimal" min="0" step="0.01" type="number"/></div>
+<div class="form-group ingredient-quantity-field"><label>Quantity</label><input id="ingredientQuantity" inputmode="decimal" min="0" step="0.001" type="number"/></div>
+<div class="form-group ingredient-unit-field"><label>Unit</label><select id="ingredientUnit"><option value="kg">kg</option><option value="g">g</option><option value="liter">liter</option><option value="ml">ml</option><option value="piece">piece</option><option value="pack">pack</option><option value="bottle">bottle</option><option value="can">can</option></select></div>
 </div>
-<div id="customIngredientGroup" style="display:none"><div class="form-group"><label>Custom Ingredient Name</label><input id="customIngredientName" type="text"/></div></div><div class="button-row"><button class="btn btn-primary" onclick="saveIngredient()" type="button">Save Ingredient</button></div><div class="message" id="ingredientMessage"></div>
+<div id="customIngredientGroup" style="display:none"><div class="form-group"><label>Custom Ingredient Name</label><input id="customIngredientName" type="text"/></div></div><div class="button-row ingredient-save-row"><button class="btn btn-primary" onclick="saveIngredient()" type="button">Save Ingredient</button></div><div class="message" id="ingredientMessage"></div>
 </div>
 <div class="card"><div class="section-title" style="font-size:17px">Saved Ingredients</div><div id="ingredientList"></div></div>
 </section>
