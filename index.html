@@ -100,6 +100,20 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
  .kkdp-wrap .kkdp-opex-grid{grid-template-columns:1fr}
  .kkdp-wrap .kkdp-buttons{grid-template-columns:1fr}
 }
+/* Dashboard layout requirement: six quick-action cards remain 2×3, and both performance summaries remain 3×1 on mobile, including narrow phones. */
+.dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:360px){
+  .dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .dashboard-card{min-height:112px;padding:11px}
+  .dashboard-card .icon{width:34px;height:34px;margin-bottom:8px;font-size:18px}
+  .dashboard-card strong{font-size:13px;line-height:1.25}
+  .dashboard-card span{font-size:11px;line-height:1.3}
+  .summary-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+  .summary-box{padding:10px 3px}
+  .summary-box span{font-size:10px}
+  .summary-box strong{font-size:12px;line-height:1.2}
+}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 
 </style>
