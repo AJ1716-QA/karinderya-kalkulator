@@ -8818,7 +8818,17 @@ function calculateCombinedSales(date){
       const master=otherItems.find(function(x){return String(x.id)===String(item.otherItemId);});
       const factor=numberValue(item.unitFactor)||kkOtherUnitFactor(item.purchaseUnit||(master&&master.unit)||item.unit);
       const purchase=numberValue(item.purchasePrice!==undefined?item.purchasePrice:(master&&master.purchasePrice));
-      const unitCost=numberValue(item.unitCost!==undefined?item.unitCost:(master&&master.unitCost))/((item.unitCost!==undefined?1:factor)||1);
+      /* Convert older saved daily rows once; newer rows already store per-sale-unit values. */
+      if(!numberValue(item.unitFactor)&&factor>1){
+        item.unitCost=numberValue(item.unitCost!==undefined?item.unitCost:(master&&master.unitCost))/factor;
+        item.sellingPrice=numberValue(item.sellingPrice!==undefined?item.sellingPrice:(master&&master.sellingPrice))/factor;
+        item.unitFactor=factor;
+        item.purchaseUnit=item.purchaseUnit||(master&&master.unit)||"";
+        item.purchasePrice=purchase;
+        item.unit=(String(item.purchaseUnit).toLowerCase()==="dozen"||String(item.purchaseUnit).toLowerCase()==="tray")?"piece":(["liter","litre","l"].includes(String(item.purchaseUnit).toLowerCase())?"ml":"g");
+        saveAllData();
+      }
+      const unitCost=numberValue(item.unitCost!==undefined?item.unitCost:(master&&master.unitCost));
       const selling=numberValue(item.sellingPrice);
       const qty=Math.max(0,Math.floor(numberValue(item.quantitySold)));
       const sales=selling*qty, cost=unitCost*qty, profit=sales-cost;
