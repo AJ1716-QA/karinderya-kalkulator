@@ -8936,3 +8936,138 @@ function deleteDailyOtherItem(button){
     renderDailyOtherItems(date);
     calculateCombinedSales(date);
 }
+
+
+
+/* OTHER ITEMS SOLD — PER-UNIT COST, PACK-BASED SELL PRICE, SIMPLE QTY UI */
+function kkMasterOtherItem(item){
+    return otherItems.find(function(x){return String(x.id)===String(item.otherItemId);})||null;
+}
+function kkNormalizeDailyOtherItem(item){
+    const master=kkMasterOtherItem(item);
+    if(!master)return item;
+    const packQty=Math.max(1,numberValue(master.quantity));
+    const perUnitCost=numberValue(master.purchasePrice)/packQty;
+    const perUnitSell=numberValue(master.sellingPrice)/packQty;
+    if(!item.unitCost||Math.abs(numberValue(item.unitCost)-numberValue(master.unitCost))<0.005){
+        item.unitCost=perUnitCost;
+    }
+    if(!item.unitCostPerItemSet){
+        if(Math.abs(numberValue(item.sellingPrice)-numberValue(master.sellingPrice))<0.005){
+            item.sellingPrice=perUnitSell;
+        }
+        item.unitCostPerItemSet=true;
+        item.unit=master.unit||item.unit||'piece';
+    }
+    return item;
+}
+window.renderDailyOtherItems=function(date){
+    const container=document.getElementById('dailyOtherItemsList');
+    if(!container)return;
+    const record=stage4TodayRecord(date);
+    container.innerHTML='';
+    if(!record.otherItems.length){
+        container.innerHTML='<div class="menu-empty">No other items sold. Select an item from the dropdown above.</div>';
+        return;
+    }
+    record.otherItems.forEach(function(raw){
+        const item=kkNormalizeDailyOtherItem(raw);
+        const qty=Math.max(0,Math.floor(numberValue(item.quantitySold)));
+        const sales=numberValue(item.sellingPrice)*qty;
+        const cost=numberValue(item.unitCost)*qty;
+        const card=document.createElement('div');
+        card.className='menu-item daily-other-simple-card';
+        card.dataset.otherId=String(item.id);
+        card.innerHTML=
+          '<div class="menu-top"><div class="menu-name">'+escapeHtml(item.name)+'</div>'+
+          '<div class="menu-actions"><button type="button" class="btn btn-secondary btn-small" onclick="editDailyOtherItem(this)">Edit</button>'+
+          '<button type="button" class="btn btn-danger btn-small" onclick="deleteDailyOtherItem(this)">Delete</button></div></div>'+
+          '<div class="daily-other-grid">'+
+          '<div class="menu-summary-box"><span>Unit Cost / '+escapeHtml(item.unit||'unit')+'</span><strong>'+money(item.unitCost)+'</strong></div>'+
+          '<div class="menu-summary-box"><span>Qty Sold</span><strong>'+qty+'</strong></div>'+
+          '<div class="menu-summary-box"><span>Total Sales</span><strong>'+money(sales)+'</strong></div>'+
+          '</div><div class="menu-summary-box" style="margin-top:8px"><span>Profit</span><strong>'+money(sales-cost)+'</strong></div>';
+        container.appendChild(card);
+    });
+    saveAllData();
+};
+window.addDailyOtherItemFromSelect=function(){
+    const select=document.getElementById('dailyOtherItemSelect');
+    const id=String(select&&select.value||'');
+    if(!id)return;
+    const date=document.getElementById('menuDate').value||todayString();
+    const master=otherItems.find(function(x){return String(x.id)===id;});
+    if(!master)return;
+    const record=stage4TodayRecord(date);
+    if(record.otherItems.some(function(x){return String(x.otherItemId)===id;})){
+        showMessage('menuMessage','This item is already added for today. Edit its quantity instead.','error');
+        renderDailyOtherItemDropdown(date);
+        return;
+    }
+    const packQty=Math.max(1,numberValue(master.quantity));
+    record.otherItems.push({
+        id:createSalesRowId(),
+        otherItemId:String(master.id),
+        name:master.name,
+        unit:master.unit||'piece',
+        unitCost:numberValue(master.purchasePrice)/packQty,
+        sellingPrice:numberValue(master.sellingPrice)/packQty,
+        quantitySold:0,
+        unitCostPerItemSet:true
+    });
+    saveAllData();
+    loadMenuOfDay();
+};
+window.editDailyOtherItem=function(button){
+    const card=button.closest('.daily-other-simple-card');
+    if(!card)return;
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    const item=record.otherItems.find(function(x){return String(x.id)===String(card.dataset.otherId);});
+    if(!item)return;
+    kkNormalizeDailyOtherItem(item);
+    card.innerHTML=
+      '<div class="menu-name">'+escapeHtml(item.name)+' <span class="muted">('+escapeHtml(item.unit||'unit')+')</span></div>'+
+      '<div class="daily-other-grid"><div class="menu-summary-box"><span>Unit Cost</span><strong>'+money(item.unitCost)+'</strong></div>'+
+      '<div class="form-group"><label>Qty Sold</label><input class="other-sale-qty" type="number" min="0" step="1" inputmode="numeric" value="'+Math.max(0,Math.floor(numberValue(item.quantitySold)))+'"></div>'+
+      '<div class="menu-summary-box"><span>Total Sales</span><strong>'+money(numberValue(item.sellingPrice)*numberValue(item.quantitySold))+'</strong></div></div>'+
+      '<div class="menu-actions" style="margin-top:10px"><button type="button" class="btn btn-primary btn-small" onclick="saveDailyOtherItemEdit(this)">Save</button>'+
+      '<button type="button" class="btn btn-secondary btn-small" onclick="cancelDailyOtherItemEdit()">Cancel</button></div>';
+};
+window.saveDailyOtherItemEdit=function(button){
+    const card=button.closest('.daily-other-simple-card');
+    if(!card)return;
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    const item=record.otherItems.find(function(x){return String(x.id)===String(card.dataset.otherId);});
+    if(!item)return;
+    const input=card.querySelector('.other-sale-qty');
+    const qty=Number(input&&input.value);
+    if(!Number.isFinite(qty)||qty<0||!Number.isInteger(qty)){
+        showMessage('menuMessage','Enter a whole number of items sold (zero or more).','error');
+        return;
+    }
+    kkNormalizeDailyOtherItem(item);
+    item.quantitySold=qty;
+    saveAllData();
+    renderDailyOtherItemDropdown(date);
+    renderDailyOtherItems(date);
+    calculateCombinedSales(date);
+};
+window.cancelDailyOtherItemEdit=function(){
+    const date=document.getElementById('menuDate').value||todayString();
+    renderDailyOtherItems(date);
+};
+window.deleteDailyOtherItem=function(button){
+    const card=button.closest('.daily-other-simple-card')||button.closest('.menu-item');
+    if(!card)return;
+    const date=document.getElementById('menuDate').value||todayString();
+    const record=stage4TodayRecord(date);
+    const item=record.otherItems.find(function(x){return String(x.id)===String(card.dataset.otherId);});
+    if(item&&!confirm('Remove '+item.name+' from today\'s sales?'))return;
+    record.otherItems=record.otherItems.filter(function(x){return String(x.id)!==String(card.dataset.otherId);});
+    saveAllData();
+    renderDailyOtherItemDropdown(date);
+    renderDailyOtherItems(date);
+    calculateCombinedSales(date);
+};
