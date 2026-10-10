@@ -8589,7 +8589,7 @@ function calculateCombinedSales(date){
       }
       const qty=Math.max(0,Math.floor(n(item.servingsSold)));
       const sales=n(item.sellingPrice)*qty;
-      const profit=sales-perServing(item)*qty;
+      const profit=sales-n(item.recipeCost);
       const card=document.createElement('div');
       card.className='menu-item'+(stage4IsFoodSoldOut(record,item.id)?' stage4-food-sold-out':'');
       card.dataset.foodId=item.id;
