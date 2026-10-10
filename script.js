@@ -9293,6 +9293,7 @@ window.deleteDailyOtherItem=function(button){
       }
     }
     var op=el('kkdpOperatingDays');if(op&&op.closest('.kkdp-opex-card'))op.closest('.kkdp-opex-card').style.display='none';
+    var dateInput=el('kkdpProfitDate');if(dateInput)dateInput.onchange=function(){window.loadProfitCalculator();};
     var inputs=root.querySelectorAll('.kkdp-expense-row input');
     inputs.forEach(function(input){input.addEventListener('input',function(){kkRecalculateDailyExpenses();});});
     var empBody=el('kkdpEmployeeBody');
