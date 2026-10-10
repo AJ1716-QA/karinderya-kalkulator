@@ -8688,7 +8688,7 @@ function calculateCombinedSales(date){
   const style=document.createElement('style');
   style.id='kk-auto-menu-layout';
   style.textContent=`
-    .kk-auto-food-grid{grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch}
+    #menuItems .kk-auto-food-grid{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;align-items:stretch}
     .kk-food-price-field{margin:0;min-width:0;padding:9px 6px;border:1px solid var(--line);border-radius:11px;background:#fff}
     .kk-food-price-field label{font-size:10px;text-align:center}
     .kk-food-price-field input{min-height:38px;padding:7px 4px;text-align:center;font-size:14px}
@@ -8699,8 +8699,8 @@ function calculateCombinedSales(date){
     .kk-premium-sold-control .btn{min-width:30px;min-height:34px;padding:5px 8px}
     .kk-premium-sold-value{min-width:22px;text-align:center}
     .kk-premium-sold-value strong{font-size:15px;color:var(--navy)}
-    .kk-auto-other-grid{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:10px}
-    @media(max-width:420px){.kk-auto-food-grid,.kk-auto-other-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.kk-food-price-field label{font-size:10px}.kk-premium-cell{padding:9px 4px}.kk-premium-cell>strong{font-size:13px}.kk-premium-sold-control{gap:2px}.kk-premium-sold-control .btn{min-width:27px;padding:4px 6px}}
+    #dailyOtherItemsList .kk-auto-other-grid{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;margin-top:10px}
+    @media(max-width:768px){#menuItems .kk-auto-food-grid,#dailyOtherItemsList .kk-auto-other-grid{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:6px}.kk-food-price-field label{font-size:10px}.kk-premium-cell{padding:9px 4px}.kk-premium-cell>strong{font-size:13px}.kk-premium-sold-control{gap:2px}.kk-premium-sold-control .btn{min-width:27px;padding:4px 6px}}
   `;
   if(!document.getElementById(style.id))document.head.appendChild(style);
 })();
