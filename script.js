@@ -4376,6 +4376,18 @@ async function updateAppAccess(forceCheck) {
         lock.style.display = "none";
         if (authScreen) authScreen.style.display = "none";
         if (appContainer) appContainer.style.display = "block";
+
+        /* Restore the saved screen before the authenticated app is revealed. */
+        try {
+            const savedScreenId = sessionStorage.getItem("kk_last_active_screen") || "homeScreen";
+            const savedScreen = document.getElementById(savedScreenId);
+            document.querySelectorAll(".screen").forEach(function(screen) { screen.classList.remove("active"); });
+            if (savedScreen && savedScreen.classList.contains("screen")) savedScreen.classList.add("active");
+            else { const home = document.getElementById("homeScreen"); if (home) home.classList.add("active"); }
+        } catch (screenRestoreError) {
+            const home = document.getElementById("homeScreen"); if (home) home.classList.add("active");
+        }
+
         if (currentUserId !== userId || !userDataLoaded || forceCheck) {
             loadUserScopedData(userId);
             await renderIngredientList();
@@ -4395,6 +4407,9 @@ async function updateAppAccess(forceCheck) {
         if (msg) msg.textContent = "Unable to verify access. Please check your connection and try again.";
     } finally {
         entitlementCheckInProgress = false;
+        document.documentElement.classList.remove("kk-starting");
+        const startupOverlay = document.getElementById("kkStartupOverlay");
+        if (startupOverlay) startupOverlay.remove();
     }
 }
 
