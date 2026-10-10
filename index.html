@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
+<script>document.documentElement.classList.add("kk-starting");</script>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Karinderya Kalkulator</title>
 <link href="./manifest.json" rel="manifest"/>
@@ -273,12 +274,19 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 
 /* Accessible password reveal control for login and sign-up. */
 .auth-password-control{display:flex;align-items:stretch;gap:8px;width:100%}.auth-password-control input{flex:1;width:0;min-width:0}.auth-password-toggle{flex:0 0 auto;min-width:66px;padding:0 12px;border:1px solid #cbd8e2;border-radius:11px;background:#edf4f8;color:#123b63;font-size:13px;font-weight:800;touch-action:manipulation}.auth-password-toggle:focus-visible{outline:3px solid rgba(36,119,179,.35);outline-offset:2px}
+
+/* Prevent login/dashboard flashes while restoring the saved session and screen. */
+html.kk-starting #authScreen,html.kk-starting #appContent{visibility:hidden!important}
+#kkStartupOverlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(180deg,#eef4f8 0,#f8fafc 100%);color:#123b63;font-weight:750;text-align:center}
+#kkStartupOverlay .kk-startup-card{display:flex;flex-direction:column;align-items:center;gap:14px}
+#kkStartupOverlay .kk-startup-mark{display:grid;place-items:center;width:54px;height:54px;border-radius:16px;background:#123b63;color:#fff;font-size:28px;box-shadow:0 8px 24px rgba(15,47,77,.18)}
 </style>
 
 
 
 </head>
 <body>
+<div aria-live="polite" id="kkStartupOverlay"><div class="kk-startup-card"><div aria-hidden="true" class="kk-startup-mark">₱</div><div>Loading your account…</div></div></div>
 <div id="authScreen">
 <div class="card"><div aria-hidden="true" class="auth-brand">₱</div>
 <div class="section-title" style="text-align:center;">Karinderya Kalkulator</div>
@@ -437,7 +445,7 @@ button,.btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=20261010p"></script>
+<script src="script.js?v=20261010q"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const btn = document.getElementById("headerMenuBtn");
